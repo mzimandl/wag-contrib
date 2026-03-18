@@ -20,7 +20,11 @@ import { IApiServices } from '../../../../appServices.js';
 import { UjcSSJCApi, UjcPSJCApi } from './basicApi.js';
 import { ApiType, LexDictApi } from './types.js';
 
-export function createApiInstance(apiServices: IApiServices, apiType: ApiType, url: string): LexDictApi {
+export function createApiInstance(
+    apiServices: IApiServices,
+    apiType: ApiType,
+    url: string
+): LexDictApi {
     switch (apiType) {
         case 'ssjc':
             return new UjcSSJCApi(url, apiServices);
