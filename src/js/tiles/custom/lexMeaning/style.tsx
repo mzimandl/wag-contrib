@@ -74,6 +74,11 @@ export const MeaningBlock = styled.div`
         font-weight: 700;
     }
 
+    .explanation {
+        font-weight: 700;
+        font-size: 0.9em;
+    }
+
     .examples {
         .example {
             font-style: italic;

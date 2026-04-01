@@ -37,14 +37,14 @@ export function init(
 
     const globalComponents = ut.getComponents();
 
-    const TabButton: React.FC<{label:string, onClick: () => void, selected?: boolean, disabled?: boolean}> = (props) => {
+    const TabButton: React.FC<{label: string, onClick: () => void, tooltip: string, selected?: boolean, disabled?: boolean}> = (props) => {
         const classes = ['item'];
         if (props.disabled) classes.push('disabled');
         if (props.selected) classes.push('current');
 
         return <S.TabButton>
             <span className={classes.join(' ')}>{
-                <a onClick={_ => props.onClick()}>
+                <a onClick={_ => props.onClick()} title={props.tooltip}>
                     {props.label}
                 </a>
             }</span>
@@ -96,8 +96,9 @@ export function init(
                             <>
                                 {i > 0 ? <span className="separator">|</span> : null}
                                 <TabButton label={ut.translate(`lex_dictionaries__short_label_${item.type}`)}
+                                    tooltip={ut.translate(`lex_dictionaries__label_${item.type}`)}
                                     onClick={() => tabOnClick(i)} selected={i === props.selectedDataIndex}
-                                    disabled={!item.loaded}
+                                    disabled={!item.loaded || item.data === null}
                                 />
                             </>,
                         props.data)

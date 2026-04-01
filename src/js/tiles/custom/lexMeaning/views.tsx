@@ -55,6 +55,7 @@ export function init(
                 {List.map((v, i) => <S.MeaningBlock>
                     <div>{i+1}. <span className='attachement'>{v.attachement}</span></div>
                     <div className='explanation'>{v.explanation}</div>
+                    <div className='metaExplanation'>{v.metaExplanation}</div>
                     <div className='examples'>
                         {List.flatMap(e => List.map(x => <div className='example'>{x}</div>, e.data), v.examples)}
                     </div>
