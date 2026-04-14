@@ -29,44 +29,55 @@ import { List } from 'cnc-tskit';
 import { ApiType } from './api/types.js';
 
 interface ServiceConf {
-    type:ApiType;
-    apiURL:string;
+    type: ApiType;
+    apiURL: string;
 }
 
 export interface LexDictionariesTileConf extends TileConf {
-    services:Array<ServiceConf>;
+    services: Array<ServiceConf>;
 }
 
 export class LexDictionariesTile implements ITileProvider {
+    private readonly tileId: number;
 
-    private readonly tileId:number;
+    private readonly dispatcher: IActionDispatcher;
 
-    private readonly dispatcher:IActionDispatcher;
+    private readonly appServices: IAppServices;
 
-    private readonly appServices:IAppServices;
+    private readonly model: LexDictionariesModel;
 
-    private readonly model:LexDictionariesModel;
+    private readonly widthFract: number;
 
-    private readonly widthFract:number;
+    private readonly label: string;
 
-    private readonly label:string;
-
-    private view:TileComponent;
+    private view: TileComponent;
 
     private readonly configuredLemLevels:Array<LemmatizationLevel>;
 
     constructor({
-        tileId, dispatcher, appServices, ut, theme, widthFract, conf, isBusy,
-        queryMatches}:TileFactoryArgs<LexDictionariesTileConf>
-    ) {
+        tileId,
+        dispatcher,
+        appServices,
+        ut,
+        theme,
+        widthFract,
+        conf,
+        isBusy,
+        queryMatches,
+    }: TileFactoryArgs<LexDictionariesTileConf>) {
         this.tileId = tileId;
         this.dispatcher = dispatcher;
         this.appServices = appServices;
         this.widthFract = widthFract;
         this.configuredLemLevels = conf.lemmatizationLevels || [];
         const apis = List.map(
-            serviceConf => createApiInstance(appServices, serviceConf.type, serviceConf.apiURL),
-            conf.services,
+            (serviceConf) =>
+                createApiInstance(
+                    appServices,
+                    serviceConf.type,
+                    serviceConf.apiURL
+                ),
+            conf.services
         );
         this.model = new LexDictionariesModel({
             dispatcher,
@@ -78,40 +89,37 @@ export class LexDictionariesTile implements ITileProvider {
                 isBusy: isBusy,
                 queries: [],
                 data: List.map(
-                    serviceConf => ({
+                    (serviceConf) => ({
                         type: serviceConf.type,
                         data: null,
                         loaded: false,
-                        backlink: null
+                        backlink: null,
                     }),
                     conf.services
                 ),
                 selectedDataIndex: 0,
                 error: null,
-            }
+            },
         });
-        this.label = appServices.importExternalMessage(conf.label || 'lex_dictionaries__main_label');
-        this.view = viewInit(
-            this.dispatcher,
-            ut,
-            theme,
-            this.model
+        this.label = appServices.importExternalMessage(
+            conf.label || 'lex_dictionaries__main_label'
         );
+        this.view = viewInit(this.dispatcher, ut, theme, this.model);
     }
 
-    getIdent():number {
+    getIdent(): number {
         return this.tileId;
     }
 
-    getLabel():string {
+    getLabel(): string {
         return this.label;
     }
 
-    getView():TileComponent {
+    getView(): TileComponent {
         return this.view;
     }
 
-    getSourceInfoComponent():null {
+    getSourceInfoComponent(): null {
         return null;
     }
 
@@ -119,48 +127,48 @@ export class LexDictionariesTile implements ITileProvider {
         return qt === 'single';
     }
 
-    disable():void {
-        this.model.waitForAction({}, (_, syncData)=>syncData);
+    disable(): void {
+        this.model.waitForAction({}, (_, syncData) => syncData);
     }
 
-    getWidthFract():number {
+    getWidthFract(): number {
         return this.widthFract;
     }
 
-    supportsTweakMode():boolean {
+    supportsTweakMode(): boolean {
         return false;
     }
 
-    supportsAltView():boolean {
+    supportsAltView(): boolean {
         return false;
     }
 
-    supportsSVGFigureSave():boolean {
+    supportsSVGFigureSave(): boolean {
         return false;
     }
 
-    getAltViewIcon():AltViewIconProps {
+    getAltViewIcon(): AltViewIconProps {
         return DEFAULT_ALT_VIEW_ICON;
     }
 
-    registerReloadModel(model:ITileReloader):boolean {
+    registerReloadModel(model: ITileReloader): boolean {
         model.registerModel(this, this.model);
         return true;
     }
 
-    getBlockingTiles():Array<number> {
+    getBlockingTiles(): Array<number> {
         return [];
     }
 
-    supportsMultiWordQueries():boolean {
+    supportsMultiWordQueries(): boolean {
         return false;
     }
 
-    getIssueReportingUrl():null {
+    getIssueReportingUrl(): null {
         return null;
     }
 
-    getReadDataFrom():number|null {
+    getReadDataFrom(): number | null {
         return null;
     }
 
@@ -173,9 +181,8 @@ export class LexDictionariesTile implements ITileProvider {
     }
 }
 
-export const init:TileFactory<LexDictionariesTileConf> = {
-
+export const init: TileFactory<LexDictionariesTileConf> = {
     sanityCheck: (args) => [],
 
-    create: (args) => new LexDictionariesTile(args)
+    create: (args) => new LexDictionariesTile(args),
 };

@@ -27,36 +27,41 @@ import { UjcDictionaryModel } from './model.js';
 import { UjcDictionaryApi } from './api.js';
 import { createEmptyData } from './common.js';
 
-
 export interface UjcDictionaryTileConf extends TileConf {
-    apiURL:string;
-    maxItems:number;
+    apiURL: string;
+    maxItems: number;
 }
 
 export class UjcDictionaryTile implements ITileProvider {
+    private readonly tileId: number;
 
-    private readonly tileId:number;
+    private readonly dispatcher: IActionDispatcher;
 
-    private readonly dispatcher:IActionDispatcher;
+    private readonly appServices: IAppServices;
 
-    private readonly appServices:IAppServices;
+    private readonly model: UjcDictionaryModel;
 
-    private readonly model:UjcDictionaryModel;
+    private readonly widthFract: number;
 
-    private readonly widthFract:number;
+    private readonly label: string;
 
-    private readonly label:string;
+    private readonly api: UjcDictionaryApi;
 
-    private readonly api:UjcDictionaryApi;
-
-    private view:TileComponent;
+    private view: TileComponent;
 
     private readonly configuredLemLevels:Array<LemmatizationLevel>;
 
     constructor({
-        tileId, dispatcher, appServices, ut, theme, widthFract, conf, isBusy,
-        queryMatches}:TileFactoryArgs<UjcDictionaryTileConf>
-    ) {
+        tileId,
+        dispatcher,
+        appServices,
+        ut,
+        theme,
+        widthFract,
+        conf,
+        isBusy,
+        queryMatches,
+    }: TileFactoryArgs<UjcDictionaryTileConf>) {
         this.tileId = tileId;
         this.dispatcher = dispatcher;
         this.appServices = appServices;
@@ -76,30 +81,27 @@ export class UjcDictionaryTile implements ITileProvider {
                 maxItems: conf.maxItems,
                 error: null,
                 backlink: null,
-            }
+            },
         });
-        this.label = appServices.importExternalMessage(conf.label || 'ujc_dict__main_label');
-        this.view = viewInit(
-            this.dispatcher,
-            ut,
-            theme,
-            this.model
+        this.label = appServices.importExternalMessage(
+            conf.label || 'ujc_dict__main_label'
         );
+        this.view = viewInit(this.dispatcher, ut, theme, this.model);
     }
 
-    getIdent():number {
+    getIdent(): number {
         return this.tileId;
     }
 
-    getLabel():string {
+    getLabel(): string {
         return this.label;
     }
 
-    getView():TileComponent {
+    getView(): TileComponent {
         return this.view;
     }
 
-    getSourceInfoComponent():null {
+    getSourceInfoComponent(): null {
         return null;
     }
 
@@ -107,48 +109,48 @@ export class UjcDictionaryTile implements ITileProvider {
         return qt === 'single';
     }
 
-    disable():void {
-        this.model.waitForAction({}, (_, syncData)=>syncData);
+    disable(): void {
+        this.model.waitForAction({}, (_, syncData) => syncData);
     }
 
-    getWidthFract():number {
+    getWidthFract(): number {
         return this.widthFract;
     }
 
-    supportsTweakMode():boolean {
+    supportsTweakMode(): boolean {
         return false;
     }
 
-    supportsAltView():boolean {
+    supportsAltView(): boolean {
         return false;
     }
 
-    supportsSVGFigureSave():boolean {
+    supportsSVGFigureSave(): boolean {
         return false;
     }
 
-    getAltViewIcon():AltViewIconProps {
+    getAltViewIcon(): AltViewIconProps {
         return DEFAULT_ALT_VIEW_ICON;
     }
 
-    registerReloadModel(model:ITileReloader):boolean {
+    registerReloadModel(model: ITileReloader): boolean {
         model.registerModel(this, this.model);
         return true;
     }
 
-    getBlockingTiles():Array<number> {
+    getBlockingTiles(): Array<number> {
         return [];
     }
 
-    supportsMultiWordQueries():boolean {
+    supportsMultiWordQueries(): boolean {
         return false;
     }
 
-    getIssueReportingUrl():null {
+    getIssueReportingUrl(): null {
         return null;
     }
 
-    getReadDataFrom():number|null {
+    getReadDataFrom(): number | null {
         return null;
     }
 
@@ -161,9 +163,8 @@ export class UjcDictionaryTile implements ITileProvider {
     }
 }
 
-export const init:TileFactory<UjcDictionaryTileConf> = {
-
+export const init: TileFactory<UjcDictionaryTileConf> = {
     sanityCheck: (args) => [],
 
-    create: (args) => new UjcDictionaryTile(args)
+    create: (args) => new UjcDictionaryTile(args),
 };

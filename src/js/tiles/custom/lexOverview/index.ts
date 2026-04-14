@@ -27,33 +27,39 @@ import { LexOverviewModel } from './model.js';
 import { LexApi } from './api.js';
 import { createEmptyData } from './common.js';
 
-
 export interface LexOverviewTileConf extends TileConf {
-    apiURL:string;
+    apiURL: string;
 }
 
 export class LexOverviewBookTile implements ITileProvider {
+    private readonly tileId: number;
 
-    private readonly tileId:number;
+    private readonly dispatcher: IActionDispatcher;
 
-    private readonly dispatcher:IActionDispatcher;
+    private readonly appServices: IAppServices;
 
-    private readonly appServices:IAppServices;
+    private readonly model: LexOverviewModel;
 
-    private readonly model:LexOverviewModel;
+    private readonly widthFract: number;
 
-    private readonly widthFract:number;
+    private readonly api: LexApi;
 
-    private readonly api:LexApi;
-
-    private view:TileComponent;
+    private view: TileComponent;
 
     private readonly configuredLemLevels:Array<LemmatizationLevel>;
 
     constructor({
-        tileId, dispatcher, appServices, ut, theme, widthFract, conf, isBusy,
-        queryMatches, readDataFromTile}:TileFactoryArgs<LexOverviewTileConf>
-    ) {
+        tileId,
+        dispatcher,
+        appServices,
+        ut,
+        theme,
+        widthFract,
+        conf,
+        isBusy,
+        queryMatches,
+        readDataFromTile,
+    }: TileFactoryArgs<LexOverviewTileConf>) {
         this.tileId = tileId;
         this.dispatcher = dispatcher;
         this.appServices = appServices;
@@ -74,29 +80,24 @@ export class LexOverviewBookTile implements ITileProvider {
                 data: createEmptyData(),
                 error: undefined,
                 backlink: undefined,
-            }
+            },
         });
-        this.view = viewInit(
-            this.dispatcher,
-            ut,
-            theme,
-            this.model
-        );
+        this.view = viewInit(this.dispatcher, ut, theme, this.model);
     }
 
-    getIdent():number {
+    getIdent(): number {
         return this.tileId;
     }
 
-    getLabel():string {
+    getLabel(): string {
         return null;
     }
 
-    getView():TileComponent {
+    getView(): TileComponent {
         return this.view;
     }
 
-    getSourceInfoComponent():null {
+    getSourceInfoComponent(): null {
         return null;
     }
 
@@ -104,48 +105,48 @@ export class LexOverviewBookTile implements ITileProvider {
         return qt === 'single';
     }
 
-    disable():void {
-        this.model.waitForAction({}, (_, syncData)=>syncData);
+    disable(): void {
+        this.model.waitForAction({}, (_, syncData) => syncData);
     }
 
-    getWidthFract():number {
+    getWidthFract(): number {
         return this.widthFract;
     }
 
-    supportsTweakMode():boolean {
+    supportsTweakMode(): boolean {
         return false;
     }
 
-    supportsAltView():boolean {
+    supportsAltView(): boolean {
         return false;
     }
 
-    supportsSVGFigureSave():boolean {
+    supportsSVGFigureSave(): boolean {
         return false;
     }
 
-    registerReloadModel(model:ITileReloader):boolean {
+    registerReloadModel(model: ITileReloader): boolean {
         model.registerModel(this, this.model);
         return true;
     }
 
-    getBlockingTiles():Array<number> {
+    getBlockingTiles(): Array<number> {
         return [];
     }
 
-    supportsMultiWordQueries():boolean {
+    supportsMultiWordQueries(): boolean {
         return false;
     }
 
-    getIssueReportingUrl():null {
+    getIssueReportingUrl(): null {
         return null;
     }
 
-    getAltViewIcon():AltViewIconProps {
+    getAltViewIcon(): AltViewIconProps {
         return DEFAULT_ALT_VIEW_ICON;
     }
 
-    getReadDataFrom():number|null {
+    getReadDataFrom(): number | null {
         return null;
     }
 
@@ -158,9 +159,8 @@ export class LexOverviewBookTile implements ITileProvider {
     }
 }
 
-export const init:TileFactory<LexOverviewTileConf> = {
-
+export const init: TileFactory<LexOverviewTileConf> = {
     sanityCheck: (args) => [],
 
-    create: (args) => new LexOverviewBookTile(args)
+    create: (args) => new LexOverviewBookTile(args),
 };

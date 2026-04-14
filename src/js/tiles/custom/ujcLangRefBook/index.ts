@@ -27,35 +27,40 @@ import { UjcLGuideModel } from './model.js';
 import { UjcLGuideApi } from './api.js';
 import { mkEmptyData } from './common.js';
 
-
 export interface UjcLangRefBookTileConf extends TileConf {
-    apiURL:string;
+    apiURL: string;
 }
 
 export class UjcLangRefBookTile implements ITileProvider {
+    private readonly tileId: number;
 
-    private readonly tileId:number;
+    private readonly dispatcher: IActionDispatcher;
 
-    private readonly dispatcher:IActionDispatcher;
+    private readonly appServices: IAppServices;
 
-    private readonly appServices:IAppServices;
+    private readonly model: UjcLGuideModel;
 
-    private readonly model:UjcLGuideModel;
+    private readonly widthFract: number;
 
-    private readonly widthFract:number;
+    private readonly label: string;
 
-    private readonly label:string;
+    private readonly api: UjcLGuideApi;
 
-    private readonly api:UjcLGuideApi;
-
-    private view:TileComponent;
+    private view: TileComponent;
 
     private readonly configuredLemLevels:Array<LemmatizationLevel>;
 
     constructor({
-        tileId, dispatcher, appServices, ut, theme, widthFract, conf, isBusy,
-        queryMatches}:TileFactoryArgs<UjcLangRefBookTileConf>
-    ) {
+        tileId,
+        dispatcher,
+        appServices,
+        ut,
+        theme,
+        widthFract,
+        conf,
+        isBusy,
+        queryMatches,
+    }: TileFactoryArgs<UjcLangRefBookTileConf>) {
         this.tileId = tileId;
         this.dispatcher = dispatcher;
         this.appServices = appServices;
@@ -73,30 +78,27 @@ export class UjcLangRefBookTile implements ITileProvider {
                 data: mkEmptyData(),
                 error: null,
                 backlink: null,
-            }
+            },
         });
-        this.label = appServices.importExternalMessage(conf.label || 'lguide__main_label');
-        this.view = viewInit(
-            this.dispatcher,
-            ut,
-            theme,
-            this.model
+        this.label = appServices.importExternalMessage(
+            conf.label || 'lguide__main_label'
         );
+        this.view = viewInit(this.dispatcher, ut, theme, this.model);
     }
 
-    getIdent():number {
+    getIdent(): number {
         return this.tileId;
     }
 
-    getLabel():string {
+    getLabel(): string {
         return this.label;
     }
 
-    getView():TileComponent {
+    getView(): TileComponent {
         return this.view;
     }
 
-    getSourceInfoComponent():null {
+    getSourceInfoComponent(): null {
         return null;
     }
 
@@ -104,48 +106,48 @@ export class UjcLangRefBookTile implements ITileProvider {
         return qt === 'single';
     }
 
-    disable():void {
-        this.model.waitForAction({}, (_, syncData)=>syncData);
+    disable(): void {
+        this.model.waitForAction({}, (_, syncData) => syncData);
     }
 
-    getWidthFract():number {
+    getWidthFract(): number {
         return this.widthFract;
     }
 
-    supportsTweakMode():boolean {
+    supportsTweakMode(): boolean {
         return false;
     }
 
-    supportsAltView():boolean {
+    supportsAltView(): boolean {
         return false;
     }
 
-    supportsSVGFigureSave():boolean {
+    supportsSVGFigureSave(): boolean {
         return false;
     }
 
-    registerReloadModel(model:ITileReloader):boolean {
+    registerReloadModel(model: ITileReloader): boolean {
         model.registerModel(this, this.model);
         return true;
     }
 
-    getBlockingTiles():Array<number> {
+    getBlockingTiles(): Array<number> {
         return [];
     }
 
-    supportsMultiWordQueries():boolean {
+    supportsMultiWordQueries(): boolean {
         return false;
     }
 
-    getIssueReportingUrl():null {
+    getIssueReportingUrl(): null {
         return null;
     }
 
-    getAltViewIcon():AltViewIconProps {
+    getAltViewIcon(): AltViewIconProps {
         return DEFAULT_ALT_VIEW_ICON;
     }
 
-    getReadDataFrom():number|null {
+    getReadDataFrom(): number | null {
         return null;
     }
 
@@ -158,9 +160,8 @@ export class UjcLangRefBookTile implements ITileProvider {
     }
 }
 
-export const init:TileFactory<UjcLangRefBookTileConf> = {
-
+export const init: TileFactory<UjcLangRefBookTileConf> = {
     sanityCheck: (args) => [],
 
-    create: (args) => new UjcLangRefBookTile(args)
+    create: (args) => new UjcLangRefBookTile(args),
 };
