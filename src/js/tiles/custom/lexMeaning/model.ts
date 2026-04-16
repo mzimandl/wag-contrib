@@ -30,38 +30,44 @@ import { AggregateData } from '../lexOverview/common.js';
 import { map } from 'rxjs';
 import { VariantData, MeaningData } from '../lexOverview/commonAssc.js';
 
-
 export interface LexMeaningModelState {
-    isBusy:boolean;
-    queries:Array<string>;
-    itemId:number;
-    variants:Array<VariantData>;
-    meanings:Array<MeaningData>;
-    error:string;
-    backlink:Backlink;
+    isBusy: boolean;
+    queries: Array<string>;
+    variantId: number;
+    variants: Array<VariantData>;
+    meanings: Array<MeaningData>;
+    error: string;
+    backlink: Backlink;
 }
 
 export interface LexMeaningModelArgs {
-    dispatcher:IActionQueue;
-    initState:LexMeaningModelState;
-    tileId:number;
-    api:UjcDictionaryApi,
-    appServices:IAppServices;
-    queryMatches:RecognizedQueries;
+    dispatcher: IActionQueue;
+    initState: LexMeaningModelState;
+    tileId: number;
+    api: UjcDictionaryApi;
+    appServices: IAppServices;
+    queryMatches: RecognizedQueries;
     readDataFromTile: number | null;
 }
 
 export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
+    private readonly tileId: number;
 
-    private readonly tileId:number;
+    private readonly api: UjcDictionaryApi;
 
-    private readonly api:UjcDictionaryApi;
-
-    private readonly appServices:IAppServices;
+    private readonly appServices: IAppServices;
 
     private readonly readDataFromTile: number | null;
 
-    constructor({dispatcher, initState, api, tileId, appServices, queryMatches, readDataFromTile}:LexMeaningModelArgs) {
+    constructor({
+        dispatcher,
+        initState,
+        api,
+        tileId,
+        appServices,
+        queryMatches,
+        readDataFromTile,
+    }: LexMeaningModelArgs) {
         super(dispatcher, initState);
         this.tileId = tileId;
         this.appServices = appServices;
@@ -72,7 +78,7 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
             GlobalActions.RequestQueryResponse,
             (state, action) => {
                 const match = findCurrQueryMatch(List.head(queryMatches));
-                state.queries = [match.lemma||match.word];
+                state.queries = [match.lemma || match.word];
                 state.isBusy = true;
                 state.error = null;
                 state.backlink = null;
@@ -80,20 +86,23 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
                 state.meanings = undefined;
             },
             (state, action, dispatch) => {
-                this.loadData(dispatch, state, this.appServices.dataStreaming());
+                this.loadData(
+                    dispatch,
+                    state,
+                    this.appServices.dataStreaming()
+                );
             }
         );
 
         this.addActionSubtypeHandler(
             Actions.TileDataLoaded,
-            action => action.payload.tileId === this.tileId,
+            (action) => action.payload.tileId === this.tileId,
             (state, action) => {
                 state.isBusy = false;
                 if (action.error) {
                     state.error = action.error.message;
-
                 } else {
-                    state.itemId = 0;
+                    state.variantId = 0;
                     state.variants = action.payload.variants;
                     state.meanings = action.payload.meanings;
                 }
@@ -102,85 +111,101 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
 
         this.addActionSubtypeHandler(
             GlobalActions.GetSourceInfo,
-            action => action.payload.tileId === this.tileId,
+            (action) => action.payload.tileId === this.tileId,
             null,
             (state, action, dispatch) => {
-                this.api.getSourceDescription(
-                    this.appServices.dataStreaming(),
-                    this.tileId,
-                    this.appServices.getISO639UILang(),
-                    ''
-                ).subscribe({
-                    next: (data) => {
-                        dispatch({
-                            name: GlobalActions.GetSourceInfoDone.name,
-                            payload: {
-                                data: data
-                            }
-                        });
-                    },
-                    error: (err) => {
-                        console.error(err);
-                        dispatch({
-                            name: GlobalActions.GetSourceInfoDone.name,
-                            error: err
-
-                        });
-                    }
-                });
+                this.api
+                    .getSourceDescription(
+                        this.appServices.dataStreaming(),
+                        this.tileId,
+                        this.appServices.getISO639UILang(),
+                        ''
+                    )
+                    .subscribe({
+                        next: (data) => {
+                            dispatch({
+                                name: GlobalActions.GetSourceInfoDone.name,
+                                payload: {
+                                    data: data,
+                                },
+                            });
+                        },
+                        error: (err) => {
+                            console.error(err);
+                            dispatch({
+                                name: GlobalActions.GetSourceInfoDone.name,
+                                error: err,
+                            });
+                        },
+                    });
             }
         );
 
         this.addActionSubtypeHandler(
             GlobalActions.FollowBacklink,
-            action => action.payload.tileId === this.tileId,
+            (action) => action.payload.tileId === this.tileId,
             null,
             (state, action, dispatch) => {
-                window.open(`https://slovnikcestiny.cz/heslo/state.data.query/`, '_blank');
+                window.open(
+                    `https://slovnikcestiny.cz/heslo/state.data.query/`,
+                    '_blank'
+                );
             }
         );
 
         this.addActionSubtypeHandler(
             LexActions.SelectItemVariant,
-            action => typeof this.readDataFromTile === 'number' && action.payload.tileId === this.readDataFromTile,
+            (action) =>
+                typeof this.readDataFromTile === 'number' &&
+                action.payload.tileId === this.readDataFromTile,
             (state, action) => {
-                if (state.itemId !== action.payload.itemIdx) {
+                if (state.variantId !== action.payload.variantIdx) {
                     state.isBusy = true;
-                    state.itemId = action.payload.itemIdx;
+                    state.variantId = action.payload.variantIdx;
                 }
-            },
+            }
         );
 
         this.addActionSubtypeHandler(
             LexActions.SendActiveMeaningData,
-            action => typeof this.readDataFromTile === 'number' && action.payload.tileId === this.readDataFromTile,
+            (action) =>
+                typeof this.readDataFromTile === 'number' &&
+                action.payload.tileId === this.readDataFromTile,
             (state, action) => {
                 state.isBusy = false;
                 state.variants = action.payload.variants;
                 state.meanings = action.payload.meanings;
-            },
+            }
         );
     }
 
-    private loadData(dispatch:SEDispatcher, state: LexMeaningModelState, streaming: IDataStreaming): void {
+    private loadData(
+        dispatch: SEDispatcher,
+        state: LexMeaningModelState,
+        streaming: IDataStreaming
+    ): void {
         (typeof this.readDataFromTile === 'number'
             ? streaming
-                    .registerTileRequest<AggregateData>({
-                        tileId: this.tileId,
-                        queryIdx: 0, // TODO
-                        otherTileId: this.readDataFromTile,
-                        otherTileQueryIdx: 0, // TODO
-                        contentType: 'application/json',
-                    })
-                    .pipe(
-                        map(resp => {
-                            const variant = resp.search.items[0][0];
-                            return resp.asscData ? resp.asscData.items[variant.itemIdx] : null;
-                        })
-                    )
-            : this.api.call(streaming, this.tileId, 0, {q: state.queries}).pipe(map(resp => resp.items[0]))
+                  .registerTileRequest<AggregateData>({
+                      tileId: this.tileId,
+                      queryIdx: 0, // TODO
+                      otherTileId: this.readDataFromTile,
+                      otherTileQueryIdx: 0, // TODO
+                      contentType: 'application/json',
+                  })
+                  .pipe(
+                      map((resp) => {
+                          const variant = resp.search.items[0][0];
+                          return resp.asscData
+                              ? resp.asscData.items[variant.itemIdx]
+                              : null;
+                      })
+                  )
+            : this.api
+                  .call(streaming, this.tileId, 0, { q: state.queries })
+                  .pipe(map((resp) => resp.items[0]))
         ).subscribe({
-            next: data => {
+            next: (data) => {
                 if (data) {
                     dispatch<typeof Actions.TileDataLoaded>({
                         name: Actions.TileDataLoaded.name,
@@ -189,7 +214,7 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
                             isEmpty: false,
                             variants: [data.variants[0]],
                             meanings: data.meanings,
-                        }
+                        },
                     });
                 } else {
                     dispatch<typeof Actions.TileDataLoaded>({
@@ -199,11 +224,11 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
                             isEmpty: true,
                             variants: undefined,
                             meanings: undefined,
-                        }
+                        },
                     });
                 }
             },
-            error: error => {
+            error: (error) => {
                 console.error(error);
                 dispatch<typeof Actions.TileDataLoaded>({
                     name: Actions.TileDataLoaded.name,
@@ -212,10 +237,10 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
                         tileId: this.tileId,
                         isEmpty: true,
                         variants: undefined,
-                        meanings: undefined
-                    }
+                        meanings: undefined,
+                    },
                 });
-            }
+            },
         });
     }
 }

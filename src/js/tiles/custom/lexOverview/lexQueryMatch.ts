@@ -18,14 +18,14 @@
 
 import { QueryMatch } from '../../../query/index.js';
 
-enum LexSource {
+export enum LexSource {
     ASSC = 'assc',
     IJP = 'ijp',
     SSJC = 'ssjc',
     SJC = 'sjc',
 }
 
-enum PoS {
+export enum PoS {
     ADJ = 'A',
     ABB = 'B',
     NUM = 'C',
@@ -43,35 +43,35 @@ enum PoS {
     PUNC = 'Z',
 }
 
-enum Gender {
+export enum Gender {
     MASCULINE_ANIM = 'M',
     MASCULINE_INAN = 'I',
     FEMININE = 'F',
     NEUTER = 'N',
 }
 
-interface LexItem {
-    idents: Array<string>;
-    source: LexSource;
+export enum Aspect {
+    PERF = 'P',
+    IMPERF = 'I',
+    BOTH = 'B',
+}
 
+export interface LexItem {
     lemma: string;
     pos: PoS;
     gender?: Gender;
+    aspect?: Aspect;
 
-    corpusEntry?: QueryMatch<undefined>;
-    extraSources: { [source: string]: Array<string> };
-}
-
-interface LexExtraData {
     mainSource: LexSource;
-    lexItems: Array<LexItem>;
+    sources: { [source: string]: Array<string> };
+    corpusEntry?: QueryMatch<undefined>;
 }
 
 export function isLexQueryMatch(
     qm: QueryMatch<any>
-): qm is QueryMatch<LexExtraData> {
+): qm is QueryMatch<Array<LexItem>> {
     return (
         qm.extraData !== undefined &&
-        (qm.extraData as LexExtraData).mainSource !== undefined
+        (qm.extraData as Array<LexItem>)[0]?.mainSource !== undefined
     );
 }

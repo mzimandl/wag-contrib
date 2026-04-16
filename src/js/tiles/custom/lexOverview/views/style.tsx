@@ -30,22 +30,18 @@ export const Header = styled.div<{ theme: Theme }>`
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    
+
     h2 {
         width: 100%;
         margin: 0.1em 0;
-
-        a {
-            cursor: pointer;
-        }
     }
 
     .variant {
         margin: 0.1em 1em;
-        cursor: pointer;
 
         a {
             text-decoration: none;
+            cursor: pointer;
         }
     }
 
@@ -55,10 +51,10 @@ export const Header = styled.div<{ theme: Theme }>`
     }
 `;
 
-export const Subtile = styled.div<{ theme: Theme; color: string}>`
+export const Subtile = styled.div<{ theme: Theme; color: string }>`
     margin-top: 1em;
     padding: 0.5em;
-    background-color: ${props => props.color};
+    background-color: ${(props) => props.color};
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -69,8 +65,8 @@ export const Subtile = styled.div<{ theme: Theme; color: string}>`
         line-height: 2em;
 
         .key {
-            color: ${props => props.theme.colorLightText};
-            font-family: ${props => props.theme.condensedFontFamily};
+            color: ${(props) => props.theme.colorLightText};
+            font-family: ${(props) => props.theme.condensedFontFamily};
         }
 
         .value {
@@ -88,8 +84,8 @@ export const SubtileRow = styled.div<{ theme: Theme }>`
     margin-bottom: 0.5em;
 
     .key {
-        color: ${props => props.theme.colorLightText};
-        font-family: ${props => props.theme.condensedFontFamily};
+        color: ${(props) => props.theme.colorLightText};
+        font-family: ${(props) => props.theme.condensedFontFamily};
     }
 
     .value {

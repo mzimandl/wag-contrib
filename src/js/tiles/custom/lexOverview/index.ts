@@ -18,14 +18,26 @@
 import { IActionDispatcher } from 'kombo';
 
 import { IAppServices } from '../../../appServices.js';
-import { findCurrQueryMatch, LemmatizationLevel, QueryType } from '../../../query/index.js';
+import {
+    findCurrQueryMatch,
+    LemmatizationLevel,
+    QueryType,
+} from '../../../query/index.js';
 import { init as viewInit } from './views/views.js';
 import {
-    TileConf, ITileProvider, TileComponent, TileFactory,
-    TileFactoryArgs, DEFAULT_ALT_VIEW_ICON, ITileReloader, AltViewIconProps, lemLevelSupport } from '../../../page/tile.js';
+    TileConf,
+    ITileProvider,
+    TileComponent,
+    TileFactory,
+    TileFactoryArgs,
+    DEFAULT_ALT_VIEW_ICON,
+    ITileReloader,
+    AltViewIconProps,
+    lemLevelSupport,
+} from '../../../page/tile.js';
 import { LexOverviewModel } from './model.js';
 import { LexApi } from './api.js';
-import { createEmptyData } from './common.js';
+import { isLexQueryMatch } from './lexQueryMatch.js';
 
 export interface LexOverviewTileConf extends TileConf {
     apiURL: string;
@@ -46,7 +58,7 @@ export class LexOverviewBookTile implements ITileProvider {
 
     private view: TileComponent;
 
-    private readonly configuredLemLevels:Array<LemmatizationLevel>;
+    private readonly configuredLemLevels: Array<LemmatizationLevel>;
 
     constructor({
         tileId,
@@ -66,6 +78,10 @@ export class LexOverviewBookTile implements ITileProvider {
         this.widthFract = widthFract;
         this.configuredLemLevels = conf.lemmatizationLevels || [];
         this.api = new LexApi(conf.apiURL, appServices);
+        const currQueryMatch = findCurrQueryMatch(queryMatches[0]);
+        const lexItems = isLexQueryMatch(currQueryMatch)
+            ? currQueryMatch.extraData
+            : null;
         this.model = new LexOverviewModel({
             dispatcher,
             appServices,
@@ -74,10 +90,9 @@ export class LexOverviewBookTile implements ITileProvider {
             tileId,
             initState: {
                 isBusy: isBusy,
-                queryMatch: findCurrQueryMatch(queryMatches[0]),
-                selectedSrchItemIdx: -1,
-                selectedSrchVariantIdx: -1,
-                data: createEmptyData(),
+                queryMatch: currQueryMatch,
+                lexItems: lexItems,
+                selectedVariantIdx: lexItems && lexItems.length > 0 ? 0 : -1,
                 error: undefined,
                 backlink: undefined,
             },
@@ -101,7 +116,11 @@ export class LexOverviewBookTile implements ITileProvider {
         return null;
     }
 
-    supportsQueryType(qt:QueryType, domain1:string, domain2?:string):boolean {
+    supportsQueryType(
+        qt: QueryType,
+        domain1: string,
+        domain2?: string
+    ): boolean {
         return qt === 'single';
     }
 
@@ -150,11 +169,11 @@ export class LexOverviewBookTile implements ITileProvider {
         return null;
     }
 
-    hideOnNoData():boolean {
+    hideOnNoData(): boolean {
         return false;
     }
 
-    supportsLemmatizationLevel(ll:LemmatizationLevel):boolean {
+    supportsLemmatizationLevel(ll: LemmatizationLevel): boolean {
         return lemLevelSupport(this.configuredLemLevels, ll);
     }
 }
