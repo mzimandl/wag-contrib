@@ -30,7 +30,6 @@ import { init as initLangGuideViews } from './langGuide/views.js';
 import { init as initCorpusViews } from './corpus/views.js';
 import * as S from './style.js';
 import { List } from 'cnc-tskit';
-import { SearchVariant } from '../common.js';
 import { LexItem, LexSource } from '../lexQueryMatch.js';
 
 export function init(
@@ -147,15 +146,25 @@ export function init(
             source: null,
         };
 
-        if (state.lexItems !== null && state.selectedVariantIdx > -1) {
-            overview.partOfSpeach =
-                state.lexItems[state.selectedVariantIdx].pos;
-            switch (state.lexItems[state.selectedVariantIdx].mainSource) {
+        if (state.variants !== null && state.selectedVariantIdx > -1) {
+            const variant = state.variants[state.selectedVariantIdx];
+            overview.partOfSpeach = variant.pos;
+            switch (variant.mainSource) {
                 case LexSource.ASSC:
                     overview.source = 'Akademický slovník současné češtiny';
+                    if (state.data.assc) {
+                        const asscVariant = List.find(
+                            (v) => v.key.startsWith(variant.lemma),
+                            state.data.assc.variants
+                        );
+                        overview.pronunciation = asscVariant.pronunciation;
+                    }
                     break;
                 case LexSource.IJP:
                     overview.source = 'Internetová jazyková příručka';
+                    if (state.data.ijp) {
+                        overview.pronunciation = state.data.ijp.pronunciation;
+                    }
                     break;
             }
         } else {
@@ -176,7 +185,7 @@ export function init(
                     <LexOverviewHeader
                         tileId={props.tileId}
                         selectedVariantIdx={state.selectedVariantIdx}
-                        items={state.lexItems}
+                        items={state.variants}
                         backupTitle={state.queryMatch.lemma}
                     />
                     <LexOverviewBasics
@@ -184,6 +193,9 @@ export function init(
                         partOfSpeach={overview.partOfSpeach}
                         source={overview.source}
                     />
+                    {state.data.ijp ? (
+                        <langGuideViews.Subtile data={state.data.ijp} />
+                    ) : null}
                     <corpusViews.Subtile data={state.queryMatch} />
                 </S.LexOverviewTileView>
             </globalComponents.TileWrapper>

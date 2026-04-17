@@ -91,8 +91,12 @@ export class LexOverviewBookTile implements ITileProvider {
             initState: {
                 isBusy: isBusy,
                 queryMatch: currQueryMatch,
-                lexItems: lexItems,
+                variants: lexItems,
                 selectedVariantIdx: lexItems && lexItems.length > 0 ? 0 : -1,
+                data: {
+                    assc: null,
+                    ijp: null,
+                },
                 error: undefined,
                 backlink: undefined,
             },

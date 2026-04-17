@@ -22,14 +22,24 @@ import { Backlink } from '../../../page/tile.js';
 import { QueryMatch, RecognizedQueries } from '../../../query/index.js';
 import { Actions as GlobalActions } from '../../../models/actions.js';
 import { Actions } from './actions.js';
-import { LexApi } from './api.js';
+import { LexApi, LexArgs } from './api.js';
 import { LexItem } from './lexQueryMatch.js';
+
+import { DataItem as ASSCData } from './commonAssc.js';
+import { DataStructure as LGuideData } from './commonLguide.js';
+import { IDataStreaming } from 'src/js/page/streaming.js';
+
+interface Data {
+    assc: ASSCData;
+    ijp: LGuideData;
+}
 
 export interface LexOverviewModelState {
     isBusy: boolean;
     queryMatch: QueryMatch;
-    lexItems: Array<LexItem>;
+    variants: Array<LexItem>;
     selectedVariantIdx: number;
+    data: Data;
     error: string;
     backlink: Backlink;
 }
@@ -71,6 +81,16 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
                 state.backlink = undefined;
             },
             (state, action, dispatch) => {
+                if (state.selectedVariantIdx > -1) {
+                    const variant = state.variants[state.selectedVariantIdx];
+                    this.loadData(
+                        this.appServices.dataStreaming(),
+                        dispatch,
+                        variant.lemma,
+                        variant.sources['assc'][0].id,
+                        variant.sources['ijp'][0].id
+                    );
+                }
                 //const match = findCurrQueryMatch(List.head(queryMatches));
                 //this.loadData(dispatch, match.lemma || match.word);
             }
@@ -81,6 +101,7 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
             (action) => action.payload.tileId === this.tileId,
             (state, action) => {
                 state.isBusy = false;
+                state.data = action.payload.data;
                 if (action.error) {
                     state.error = action.error.message;
                 }
@@ -141,30 +162,61 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
             (action) => action.payload.tileId === this.tileId,
             (state, action) => {
                 state.selectedVariantIdx = action.payload.variantIdx;
-                state.isBusy = false;
+                state.isBusy = true;
+            },
+            (state, action, dispatch) => {
+                const variant = state.variants[action.payload.variantIdx];
+                this.loadData(
+                    this.appServices
+                        .dataStreaming()
+                        .startNewSubgroup(this.tileId),
+                    dispatch,
+                    variant.lemma,
+                    variant.sources['assc'][0].id,
+                    variant.sources['ijp'][0].id
+                );
             }
         );
+    }
 
-        this.addActionSubtypeHandler(
-            Actions.ASSCDataLoaded,
-            (action) => action.payload.tileId === this.tileId,
-            (state, action) => {
-                state.isBusy = false;
-                if (action.error) {
-                    state.error = action.error.message;
-                }
-            }
-        );
+    private loadData(
+        streaming: IDataStreaming,
+        dispatch: SEDispatcher,
+        value: string,
+        asscId: string,
+        ijpId: string
+    ) {
+        const args: LexArgs = {
+            asscId,
+            ijpId,
+        };
 
-        this.addActionSubtypeHandler(
-            Actions.LGuideDataLoaded,
-            (action) => action.payload.tileId === this.tileId,
-            (state, action) => {
-                state.isBusy = false;
-                if (action.error) {
-                    state.error = action.error.message;
-                }
-            }
-        );
+        this.api.call(streaming, this.tileId, 0, args).subscribe({
+            next: (data) => {
+                dispatch<typeof Actions.TileDataLoaded>({
+                    name: Actions.TileDataLoaded.name,
+                    payload: {
+                        tileId: this.tileId,
+                        isEmpty: false,
+                        data,
+                    },
+                });
+            },
+            error: (error) => {
+                console.error(error);
+                dispatch<typeof Actions.TileDataLoaded>({
+                    name: Actions.TileDataLoaded.name,
+                    error,
+                    payload: {
+                        tileId: this.tileId,
+                        isEmpty: true,
+                        data: {
+                            assc: null,
+                            ijp: null,
+                        },
+                    },
+                });
+            },
+        });
     }
 }

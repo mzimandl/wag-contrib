@@ -18,38 +18,14 @@
 
 import { Action } from 'kombo';
 import { Actions as GlobalActions } from '../../../models/actions.js';
-import { AggregateData, SearchVariant } from './common.js';
-import { DataItem, MeaningData, VariantData } from './commonAssc.js';
-import { DataStructure as LGuideDataStructure } from './commonLguide.js';
-
-export interface DataLoadedPayload {
-    aggregate: AggregateData;
-}
+import { MeaningData, VariantData } from './commonAssc.js';
+import { LexResponse } from './api.js';
 
 export class Actions {
     static TileDataLoaded: Action<
-        typeof GlobalActions.TileDataLoaded.payload & DataLoadedPayload
+        typeof GlobalActions.TileDataLoaded.payload & { data: LexResponse }
     > = {
         name: GlobalActions.TileDataLoaded.name,
-    };
-
-    static ASSCDataLoaded: Action<{
-        tileId: number;
-        selectedItemIdx: number;
-        selectedVariantIdx: number;
-        items: Array<DataItem>;
-        variants: Array<Array<SearchVariant>>;
-    }> = {
-        name: 'LEX_OVERVIEW_ASSC_DATA_LOADED',
-    };
-
-    static LGuideDataLoaded: Action<{
-        tileId: number;
-        selectedItemIdx: number;
-        selectedVariantIdx: number;
-        data: LGuideDataStructure;
-    }> = {
-        name: 'LEX_OVERVIEW_LGUIDE_DATA_LOADED',
     };
 
     static SelectItemVariant: Action<{

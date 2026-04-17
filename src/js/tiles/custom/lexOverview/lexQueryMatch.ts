@@ -56,6 +56,11 @@ export enum Aspect {
     BOTH = 'B',
 }
 
+interface LexID {
+    id: string;
+    parentId?: string;
+}
+
 export interface LexItem {
     lemma: string;
     pos: PoS;
@@ -63,7 +68,7 @@ export interface LexItem {
     aspect?: Aspect;
 
     mainSource: LexSource;
-    sources: { [source: string]: Array<string> };
+    sources: { [source: string]: Array<LexID> };
     corpusEntry?: QueryMatch<undefined>;
 }
 
