@@ -61,6 +61,32 @@ interface LexID {
     parentId?: string;
 }
 
+interface Sublemma {
+    value: string;
+    count: number;
+}
+
+export interface CorpusEntry {
+    _id: string;
+    _rev: string;
+    lemma: string;
+    sublemmas: Array<Sublemma>;
+    pos: string;
+    datasetSize: number;
+    upos: string;
+    count: number;
+    arf: number;
+    ipm: number;
+    is_pname: boolean;
+    forms: Array<{
+        word: string;
+        sublemma?: string;
+        count: number;
+        ipm: number;
+        arf: number;
+    }>;
+}
+
 export interface LexItem {
     lemma: string;
     pos: PoS;
@@ -68,7 +94,7 @@ export interface LexItem {
     aspect?: Aspect;
 
     sources: { [source: string]: Array<LexID> };
-    corpusEntry?: QueryMatch<undefined>;
+    corpusEntry?: CorpusEntry;
 }
 
 export function isLexQueryMatch(

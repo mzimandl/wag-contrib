@@ -16,52 +16,71 @@
  * limitations under the License.
  */
 
-import { List } from 'cnc-tskit';
 import { IActionDispatcher, ViewUtils } from 'kombo';
 import * as React from 'react';
 import { GlobalComponents } from '../../../../../views/common/index.js';
-import { QueryMatch } from '../../../../../query/index.js';
 import { init as commonViewInit } from './common.js';
 import * as S from '../style.js';
-
+import { calcFreqBand } from '../../../../../query/index.js';
 
 export function init(
-    dispatcher:IActionDispatcher,
-    ut:ViewUtils<GlobalComponents>,
-):{
+    dispatcher: IActionDispatcher,
+    ut: ViewUtils<GlobalComponents>
+): {
     Subtile: React.FC<{
-        data: QueryMatch;
+        source: string;
+        data?: {
+            abs: number;
+            ipm: number;
+        };
         color?: string;
-    }>
+    }>;
 } {
-    
     const commonViews = commonViewInit(dispatcher, ut);
     const defaultColor = '#fae9da';
 
     // -------------------- <SrchWordInfo /> ---------------------------------------------------
 
     const SrchWordInfo: React.FC<{
-        data: QueryMatch;
+        source: string;
+        data?: {
+            abs: number;
+            ipm: number;
+        };
         color?: string;
     }> = (props) => (
         <S.Subtile color={props.color || defaultColor}>
-            {props.data.lemma ? (
+            {props.data ? (
                 props.data.abs > 0 ? (
-                    <p className='content'>
-                        <span className='key'>{ut.translate('wordfreq__freq_bands')}:</span>
-                        <span className='value' style={{display: 'inline-block', fontSize: '1.2em'}}>
+                    <p className="content">
+                        <span className="key">
+                            {ut.translate('wordfreq__freq_bands')}:
+                        </span>
+                        <span
+                            className="value"
+                            style={{
+                                display: 'inline-block',
+                                fontSize: '1.2em',
+                            }}
+                        >
                             <commonViews.Stars
-                                freqBand={props.data.flevel}
+                                freqBand={calcFreqBand(props.data.ipm)}
                             />
                         </span>
-                        <br/>
-                        <span className='key'>{ut.translate('wordfreq__ipm')}:</span>
-                        <span className='value'>{ut.formatNumber(props.data.ipm, 2)}</span>
+                        <br />
+                        <span className="key">
+                            {ut.translate('wordfreq__ipm')}:
+                        </span>
+                        <span className="value">
+                            {ut.formatNumber(props.data.ipm, 2)}
+                        </span>
                     </p>
                 ) : (
-                    <p className='content'>
-                        <span className='key'>{ut.translate('wordfreq__note')}:</span>
-                        <span className='value'>
+                    <p className="content">
+                        <span className="key">
+                            {ut.translate('wordfreq__note')}:
+                        </span>
+                        <span className="value">
                             {ut.translate(
                                 'wordfreq__word_known_but_nothing_more'
                             )}
@@ -69,19 +88,24 @@ export function init(
                     </p>
                 )
             ) : (
-                <p className='content'>
-                    <span className='key'>{ut.translate('wordfreq__note')}:</span>
-                    <span className='value'>{ut.translate('wordfreq__not_in_dict')}</span>
+                <p className="content">
+                    <span className="key">
+                        {ut.translate('wordfreq__note')}:
+                    </span>
+                    <span className="value">
+                        {ut.translate('wordfreq__not_in_dict')}
+                    </span>
                 </p>
             )}
 
-            <div className='content footer'>
-                <span className='key'>Zdroj:</span><span className='value'>Korpus SYN 2025</span>
+            <div className="content footer">
+                <span className="key">Zdroj:</span>
+                <span className="value">{props.source}</span>
             </div>
         </S.Subtile>
     );
 
     return {
-        Subtile: SrchWordInfo
-    }
+        Subtile: SrchWordInfo,
+    };
 }

@@ -146,7 +146,11 @@ export function init(
             source: null,
         };
 
-        if (state.variants !== null && state.selectedVariantIdx > -1) {
+        const currentVariant =
+            state.variants && state.selectedVariantIdx > -1
+                ? state.variants[state.selectedVariantIdx]
+                : null;
+        if (currentVariant !== null) {
             const variant = state.variants[state.selectedVariantIdx];
             overview.partOfSpeach = variant.pos;
             switch (state.mainSource) {
@@ -193,10 +197,30 @@ export function init(
                         partOfSpeach={overview.partOfSpeach}
                         source={overview.source}
                     />
+
                     {state.data.ijp ? (
                         <langGuideViews.Subtile data={state.data.ijp} />
                     ) : null}
-                    <corpusViews.Subtile data={state.queryMatch} />
+
+                    {!currentVariant ? (
+                        <corpusViews.Subtile
+                            source={'syn2020'}
+                            data={{
+                                abs: state.queryMatch.abs,
+                                ipm: state.queryMatch.ipm,
+                            }}
+                        />
+                    ) : currentVariant.corpusEntry ? (
+                        <corpusViews.Subtile
+                            source={'syn2020'}
+                            data={{
+                                abs: currentVariant.corpusEntry.count,
+                                ipm: currentVariant.corpusEntry.ipm,
+                            }}
+                        />
+                    ) : (
+                        <corpusViews.Subtile source={'syn2020'} />
+                    )}
                 </S.LexOverviewTileView>
             </globalComponents.TileWrapper>
         );
