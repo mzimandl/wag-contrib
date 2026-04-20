@@ -30,7 +30,7 @@ import { init as initLangGuideViews } from './langGuide/views.js';
 import { init as initCorpusViews } from './corpus/views.js';
 import * as S from './style.js';
 import { List } from 'cnc-tskit';
-import { LexItem, LexSource } from '../lexQueryMatch.js';
+import { LexItem, Source } from '../common.js';
 
 export function init(
     dispatcher: IActionDispatcher,
@@ -149,8 +149,8 @@ export function init(
         if (state.variants !== null && state.selectedVariantIdx > -1) {
             const variant = state.variants[state.selectedVariantIdx];
             overview.partOfSpeach = variant.pos;
-            switch (variant.mainSource) {
-                case LexSource.ASSC:
+            switch (state.mainSource) {
+                case Source.ASSC:
                     overview.source = 'Akademický slovník současné češtiny';
                     if (state.data.assc) {
                         const asscVariant = List.find(
@@ -160,7 +160,7 @@ export function init(
                         overview.pronunciation = asscVariant.pronunciation;
                     }
                     break;
-                case LexSource.IJP:
+                case Source.IJP:
                     overview.source = 'Internetová jazyková příručka';
                     if (state.data.ijp) {
                         overview.pronunciation = state.data.ijp.pronunciation;

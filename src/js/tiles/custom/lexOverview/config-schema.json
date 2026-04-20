@@ -4,6 +4,18 @@
         "apiURL": {
             "type": "string"
         },
+        "sourcePriority": {
+            "type": "array",
+            "items": {
+                "enum": [
+                    "assc",
+                    "ijp",
+                    "sjc",
+                    "ssjc"
+                ],
+                "type": "string"
+            }
+        },
         "tileType": {
             "description": "An identifier as defined by tiles configuration interface",
             "type": "string"
@@ -58,10 +70,23 @@
             "items": {
                 "type": "string"
             }
+        },
+        "lemmatizationLevels": {
+            "description": "In case a tile supports only some of the lemmatization levels,\nit should be configured. If empty, WaG assumes the tile supports\nall the types.",
+            "type": "array",
+            "items": {
+                "enum": [
+                    "form",
+                    "lemma",
+                    "sublemma"
+                ],
+                "type": "string"
+            }
         }
     },
     "required": [
         "apiURL",
+        "sourcePriority",
         "tileType"
     ],
     "definitions": {

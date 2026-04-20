@@ -1,6 +1,6 @@
 /*
- * Copyright 2022 Martin Zimandl <martin.zimandl@gmail.com>
- * Copyright 2022 Institute of the Czech National Corpus,
+ * Copyright 2026 Martin Zimandl <martin.zimandl@gmail.com>
+ * Copyright 2026 Institute of the Czech National Corpus,
  *                Faculty of Arts, Charles University
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,22 +18,22 @@
 
 import { Dict, HTTP, List, pipe } from 'cnc-tskit';
 import { forkJoin, Observable, of as rxOf } from 'rxjs';
-import { IApiServices } from '../../../appServices.js';
-import { ajax$ } from '../../../page/ajax.js';
-import { ResourceApi, SourceDetails, HTTPHeaders } from '../../../types.js';
-import { Backlink } from '../../../page/tile.js';
-import { IDataStreaming } from '../../../page/streaming.js';
-import { DataItem as ASSCData } from './commonAssc.js';
-import { DataStructure as LGuideData } from './commonLguide.js';
+import { IApiServices } from '../../../../appServices.js';
+import { ajax$ } from '../../../../page/ajax.js';
+import { ResourceApi, SourceDetails, HTTPHeaders } from '../../../../types.js';
+import { Backlink } from '../../../../page/tile.js';
+import { IDataStreaming } from '../../../../page/streaming.js';
+import { DataItem as ASSCData } from './assc.js';
+import { DataStructure as IJPData } from './ijp.js';
 
 export interface LexArgs {
-    asscId: string;
-    ijpId: string;
+    asscId?: string;
+    ijpId?: string;
 }
 
 export interface LexResponse {
     assc: ASSCData;
-    ijp: LGuideData;
+    ijp: IJPData;
 }
 
 export class LexApi implements ResourceApi<LexArgs, LexResponse> {
@@ -68,8 +68,12 @@ export class LexApi implements ResourceApi<LexArgs, LexResponse> {
         queryArgs: LexArgs
     ): Observable<LexResponse> {
         return forkJoin({
-            assc: this.loadASSC(streaming, tileId, 0, queryArgs.asscId),
-            ijp: this.loadLGuide(streaming, tileId, 1, queryArgs.ijpId),
+            assc: queryArgs.asscId
+                ? this.loadASSC(streaming, tileId, 0, queryArgs.asscId)
+                : rxOf(null),
+            ijp: queryArgs.ijpId
+                ? this.loadLGuide(streaming, tileId, 1, queryArgs.ijpId)
+                : rxOf(null),
         });
     }
 
@@ -103,12 +107,12 @@ export class LexApi implements ResourceApi<LexArgs, LexResponse> {
         tileId: number,
         queryIdx: number,
         id: string
-    ): Observable<LGuideData> {
+    ): Observable<IJPData> {
         if (!id) {
             return rxOf(null);
         }
         return streaming
-            ? streaming.registerTileRequest<LGuideData>({
+            ? streaming.registerTileRequest<IJPData>({
                   tileId,
                   queryIdx,
                   method: HTTP.Method.GET,
@@ -116,7 +120,7 @@ export class LexApi implements ResourceApi<LexArgs, LexResponse> {
                   body: {},
                   contentType: 'application/json',
               })
-            : ajax$<LGuideData>(
+            : ajax$<IJPData>(
                   HTTP.Method.GET,
                   this.apiURL + '/lguide?id=' + id,
                   {}

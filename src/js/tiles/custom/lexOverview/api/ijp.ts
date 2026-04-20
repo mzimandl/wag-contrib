@@ -1,6 +1,6 @@
 /*
- * Copyright 2022 Martin Zimandl <martin.zimandl@gmail.com>
- * Copyright 2022 Institute of the Czech National Corpus,
+ * Copyright 2026 Martin Zimandl <martin.zimandl@gmail.com>
+ * Copyright 2026 Institute of the Czech National Corpus,
  *                Faculty of Arts, Charles University
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,86 +16,85 @@
  * limitations under the License.
  */
 
-
 export interface NumberData {
-    singular:string;
-    plural:string;
+    singular: string;
+    plural: string;
 }
 
 export interface CaseData {
-    nominative:NumberData;
-    genitive:NumberData;
-    dative:NumberData;
-    accusative:NumberData;
-    vocative:NumberData;
-    locative:NumberData;
-    instrumental:NumberData;
+    nominative: NumberData;
+    genitive: NumberData;
+    dative: NumberData;
+    accusative: NumberData;
+    vocative: NumberData;
+    locative: NumberData;
+    instrumental: NumberData;
 }
 
 export interface ComparisonData {
-    comparative:string;
-    superlative:string
+    comparative: string;
+    superlative: string;
 }
 
 export interface PersonData {
-    first:NumberData;
-    second:NumberData;
-    third:NumberData
+    first: NumberData;
+    second: NumberData;
+    third: NumberData;
 }
 
 export interface ParticipleData {
-    active:string;
-    passive:string;
+    active: string;
+    passive: string;
 }
 
 export interface TransgressiveRow {
-    m:NumberData;
-    zs:NumberData;
+    m: NumberData;
+    zs: NumberData;
 }
 
 export interface TransgressiveData {
-    past:TransgressiveRow;
-    present:TransgressiveRow;
+    past: TransgressiveRow;
+    present: TransgressiveRow;
 }
 
 export interface ConjugationData {
-    person:PersonData;
-    imperative:NumberData;
-    participle:ParticipleData;
-    transgressive:TransgressiveData;
-    verbalNoun:string;
+    person: PersonData;
+    imperative: NumberData;
+    participle: ParticipleData;
+    transgressive: TransgressiveData;
+    verbalNoun: string;
 }
 
 export interface Alternative {
-    id:string;
-    info:string;
+    id: string;
+    info: string;
 }
 
 export interface DataStructure {
-    scripts:Array<string>;
-    cssLinks:Array<string>;
-    heading:string;
-    pronunciation:string;
-    meaning:string;
-    syllabification:string;
-    gender:string;
-    grammarCase:CaseData;
-    comparison:ComparisonData;
-    conjugation:ConjugationData;
-    examples:Array<string>;
-    notes:string;
-    alternatives:Array<Alternative>;
-    isDirect:boolean;
+    scripts: Array<string>;
+    cssLinks: Array<string>;
+    heading: string;
+    pronunciation: string;
+    meaning: string;
+    syllabification: string;
+    gender: string;
+    grammarCase: CaseData;
+    comparison: ComparisonData;
+    conjugation: ConjugationData;
+    examples: Array<string>;
+    notes: string;
+    alternatives: Array<Alternative>;
+    isDirect: boolean;
 }
 
-export function mkEmptyNumber():NumberData {
+export function mkEmptyNumber(): NumberData {
     return {
         singular: '',
         plural: '',
     };
 }
 
-export function mkEmptyData():DataStructure {
+export function mkEmptyData(): DataStructure {
     return {
         scripts: [],
         cssLinks: [],
@@ -138,11 +137,11 @@ export function mkEmptyData():DataStructure {
                     m: mkEmptyNumber(),
                     zs: mkEmptyNumber(),
                 },
-            }
+            },
         },
         notes: '',
         examples: [],
         alternatives: [],
-        isDirect: false
+        isDirect: false,
     };
 }

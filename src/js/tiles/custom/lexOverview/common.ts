@@ -18,7 +18,7 @@
 
 import { QueryMatch } from '../../../query/index.js';
 
-export enum LexSource {
+export enum Source {
     ASSC = 'assc',
     IJP = 'ijp',
     SSJC = 'ssjc',
@@ -67,7 +67,6 @@ export interface LexItem {
     gender?: Gender;
     aspect?: Aspect;
 
-    mainSource: LexSource;
     sources: { [source: string]: Array<LexID> };
     corpusEntry?: QueryMatch<undefined>;
 }
@@ -75,8 +74,5 @@ export interface LexItem {
 export function isLexQueryMatch(
     qm: QueryMatch<any>
 ): qm is QueryMatch<Array<LexItem>> {
-    return (
-        qm.extraData !== undefined &&
-        (qm.extraData as Array<LexItem>)[0]?.mainSource !== undefined
-    );
+    return qm.extraData !== undefined && Array.isArray(qm.extraData);
 }

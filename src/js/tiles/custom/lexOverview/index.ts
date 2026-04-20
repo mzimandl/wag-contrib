@@ -1,6 +1,6 @@
 /*
- * Copyright 2022 Martin Zimandl <martin.zimandl@gmail.com>
- * Copyright 2022 Institute of the Czech National Corpus,
+ * Copyright 2026 Martin Zimandl <martin.zimandl@gmail.com>
+ * Copyright 2026 Institute of the Czech National Corpus,
  *                Faculty of Arts, Charles University
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,11 +36,13 @@ import {
     lemLevelSupport,
 } from '../../../page/tile.js';
 import { LexOverviewModel } from './model.js';
-import { LexApi } from './api.js';
-import { isLexQueryMatch } from './lexQueryMatch.js';
+import { LexApi } from './api/api.js';
+import { isLexQueryMatch, LexItem, Source } from './common.js';
+import { Dict } from 'cnc-tskit';
 
 export interface LexOverviewTileConf extends TileConf {
     apiURL: string;
+    sourcePriority: Array<Source>;
 }
 
 export class LexOverviewBookTile implements ITileProvider {
@@ -79,9 +81,21 @@ export class LexOverviewBookTile implements ITileProvider {
         this.configuredLemLevels = conf.lemmatizationLevels || [];
         this.api = new LexApi(conf.apiURL, appServices);
         const currQueryMatch = findCurrQueryMatch(queryMatches[0]);
-        const lexItems = isLexQueryMatch(currQueryMatch)
-            ? currQueryMatch.extraData
-            : null;
+        var variants: Array<LexItem> = null;
+        var mainSource: Source = null;
+        if (isLexQueryMatch(currQueryMatch)) {
+            for (const source of conf.sourcePriority) {
+                const sourceItems = currQueryMatch.extraData.filter((item) =>
+                    Dict.hasKey(source, item.sources)
+                );
+                if (sourceItems.length > 0) {
+                    variants = sourceItems;
+                    mainSource = source;
+                    break;
+                }
+            }
+        }
+
         this.model = new LexOverviewModel({
             dispatcher,
             appServices,
@@ -91,8 +105,9 @@ export class LexOverviewBookTile implements ITileProvider {
             initState: {
                 isBusy: isBusy,
                 queryMatch: currQueryMatch,
-                variants: lexItems,
-                selectedVariantIdx: lexItems && lexItems.length > 0 ? 0 : -1,
+                mainSource,
+                variants,
+                selectedVariantIdx: variants && variants.length > 0 ? 0 : -1,
                 data: {
                     assc: null,
                     ijp: null,

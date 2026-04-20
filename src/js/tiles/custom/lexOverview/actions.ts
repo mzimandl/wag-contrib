@@ -1,6 +1,6 @@
 /*
- * Copyright 2022 Martin Zimandl <martin.zimandl@gmail.com>
- * Copyright 2022 Institute of the Czech National Corpus,
+ * Copyright 2026 Martin Zimandl <martin.zimandl@gmail.com>
+ * Copyright 2026 Institute of the Czech National Corpus,
  *                Faculty of Arts, Charles University
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +18,8 @@
 
 import { Action } from 'kombo';
 import { Actions as GlobalActions } from '../../../models/actions.js';
-import { MeaningData, VariantData } from './commonAssc.js';
-import { LexResponse } from './api.js';
+import { MeaningData, VariantData } from './api/assc.js';
+import { LexResponse } from './api/api.js';
 
 export class Actions {
     static TileDataLoaded: Action<

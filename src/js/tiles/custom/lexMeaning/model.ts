@@ -26,9 +26,8 @@ import { List } from 'cnc-tskit';
 import { UjcDictionaryApi } from './api.js';
 import { findCurrQueryMatch, RecognizedQueries } from '../../../query/index.js';
 import { IDataStreaming } from '../../../page/streaming.js';
-import { AggregateData } from '../lexOverview/common.js';
 import { map } from 'rxjs';
-import { VariantData, MeaningData } from '../lexOverview/commonAssc.js';
+import { VariantData, MeaningData } from '../lexOverview/api/assc.js';
 
 export interface LexMeaningModelState {
     isBusy: boolean;
@@ -186,7 +185,7 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
     ): void {
         (typeof this.readDataFromTile === 'number'
             ? streaming
-                  .registerTileRequest<AggregateData>({
+                  .registerTileRequest<any /*AggregateData*/>({
                       tileId: this.tileId,
                       queryIdx: 0, // TODO
                       otherTileId: this.readDataFromTile,

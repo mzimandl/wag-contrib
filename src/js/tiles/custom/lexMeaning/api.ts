@@ -21,84 +21,84 @@ import { Observable, of as rxOf } from 'rxjs';
 import { IApiServices } from '../../../appServices.js';
 import { ajax$ } from '../../../page/ajax.js';
 import { ResourceApi, SourceDetails, HTTPHeaders } from '../../../types.js';
-import { DataStructure } from '../lexOverview/commonAssc.js';
+import { DataStructure } from '../lexOverview/api/assc.js';
 import { Backlink } from '../../../page/tile.js';
 import { IDataStreaming } from '../../../page/streaming.js';
 
-
 export interface UjcDictionaryArgs {
-    q:string|Array<string>;
+    q: string | Array<string>;
 }
 
+export class UjcDictionaryApi
+    implements ResourceApi<UjcDictionaryArgs, DataStructure>
+{
+    private readonly apiURL: string;
 
-export class UjcDictionaryApi implements ResourceApi<UjcDictionaryArgs, DataStructure> {
+    private readonly customHeaders: HTTPHeaders;
 
-    private readonly apiURL:string;
+    private readonly apiServices: IApiServices;
 
-    private readonly customHeaders:HTTPHeaders;
-
-    private readonly apiServices:IApiServices;
-
-
-    constructor(apiURL:string, apiServices:IApiServices) {
+    constructor(apiURL: string, apiServices: IApiServices) {
         this.apiURL = apiURL;
         this.customHeaders = apiServices.getApiHeaders(apiURL) || {};
         this.apiServices = apiServices;
     }
 
-    private prepareArgs(queryArgs:{[k:string]:any}):string {
+    private prepareArgs(queryArgs: { [k: string]: any }): string {
         return pipe(
             {
-                ...queryArgs
+                ...queryArgs,
             },
             Dict.toEntries(),
-            List.filter(
-                ([k, v]) => v !== undefined
-            ),
-            List.map(
-                ([k, v]) => `${k}=${encodeURIComponent(v)}`
-            ),
-            x => x.join('&')
-        )
+            List.filter(([k, v]) => v !== undefined),
+            List.map(([k, v]) => `${k}=${encodeURIComponent(v)}`),
+            (x) => x.join('&')
+        );
     }
 
-    call(streaming:IDataStreaming|null, tileId:number, queryIdx:number, queryArgs:UjcDictionaryArgs):Observable<DataStructure> {
+    call(
+        streaming: IDataStreaming | null,
+        tileId: number,
+        queryIdx: number,
+        queryArgs: UjcDictionaryArgs
+    ): Observable<DataStructure> {
         const url = this.apiURL.replace(/\/$/, '');
-        return streaming ?
-            streaming.registerTileRequest<DataStructure>(
-                {
-                    tileId,
-                    queryIdx,
-                    method: HTTP.Method.GET,
-                    url: url + '?' + this.prepareArgs(queryArgs),
-                    body: {},
-                    contentType: 'application/json',
-                }
-            ) :
-            ajax$<DataStructure>(
-                HTTP.Method.GET,
-                url,
-                queryArgs,
-            );
+        return streaming
+            ? streaming.registerTileRequest<DataStructure>({
+                  tileId,
+                  queryIdx,
+                  method: HTTP.Method.GET,
+                  url: url + '?' + this.prepareArgs(queryArgs),
+                  body: {},
+                  contentType: 'application/json',
+              })
+            : ajax$<DataStructure>(HTTP.Method.GET, url, queryArgs);
     }
 
-    getSourceDescription(streaming:IDataStreaming, tileId:number, lang:string, corpname:string):Observable<SourceDetails> {
+    getSourceDescription(
+        streaming: IDataStreaming,
+        tileId: number,
+        lang: string,
+        corpname: string
+    ): Observable<SourceDetails> {
         return rxOf({
             tileId,
             title: this.apiServices.importExternalMessage({
                 'cs-CZ': 'Akademický slovník současné češtiny',
-                'en-US': 'Academic Dictionary of Contemporary Czech'
+                'en-US': 'Academic Dictionary of Contemporary Czech',
             }),
             description: this.apiServices.importExternalMessage({
-                'cs-CZ': 'Původní webová aplikace vznikla v rámci grantového projektu Programu aplikovaného výzkumu a vývoje národní a kulturní identity (NAKI) Ministerstva kultury ČR – Nová cesta k modernímu jednojazyčnému výkladovému slovníku současné češtiny (DF13P01OVV011). Její nová verze je rozvíjena a financována z institucionálních prostředků Ústavu pro jazyk český AV ČR, v. v. i.',
-                'en-US': 'Původní webová aplikace vznikla v rámci grantového projektu Programu aplikovaného výzkumu a vývoje národní a kulturní identity (NAKI) Ministerstva kultury ČR – Nová cesta k modernímu jednojazyčnému výkladovému slovníku současné češtiny (DF13P01OVV011). Její nová verze je rozvíjena a financována z institucionálních prostředků Ústavu pro jazyk český AV ČR, v. v. i. UNTRANSLATED'
+                'cs-CZ':
+                    'Původní webová aplikace vznikla v rámci grantového projektu Programu aplikovaného výzkumu a vývoje národní a kulturní identity (NAKI) Ministerstva kultury ČR – Nová cesta k modernímu jednojazyčnému výkladovému slovníku současné češtiny (DF13P01OVV011). Její nová verze je rozvíjena a financována z institucionálních prostředků Ústavu pro jazyk český AV ČR, v. v. i.',
+                'en-US':
+                    'Původní webová aplikace vznikla v rámci grantového projektu Programu aplikovaného výzkumu a vývoje národní a kulturní identity (NAKI) Ministerstva kultury ČR – Nová cesta k modernímu jednojazyčnému výkladovému slovníku současné češtiny (DF13P01OVV011). Její nová verze je rozvíjena a financována z institucionálních prostředků Ústavu pro jazyk český AV ČR, v. v. i. UNTRANSLATED',
             }),
             author: 'Ústav pro jazyk český AV ČR',
-            href: 'https://slovnikcestiny.cz/o_slovniku.php'
-        })
+            href: 'https://slovnikcestiny.cz/o_slovniku.php',
+        });
     }
 
-    getBacklink(queryId:number, subqueryId?:number):Backlink|null {
+    getBacklink(queryId: number, subqueryId?: number): Backlink | null {
         return {
             queryId,
             label: 'heslo v Akademickém slovníku současné češtiny',

@@ -22,12 +22,12 @@ import { Backlink } from '../../../page/tile.js';
 import { QueryMatch, RecognizedQueries } from '../../../query/index.js';
 import { Actions as GlobalActions } from '../../../models/actions.js';
 import { Actions } from './actions.js';
-import { LexApi, LexArgs } from './api.js';
-import { LexItem } from './lexQueryMatch.js';
+import { LexApi, LexArgs } from './api/api.js';
+import { LexItem, Source } from './common.js';
 
-import { DataItem as ASSCData } from './commonAssc.js';
-import { DataStructure as LGuideData } from './commonLguide.js';
-import { IDataStreaming } from 'src/js/page/streaming.js';
+import { DataItem as ASSCData } from './api/assc.js';
+import { DataStructure as LGuideData } from './api/ijp.js';
+import { IDataStreaming } from '../../../page/streaming.js';
 
 interface Data {
     assc: ASSCData;
@@ -37,6 +37,7 @@ interface Data {
 export interface LexOverviewModelState {
     isBusy: boolean;
     queryMatch: QueryMatch;
+    mainSource: Source;
     variants: Array<LexItem>;
     selectedVariantIdx: number;
     data: Data;
@@ -166,14 +167,16 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
             },
             (state, action, dispatch) => {
                 const variant = state.variants[action.payload.variantIdx];
+                const assc = variant.sources['assc'];
+                const ijp = variant.sources['ijp'];
                 this.loadData(
                     this.appServices
                         .dataStreaming()
                         .startNewSubgroup(this.tileId),
                     dispatch,
                     variant.lemma,
-                    variant.sources['assc'][0].id,
-                    variant.sources['ijp'][0].id
+                    assc ? assc[0].id : null,
+                    ijp ? ijp[0].id : null
                 );
             }
         );
@@ -183,8 +186,8 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
         streaming: IDataStreaming,
         dispatch: SEDispatcher,
         value: string,
-        asscId: string,
-        ijpId: string
+        asscId?: string,
+        ijpId?: string
     ) {
         const args: LexArgs = {
             asscId,

@@ -18,18 +18,17 @@
 
 import { Action } from 'kombo';
 import { Actions as GlobalActions } from '../../../models/actions.js';
-import { VariantData, MeaningData } from '../lexOverview/commonAssc.js';
-
+import { VariantData, MeaningData } from '../lexOverview/api/assc.js';
 
 export interface DataLoadedPayload {
-    variants: Array<VariantData>; 
+    variants: Array<VariantData>;
     meanings: Array<MeaningData>;
 }
 
 export class Actions {
-
-    static TileDataLoaded:Action<typeof GlobalActions.TileDataLoaded.payload & DataLoadedPayload> = {
-        name: GlobalActions.TileDataLoaded.name
+    static TileDataLoaded: Action<
+        typeof GlobalActions.TileDataLoaded.payload & DataLoadedPayload
+    > = {
+        name: GlobalActions.TileDataLoaded.name,
     };
-
 }
