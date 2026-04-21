@@ -20,21 +20,23 @@ import { IActionQueue, SEDispatcher, StatelessModel } from 'kombo';
 import { IAppServices } from '../../../appServices.js';
 import { Backlink } from '../../../page/tile.js';
 import { Actions as GlobalActions } from '../../../models/actions.js';
-import { Actions } from './actions.js';
+import { Actions, DataItem } from './actions.js';
 import { Actions as LexActions } from '../lexOverview/actions.js';
 import { List } from 'cnc-tskit';
-import { UjcDictionaryApi } from './api.js';
-import { findCurrQueryMatch, RecognizedQueries } from '../../../query/index.js';
+import { LexApi } from '../lexOverview/api/api.js';
+import {
+    findCurrQueryMatch,
+    QueryMatch,
+    RecognizedQueries,
+} from '../../../query/index.js';
 import { IDataStreaming } from '../../../page/streaming.js';
-import { map } from 'rxjs';
-import { VariantData, MeaningData } from '../lexOverview/api/assc.js';
+import { forkJoin, map } from 'rxjs';
+import { isLexQueryMatch, Source } from '../lexOverview/common.js';
 
 export interface LexMeaningModelState {
     isBusy: boolean;
-    queries: Array<string>;
-    variantId: number;
-    variants: Array<VariantData>;
-    meanings: Array<MeaningData>;
+    slectedVariantIdx: number;
+    data: Array<DataItem>;
     error: string;
     backlink: Backlink;
 }
@@ -43,20 +45,19 @@ export interface LexMeaningModelArgs {
     dispatcher: IActionQueue;
     initState: LexMeaningModelState;
     tileId: number;
-    api: UjcDictionaryApi;
+    api: LexApi;
     appServices: IAppServices;
     queryMatches: RecognizedQueries;
-    readDataFromTile: number | null;
 }
 
 export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
     private readonly tileId: number;
 
-    private readonly api: UjcDictionaryApi;
+    private readonly api: LexApi;
 
     private readonly appServices: IAppServices;
 
-    private readonly readDataFromTile: number | null;
+    private readonly queryMatches: RecognizedQueries;
 
     constructor({
         dispatcher,
@@ -65,30 +66,26 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
         tileId,
         appServices,
         queryMatches,
-        readDataFromTile,
     }: LexMeaningModelArgs) {
         super(dispatcher, initState);
         this.tileId = tileId;
         this.appServices = appServices;
         this.api = api;
-        this.readDataFromTile = readDataFromTile;
+        this.queryMatches = queryMatches;
 
         this.addActionHandler(
             GlobalActions.RequestQueryResponse,
             (state, action) => {
-                const match = findCurrQueryMatch(List.head(queryMatches));
-                state.queries = [match.lemma || match.word];
                 state.isBusy = true;
                 state.error = null;
                 state.backlink = null;
-                state.variants = undefined;
-                state.meanings = undefined;
+                state.data = this.prepareRequestData(state.slectedVariantIdx);
             },
             (state, action, dispatch) => {
                 this.loadData(
-                    dispatch,
-                    state,
-                    this.appServices.dataStreaming()
+                    this.appServices.dataStreaming(),
+                    List.map((v) => v.id, state.data),
+                    dispatch
                 );
             }
         );
@@ -101,9 +98,7 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
                 if (action.error) {
                     state.error = action.error.message;
                 } else {
-                    state.variantId = 0;
-                    state.variants = action.payload.variants;
-                    state.meanings = action.payload.meanings;
+                    state.data = action.payload.data;
                 }
             }
         );
@@ -152,80 +147,92 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
             }
         );
 
-        this.addActionSubtypeHandler(
+        this.addActionHandler(
             LexActions.SelectItemVariant,
-            (action) =>
-                typeof this.readDataFromTile === 'number' &&
-                action.payload.tileId === this.readDataFromTile,
             (state, action) => {
-                if (state.variantId !== action.payload.variantIdx) {
+                if (state.slectedVariantIdx !== action.payload.variantIdx) {
                     state.isBusy = true;
-                    state.variantId = action.payload.variantIdx;
+                    state.slectedVariantIdx = action.payload.variantIdx;
+                    state.data = this.prepareRequestData(
+                        state.slectedVariantIdx
+                    );
                 }
-            }
-        );
-
-        this.addActionSubtypeHandler(
-            LexActions.SendActiveMeaningData,
-            (action) =>
-                typeof this.readDataFromTile === 'number' &&
-                action.payload.tileId === this.readDataFromTile,
-            (state, action) => {
-                state.isBusy = false;
-                state.variants = action.payload.variants;
-                state.meanings = action.payload.meanings;
+            },
+            (state, action, dispatch) => {
+                this.loadData(
+                    this.appServices
+                        .dataStreaming()
+                        .startNewSubgroup(this.tileId),
+                    List.map((v) => v.id, state.data),
+                    dispatch
+                );
             }
         );
     }
 
+    private prepareRequestData(
+        variantIdx: number
+    ): Array<{ id: string; variants: null; meanings: null }> {
+        const currentQueryMatch = findCurrQueryMatch(
+            List.head(this.queryMatches)
+        );
+        return isLexQueryMatch(currentQueryMatch)
+            ? List.flatMap(
+                  (v) =>
+                      v.parentId
+                          ? [
+                                {
+                                    id: v.id,
+                                    variants: null,
+                                    meanings: null,
+                                },
+                                {
+                                    id: v.parentId,
+                                    variants: null,
+                                    meanings: null,
+                                },
+                            ]
+                          : [
+                                {
+                                    id: v.id,
+                                    variants: null,
+                                    meanings: null,
+                                },
+                            ],
+                  currentQueryMatch.extraData[variantIdx].sources[
+                      Source.ASSC
+                  ] || []
+              )
+            : [];
+    }
+
     private loadData(
-        dispatch: SEDispatcher,
-        state: LexMeaningModelState,
-        streaming: IDataStreaming
+        streaming: IDataStreaming,
+        requestIds: Array<string>,
+        dispatch: SEDispatcher
     ): void {
-        (typeof this.readDataFromTile === 'number'
-            ? streaming
-                  .registerTileRequest<any /*AggregateData*/>({
-                      tileId: this.tileId,
-                      queryIdx: 0, // TODO
-                      otherTileId: this.readDataFromTile,
-                      otherTileQueryIdx: 0, // TODO
-                      contentType: 'application/json',
-                  })
-                  .pipe(
-                      map((resp) => {
-                          const variant = resp.search.items[0][0];
-                          return resp.asscData
-                              ? resp.asscData.items[variant.itemIdx]
-                              : null;
-                      })
-                  )
-            : this.api
-                  .call(streaming, this.tileId, 0, { q: state.queries })
-                  .pipe(map((resp) => resp.items[0]))
+        forkJoin(
+            List.map(
+                (id, i) =>
+                    this.api.loadASSC(streaming, this.tileId, i, id).pipe(
+                        map((resp) => ({
+                            id: id,
+                            variants: resp.variants,
+                            meanings: resp.meanings,
+                        }))
+                    ),
+                requestIds
+            )
         ).subscribe({
             next: (data) => {
-                if (data) {
-                    dispatch<typeof Actions.TileDataLoaded>({
-                        name: Actions.TileDataLoaded.name,
-                        payload: {
-                            tileId: this.tileId,
-                            isEmpty: false,
-                            variants: [data.variants[0]],
-                            meanings: data.meanings,
-                        },
-                    });
-                } else {
-                    dispatch<typeof Actions.TileDataLoaded>({
-                        name: Actions.TileDataLoaded.name,
-                        payload: {
-                            tileId: this.tileId,
-                            isEmpty: true,
-                            variants: undefined,
-                            meanings: undefined,
-                        },
-                    });
-                }
+                dispatch<typeof Actions.TileDataLoaded>({
+                    name: Actions.TileDataLoaded.name,
+                    payload: {
+                        tileId: this.tileId,
+                        isEmpty: data.length === 0,
+                        data,
+                    },
+                });
             },
             error: (error) => {
                 console.error(error);
@@ -235,8 +242,7 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
                     payload: {
                         tileId: this.tileId,
                         isEmpty: true,
-                        variants: undefined,
-                        meanings: undefined,
+                        data: [],
                     },
                 });
             },

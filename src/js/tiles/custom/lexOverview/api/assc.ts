@@ -53,15 +53,3 @@ export interface DataItem {
     meanings: Array<MeaningData>;
     phrasemes: Array<PhrasemeData>;
 }
-
-export interface DataStructure {
-    items: Array<DataItem>;
-    notes: Array<string>;
-}
-
-export function createEmptyData(): DataStructure {
-    return {
-        items: [],
-        notes: [],
-    };
-}

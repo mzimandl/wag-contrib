@@ -20,9 +20,14 @@ import { Action } from 'kombo';
 import { Actions as GlobalActions } from '../../../models/actions.js';
 import { VariantData, MeaningData } from '../lexOverview/api/assc.js';
 
-export interface DataLoadedPayload {
+export interface DataItem {
+    id: string;
     variants: Array<VariantData>;
     meanings: Array<MeaningData>;
+}
+
+export interface DataLoadedPayload {
+    data: Array<DataItem>;
 }
 
 export class Actions {

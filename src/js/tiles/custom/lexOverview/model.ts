@@ -26,12 +26,12 @@ import { LexApi, LexArgs } from './api/api.js';
 import { LexItem, Source } from './common.js';
 
 import { DataItem as ASSCData } from './api/assc.js';
-import { DataStructure as LGuideData } from './api/ijp.js';
+import { DataStructure as IJPData } from './api/ijp.js';
 import { IDataStreaming } from '../../../page/streaming.js';
 
 interface Data {
     assc: ASSCData;
-    ijp: LGuideData;
+    ijp: IJPData;
 }
 
 export interface LexOverviewModelState {
@@ -61,6 +61,8 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
 
     private readonly appServices: IAppServices;
 
+    private readonly queryMatches: RecognizedQueries;
+
     constructor({
         dispatcher,
         initState,
@@ -73,6 +75,7 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
         this.tileId = tileId;
         this.appServices = appServices;
         this.api = api;
+        this.queryMatches = queryMatches;
 
         this.addActionHandler(
             GlobalActions.RequestQueryResponse,

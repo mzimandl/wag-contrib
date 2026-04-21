@@ -99,15 +99,16 @@ export function init(
                 tileId={props.tileId}
                 isBusy={state.isBusy}
                 error={state.error}
-                hasData={!!state.variants && state.meanings.length > 0}
+                hasData={state.data.length > 0}
                 supportsTileReload={props.supportsReloadOnError}
                 issueReportingUrl={props.issueReportingUrl}
             >
                 <S.MeaningTileView>
                     <S.MeaningBox>
-                        {state.variants
-                            ? renderDataItem(state.variants, state.meanings, 0)
-                            : null}
+                        {List.map(
+                            (v, i) => renderDataItem(v.variants, v.meanings, i),
+                            state.data
+                        )}
                     </S.MeaningBox>
                 </S.MeaningTileView>
             </globalComponents.TileWrapper>

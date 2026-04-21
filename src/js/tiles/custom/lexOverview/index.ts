@@ -80,6 +80,7 @@ export class LexOverviewBookTile implements ITileProvider {
         this.widthFract = widthFract;
         this.configuredLemLevels = conf.lemmatizationLevels || [];
         this.api = new LexApi(conf.apiURL, appServices);
+
         const currQueryMatch = findCurrQueryMatch(queryMatches[0]);
         var variants: Array<LexItem> = null;
         var mainSource: Source = null;

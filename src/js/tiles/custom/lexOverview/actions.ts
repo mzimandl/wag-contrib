@@ -18,7 +18,6 @@
 
 import { Action } from 'kombo';
 import { Actions as GlobalActions } from '../../../models/actions.js';
-import { MeaningData, VariantData } from './api/assc.js';
 import { LexResponse } from './api/api.js';
 
 export class Actions {
@@ -33,13 +32,5 @@ export class Actions {
         variantIdx: number;
     }> = {
         name: 'LEX_OVERVIEW_SELECT_ITEM_VARIANT',
-    };
-
-    static SendActiveMeaningData: Action<{
-        tileId: number;
-        variants: Array<VariantData>;
-        meanings: Array<MeaningData>;
-    }> = {
-        name: 'LEX_OVERVIEW_SEND_ACTIVE_MEANING_DATA',
     };
 }

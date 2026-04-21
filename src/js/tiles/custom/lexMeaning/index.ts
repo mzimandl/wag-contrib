@@ -18,7 +18,11 @@
 import { IActionDispatcher } from 'kombo';
 
 import { IAppServices } from '../../../appServices.js';
-import { LemmatizationLevel, QueryType } from '../../../query/index.js';
+import {
+    findCurrQueryMatch,
+    LemmatizationLevel,
+    QueryType,
+} from '../../../query/index.js';
 import { init as viewInit } from './views.js';
 import {
     TileConf,
@@ -32,7 +36,8 @@ import {
     lemLevelSupport,
 } from '../../../page/tile.js';
 import { LexMeaningModel } from './model.js';
-import { UjcDictionaryApi } from './api.js';
+import { LexApi } from '../lexOverview/api/api.js';
+import { isLexQueryMatch } from '../lexOverview/common.js';
 
 export interface LexMeaningTileConf extends TileConf {
     apiURL: string;
@@ -51,7 +56,7 @@ export class LexMeaningTile implements ITileProvider {
 
     private readonly label: string;
 
-    private readonly api: UjcDictionaryApi;
+    private readonly api: LexApi;
 
     private view: TileComponent;
 
@@ -67,14 +72,15 @@ export class LexMeaningTile implements ITileProvider {
         conf,
         isBusy,
         queryMatches,
-        readDataFromTile,
     }: TileFactoryArgs<LexMeaningTileConf>) {
         this.tileId = tileId;
         this.dispatcher = dispatcher;
         this.appServices = appServices;
         this.widthFract = widthFract;
         this.configuredLemLevels = conf.lemmatizationLevels || [];
-        this.api = new UjcDictionaryApi(conf.apiURL, appServices);
+        this.api = new LexApi(conf.apiURL, appServices);
+
+        const currQueryMatch = findCurrQueryMatch(queryMatches[0]);
         this.model = new LexMeaningModel({
             dispatcher,
             appServices,
@@ -83,14 +89,15 @@ export class LexMeaningTile implements ITileProvider {
             tileId,
             initState: {
                 isBusy: isBusy,
-                queries: [],
-                variantId: -1,
-                variants: null,
-                meanings: null,
+                slectedVariantIdx:
+                    isLexQueryMatch(currQueryMatch) &&
+                    currQueryMatch.extraData.length > 0
+                        ? 0
+                        : -1,
+                data: [],
                 error: null,
                 backlink: null,
             },
-            readDataFromTile,
         });
         this.label = appServices.importExternalMessage(
             conf.label || 'lex_meaning__main_label'
