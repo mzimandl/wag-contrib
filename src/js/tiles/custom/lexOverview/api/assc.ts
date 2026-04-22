@@ -19,6 +19,7 @@
 export interface VariantData {
     id: string;
     key: string;
+    homonym: string;
     pronunciation: string;
     audioFile: string;
     quality: string;

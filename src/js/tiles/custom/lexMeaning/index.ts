@@ -36,8 +36,8 @@ import {
     lemLevelSupport,
 } from '../../../page/tile.js';
 import { LexMeaningModel } from './model.js';
-import { LexApi } from '../lexOverview/api/api.js';
 import { isLexQueryMatch } from '../lexOverview/common.js';
+import { MeaningApi } from './api.js';
 
 export interface LexMeaningTileConf extends TileConf {
     apiURL: string;
@@ -56,7 +56,7 @@ export class LexMeaningTile implements ITileProvider {
 
     private readonly label: string;
 
-    private readonly api: LexApi;
+    private readonly api: MeaningApi;
 
     private view: TileComponent;
 
@@ -78,7 +78,7 @@ export class LexMeaningTile implements ITileProvider {
         this.appServices = appServices;
         this.widthFract = widthFract;
         this.configuredLemLevels = conf.lemmatizationLevels || [];
-        this.api = new LexApi(conf.apiURL, appServices);
+        this.api = new MeaningApi(conf.apiURL, appServices);
 
         const currQueryMatch = findCurrQueryMatch(queryMatches[0]);
         this.model = new LexMeaningModel({
@@ -89,7 +89,7 @@ export class LexMeaningTile implements ITileProvider {
             tileId,
             initState: {
                 isBusy: isBusy,
-                slectedVariantIdx:
+                selectedVariantIdx:
                     isLexQueryMatch(currQueryMatch) &&
                     currQueryMatch.extraData.length > 0
                         ? 0

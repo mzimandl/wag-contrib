@@ -24,7 +24,7 @@ import { CoreTileComponentProps, TileComponent } from '../../../page/tile.js';
 import { LexMeaningModel } from './model.js';
 import * as S from './style.js';
 import { GlobalComponents } from '../../../views/common/index.js';
-import { VariantData, MeaningData } from '../lexOverview/api/assc.js';
+import { HTMLBlock, VariantData } from './api.js';
 
 export function init(
     dispatcher: IActionDispatcher,
@@ -39,58 +39,36 @@ export function init(
     const LexMeaningTileView: React.FC<CoreTileComponentProps> = (props) => {
         const state = useModel(model);
 
-        const renderDataItem = (
-            variants: Array<VariantData>,
-            meanings: Array<MeaningData>,
-            i: number
-        ) => {
+        const renderDataItem = (data: HTMLBlock, i: number) => {
             return (
-                <div>
-                    {i > 0 ? <hr /> : null}
+                <S.MeaningItem
+                    key={i}
+                    className={data.isParent ? 'parent' : ''}
+                >
                     <S.MeaningHeading>
                         <span className="key">pro slovo:</span>
                         {List.map(
                             (variant, i) => (
                                 <>
                                     {i > 0 ? <span> /</span> : null}
-                                    <span className="word">{variant.key}</span>
+                                    <span className="word">
+                                        {variant.key} {variant.homonym}
+                                    </span>
                                     <span className="pos">{variant.pos}</span>
                                 </>
                             ),
-                            variants
+                            data.variants
                         )}
                     </S.MeaningHeading>
                     {List.map(
-                        (v, i) => (
-                            <S.MeaningBlock>
-                                <div>
-                                    {i + 1}.{' '}
-                                    <span className="attachement">
-                                        {v.attachement}
-                                    </span>
-                                </div>
-                                <div className="explanation">
-                                    {v.explanation}
-                                </div>
-                                <div className="examples">
-                                    {List.flatMap(
-                                        (e) =>
-                                            List.map(
-                                                (x) => (
-                                                    <div className="example">
-                                                        {x}
-                                                    </div>
-                                                ),
-                                                e.data
-                                            ),
-                                        v.examples
-                                    )}
-                                </div>
-                            </S.MeaningBlock>
+                        (v) => (
+                            <S.MeaningBlock
+                                dangerouslySetInnerHTML={{ __html: v }}
+                            />
                         ),
-                        meanings
+                        data.meanings
                     )}
-                </div>
+                </S.MeaningItem>
             );
         };
 
@@ -106,7 +84,12 @@ export function init(
                 <S.MeaningTileView>
                     <S.MeaningBox>
                         {List.map(
-                            (v, i) => renderDataItem(v.variants, v.meanings, i),
+                            (v, i) => (
+                                <>
+                                    {i > 0 && !v.isParent ? <hr /> : null}
+                                    {renderDataItem(v, i)}
+                                </>
+                            ),
                             state.data
                         )}
                     </S.MeaningBox>
