@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-import { List } from 'cnc-tskit';
+import { List, pipe } from 'cnc-tskit';
 import { IActionDispatcher, ViewUtils, useModel } from 'kombo';
 import * as React from 'react';
 import { Theme } from '../../../page/theme.js';
@@ -24,7 +24,7 @@ import { CoreTileComponentProps, TileComponent } from '../../../page/tile.js';
 import { LexMeaningModel } from './model.js';
 import * as S from './style.js';
 import { GlobalComponents } from '../../../views/common/index.js';
-import { HTMLBlock, VariantData } from './api.js';
+import { HTMLBlock } from '../lexOverview/api/asscTypes.js';
 
 export function init(
     dispatcher: IActionDispatcher,
@@ -39,16 +39,18 @@ export function init(
     const LexMeaningTileView: React.FC<CoreTileComponentProps> = (props) => {
         const state = useModel(model);
 
-        const renderDataItem = (data: HTMLBlock, i: number) => {
+        const renderDataItem = (
+            key: string,
+            data: HTMLBlock,
+            isParent: boolean
+        ) => {
             return (
-                <S.MeaningItem
-                    key={i}
-                    className={data.isParent ? 'parent' : ''}
-                >
+                <S.MeaningItem key={key} className={isParent ? 'parent' : ''}>
                     <S.MeaningHeading>
                         <span className="key">pro slovo:</span>
-                        {List.map(
-                            (variant, i) => (
+                        {pipe(
+                            data.variants,
+                            List.map((variant, i) => (
                                 <>
                                     {i > 0 ? <span> /</span> : null}
                                     <span className="word">
@@ -56,8 +58,7 @@ export function init(
                                     </span>
                                     <span className="pos">{variant.pos}</span>
                                 </>
-                            ),
-                            data.variants
+                            ))
                         )}
                     </S.MeaningHeading>
                     {List.map(
@@ -83,13 +84,21 @@ export function init(
             >
                 <S.MeaningTileView>
                     <S.MeaningBox>
-                        {List.map(
-                            (v, i) => (
-                                <>
-                                    {i > 0 && !v.isParent ? <hr /> : null}
-                                    {renderDataItem(v, i)}
-                                </>
-                            ),
+                        {List.flatMap(
+                            (d, i) =>
+                                List.map((block, j) => {
+                                    const isParent = j > 0;
+                                    return (
+                                        <>
+                                            {i > 0 && j === 0 ? <hr /> : null}
+                                            {renderDataItem(
+                                                `item-${i}-${j}`,
+                                                block,
+                                                isParent
+                                            )}
+                                        </>
+                                    );
+                                }, d.blocks),
                             state.data
                         )}
                     </S.MeaningBox>

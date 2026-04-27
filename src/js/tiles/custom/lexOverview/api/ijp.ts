@@ -16,132 +16,81 @@
  * limitations under the License.
  */
 
-export interface NumberData {
-    singular: string;
-    plural: string;
-}
+import { HTTP } from 'cnc-tskit';
+import { Observable, of as rxOf } from 'rxjs';
+import { IApiServices } from '../../../../appServices.js';
+import { ajax$ } from '../../../../page/ajax.js';
+import { ResourceApi, SourceDetails, HTTPHeaders } from '../../../../types.js';
+import { Backlink } from '../../../../page/tile.js';
+import { IDataStreaming } from '../../../../page/streaming.js';
+import { IJPData as IJPData } from './ijpTypes.js';
 
-export interface CaseData {
-    nominative: NumberData;
-    genitive: NumberData;
-    dative: NumberData;
-    accusative: NumberData;
-    vocative: NumberData;
-    locative: NumberData;
-    instrumental: NumberData;
-}
-
-export interface ComparisonData {
-    comparative: string;
-    superlative: string;
-}
-
-export interface PersonData {
-    first: NumberData;
-    second: NumberData;
-    third: NumberData;
-}
-
-export interface ParticipleData {
-    active: string;
-    passive: string;
-}
-
-export interface TransgressiveRow {
-    m: NumberData;
-    zs: NumberData;
-}
-
-export interface TransgressiveData {
-    past: TransgressiveRow;
-    present: TransgressiveRow;
-}
-
-export interface ConjugationData {
-    person: PersonData;
-    imperative: NumberData;
-    participle: ParticipleData;
-    transgressive: TransgressiveData;
-    verbalNoun: string;
-}
-
-export interface Alternative {
+export interface RequestArgs {
     id: string;
-    info: string;
 }
 
-export interface DataStructure {
-    scripts: Array<string>;
-    cssLinks: Array<string>;
-    heading: string;
-    pronunciation: string;
-    meaning: string;
-    syllabification: string;
-    gender: string;
-    grammarCase: CaseData;
-    comparison: ComparisonData;
-    conjugation: ConjugationData;
-    examples: Array<string>;
-    notes: string;
-    alternatives: Array<Alternative>;
-    isDirect: boolean;
-}
+export class IJPApi implements ResourceApi<RequestArgs, IJPData> {
+    private readonly apiURL: string;
 
-export function mkEmptyNumber(): NumberData {
-    return {
-        singular: '',
-        plural: '',
-    };
-}
+    private readonly customHeaders: HTTPHeaders;
 
-export function mkEmptyData(): DataStructure {
-    return {
-        scripts: [],
-        cssLinks: [],
-        heading: '',
-        pronunciation: '',
-        meaning: '',
-        syllabification: '',
-        gender: '',
-        grammarCase: {
-            nominative: mkEmptyNumber(),
-            genitive: mkEmptyNumber(),
-            dative: mkEmptyNumber(),
-            accusative: mkEmptyNumber(),
-            vocative: mkEmptyNumber(),
-            locative: mkEmptyNumber(),
-            instrumental: mkEmptyNumber(),
-        },
-        comparison: {
-            comparative: '',
-            superlative: '',
-        },
-        conjugation: {
-            imperative: mkEmptyNumber(),
-            participle: {
-                active: '',
-                passive: '',
-            },
-            verbalNoun: '',
-            person: {
-                first: mkEmptyNumber(),
-                second: mkEmptyNumber(),
-                third: mkEmptyNumber(),
-            },
-            transgressive: {
-                past: {
-                    m: mkEmptyNumber(),
-                    zs: mkEmptyNumber(),
-                },
-                present: {
-                    m: mkEmptyNumber(),
-                    zs: mkEmptyNumber(),
-                },
-            },
-        },
-        notes: '',
-        examples: [],
-        alternatives: [],
-        isDirect: false,
-    };
+    private readonly apiServices: IApiServices;
+
+    constructor(apiURL: string, apiServices: IApiServices) {
+        this.apiURL = apiURL;
+        this.customHeaders = apiServices.getApiHeaders(apiURL) || {};
+        this.apiServices = apiServices;
+    }
+
+    call(
+        streaming: IDataStreaming | null,
+        tileId: number,
+        queryIdx: number,
+        queryArgs: RequestArgs
+    ): Observable<IJPData> {
+        return streaming
+            ? streaming.registerTileRequest<IJPData>({
+                  tileId,
+                  queryIdx,
+                  method: HTTP.Method.GET,
+                  url: this.apiURL + '/get?id=' + queryArgs.id,
+                  body: {},
+                  contentType: 'application/json',
+              })
+            : ajax$<IJPData>(
+                  HTTP.Method.GET,
+                  this.apiURL + '/get?id=' + queryArgs.id,
+                  {}
+              );
+    }
+
+    getSourceDescription(
+        streaming: IDataStreaming,
+        tileId: number,
+        lang: string,
+        corpname: string
+    ): Observable<SourceDetails> {
+        return rxOf({
+            tileId,
+            title: this.apiServices.importExternalMessage({
+                'cs-CZ': 'Akademický slovník současné češtiny',
+                'en-US': 'Academic Dictionary of Contemporary Czech',
+            }),
+            description: this.apiServices.importExternalMessage({
+                'cs-CZ':
+                    'Původní webová aplikace vznikla v rámci grantového projektu Programu aplikovaného výzkumu a vývoje národní a kulturní identity (NAKI) Ministerstva kultury ČR – Nová cesta k modernímu jednojazyčnému výkladovému slovníku současné češtiny (DF13P01OVV011). Její nová verze je rozvíjena a financována z institucionálních prostředků Ústavu pro jazyk český AV ČR, v. v. i.',
+                'en-US':
+                    'Původní webová aplikace vznikla v rámci grantového projektu Programu aplikovaného výzkumu a vývoje národní a kulturní identity (NAKI) Ministerstva kultury ČR – Nová cesta k modernímu jednojazyčnému výkladovému slovníku současné češtiny (DF13P01OVV011). Její nová verze je rozvíjena a financována z institucionálních prostředků Ústavu pro jazyk český AV ČR, v. v. i. UNTRANSLATED',
+            }),
+            author: 'Ústav pro jazyk český AV ČR',
+            href: 'https://slovnikcestiny.cz/o_slovniku.php',
+        });
+    }
+
+    getBacklink(queryId: number, subqueryId?: number): Backlink | null {
+        return {
+            queryId,
+            label: 'heslo v Akademickém slovníku současné češtiny',
+        };
+    }
 }

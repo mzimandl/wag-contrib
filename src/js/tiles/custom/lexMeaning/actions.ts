@@ -18,10 +18,10 @@
 
 import { Action } from 'kombo';
 import { Actions as GlobalActions } from '../../../models/actions.js';
-import { HTMLBlock } from './api.js';
+import { HTMLBlock } from '../lexOverview/api/asscTypes.js';
 
 export interface DataLoadedPayload {
-    data: Array<HTMLBlock>;
+    data: HTMLBlock[];
 }
 
 export class Actions {

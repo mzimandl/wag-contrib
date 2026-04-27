@@ -21,17 +21,21 @@ import { IActionDispatcher, ViewUtils } from 'kombo';
 import * as React from 'react';
 import { GlobalComponents } from '../../../../../views/common/index.js';
 import { Actions } from '../../actions.js';
-import { CaseData, ComparisonData, ConjugationData } from '../../api/ijp.js';
+import {
+    CaseData,
+    ComparisonData,
+    ConjugationData,
+} from '../../api/ijpTypes.js';
 import * as S from '../style.js';
 import * as LS from './style.js';
-import { DataStructure } from '../../api/ijp.js';
+import { IJPData } from '../../api/ijpTypes.js';
 
 export function init(
     dispatcher: IActionDispatcher,
     ut: ViewUtils<GlobalComponents>
 ): {
     Subtile: React.FC<{
-        data: DataStructure;
+        data: IJPData;
         color?: string;
     }>;
 } {
@@ -291,7 +295,7 @@ export function init(
     // -------------------- <LangGuideSubtileView /> -----------------------------------------------
 
     const LangGuideSubtileView: React.FC<{
-        data: DataStructure;
+        data: IJPData;
         color?: string;
     }> = (props) => {
         return (

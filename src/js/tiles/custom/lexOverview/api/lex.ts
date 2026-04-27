@@ -23,8 +23,8 @@ import { ajax$ } from '../../../../page/ajax.js';
 import { ResourceApi, SourceDetails, HTTPHeaders } from '../../../../types.js';
 import { Backlink } from '../../../../page/tile.js';
 import { IDataStreaming } from '../../../../page/streaming.js';
-import { DataItem as ASSCData } from './assc.js';
-import { DataStructure as IJPData } from './ijp.js';
+import { DataItem as ASSCData } from './asscTypes.js';
+import { IJPData as IJPData } from './ijpTypes.js';
 
 export interface LexArgs {
     asscId?: string;

@@ -1,7 +1,10 @@
 {
     "type": "object",
     "properties": {
-        "apiURL": {
+        "asscApiURL": {
+            "type": "string"
+        },
+        "ijpApiURL": {
             "type": "string"
         },
         "sourcePriority": {
@@ -85,7 +88,8 @@
         }
     },
     "required": [
-        "apiURL",
+        "asscApiURL",
+        "ijpApiURL",
         "sourcePriority",
         "tileType"
     ],

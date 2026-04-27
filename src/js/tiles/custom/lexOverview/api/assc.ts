@@ -16,41 +16,81 @@
  * limitations under the License.
  */
 
-export interface VariantData {
+import { HTTP } from 'cnc-tskit';
+import { Observable, of as rxOf } from 'rxjs';
+import { IApiServices } from '../../../../appServices.js';
+import { ajax$ } from '../../../../page/ajax.js';
+import { ResourceApi, SourceDetails, HTTPHeaders } from '../../../../types.js';
+import { Backlink } from '../../../../page/tile.js';
+import { IDataStreaming } from '../../../../page/streaming.js';
+import { HTMLBlock } from './asscTypes.js';
+
+export interface RequestArgs {
     id: string;
-    key: string;
-    homonym: string;
-    pronunciation: string;
-    audioFile: string;
-    quality: string;
-    forms: { [key: string]: string };
-    pos: string;
 }
 
-export interface MeaningData {
-    explanation: string;
-    metaExplanation: string;
-    attachement: string;
-    synonyms: Array<string>;
-    examples: Array<{
-        usage: string;
-        data: Array<string>;
-    }>;
-    collocations: Array<{
-        collocation: string;
-        explanation: string;
-        examples: Array<string>;
-    }>;
-}
+export class ASSCApi implements ResourceApi<RequestArgs, Array<HTMLBlock>> {
+    private readonly apiURL: string;
 
-export interface PhrasemeData {
-    phraseme: string;
-    explanation: string;
-    examples: Array<string>;
-}
+    private readonly customHeaders: HTTPHeaders;
 
-export interface DataItem {
-    variants: Array<VariantData>;
-    meanings: Array<MeaningData>;
-    phrasemes: Array<PhrasemeData>;
+    private readonly apiServices: IApiServices;
+
+    constructor(apiURL: string, apiServices: IApiServices) {
+        this.apiURL = apiURL;
+        this.customHeaders = apiServices.getApiHeaders(apiURL) || {};
+        this.apiServices = apiServices;
+    }
+
+    call(
+        streaming: IDataStreaming | null,
+        tileId: number,
+        queryIdx: number,
+        queryArgs: RequestArgs
+    ): Observable<Array<HTMLBlock>> {
+        return streaming
+            ? streaming.registerTileRequest<Array<HTMLBlock>>({
+                  tileId,
+                  queryIdx,
+                  method: HTTP.Method.GET,
+                  url: this.apiURL + '/semi-raw?id=' + queryArgs.id,
+                  body: {},
+                  contentType: 'application/json',
+              })
+            : ajax$<Array<HTMLBlock>>(
+                  HTTP.Method.GET,
+                  this.apiURL + '/semi-raw?id=' + queryArgs.id,
+                  {}
+              );
+    }
+
+    getSourceDescription(
+        streaming: IDataStreaming,
+        tileId: number,
+        lang: string,
+        corpname: string
+    ): Observable<SourceDetails> {
+        return rxOf({
+            tileId,
+            title: this.apiServices.importExternalMessage({
+                'cs-CZ': 'Akademický slovník současné češtiny',
+                'en-US': 'Academic Dictionary of Contemporary Czech',
+            }),
+            description: this.apiServices.importExternalMessage({
+                'cs-CZ':
+                    'Původní webová aplikace vznikla v rámci grantového projektu Programu aplikovaného výzkumu a vývoje národní a kulturní identity (NAKI) Ministerstva kultury ČR – Nová cesta k modernímu jednojazyčnému výkladovému slovníku současné češtiny (DF13P01OVV011). Její nová verze je rozvíjena a financována z institucionálních prostředků Ústavu pro jazyk český AV ČR, v. v. i.',
+                'en-US':
+                    'Původní webová aplikace vznikla v rámci grantového projektu Programu aplikovaného výzkumu a vývoje národní a kulturní identity (NAKI) Ministerstva kultury ČR – Nová cesta k modernímu jednojazyčnému výkladovému slovníku současné češtiny (DF13P01OVV011). Její nová verze je rozvíjena a financována z institucionálních prostředků Ústavu pro jazyk český AV ČR, v. v. i. UNTRANSLATED',
+            }),
+            author: 'Ústav pro jazyk český AV ČR',
+            href: 'https://slovnikcestiny.cz/o_slovniku.php',
+        });
+    }
+
+    getBacklink(queryId: number, subqueryId?: number): Backlink | null {
+        return {
+            queryId,
+            label: 'heslo v Akademickém slovníku současné češtiny',
+        };
+    }
 }

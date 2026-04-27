@@ -32,6 +32,12 @@ import * as S from './style.js';
 import { List } from 'cnc-tskit';
 import { LexItem, Source } from '../common.js';
 
+interface BasicOverviewStruct {
+    pronunciation?: string;
+    partOfSpeach?: string;
+    source: string;
+}
+
 export function init(
     dispatcher: IActionDispatcher,
     ut: ViewUtils<GlobalComponents>,
@@ -69,14 +75,22 @@ export function init(
                         <a onClick={() => handleVariantClick(variantIdx)}>
                             {variant.lemma}{' '}
                             {withInfo && variant.pos ? (
-                                <span className="small">({variant.pos})</span>
+                                <span className="small">
+                                    ({variant.pos}
+                                    {variant.gender}
+                                    {variant.aspect})
+                                </span>
                             ) : null}
                         </a>
                     ) : (
                         <span>
                             {variant.lemma}{' '}
                             {withInfo && variant.pos ? (
-                                <span className="small">({variant.pos})</span>
+                                <span className="small">
+                                    ({variant.pos}
+                                    {variant.gender}
+                                    {variant.aspect})
+                                </span>
                             ) : null}
                         </span>
                     )}
@@ -113,23 +127,27 @@ export function init(
     // -------------------- <LexOverviewBasics /> -----------------------------------------------
 
     const LexOverviewBasics: React.FC<{
-        pronunciation: string;
-        partOfSpeach: string;
-        source: string;
+        basicOverview: BasicOverviewStruct;
     }> = (props) => {
         return (
             <S.Subtile color="#d4e2f4">
-                <S.SubtileRow>
-                    <span className="key">výslovnost:</span>
-                    <span className="value">{props.pronunciation}</span>
-                </S.SubtileRow>
+                {props.basicOverview.pronunciation ? (
+                    <S.SubtileRow>
+                        <span className="key">výslovnost:</span>
+                        <span className="value">
+                            {props.basicOverview.pronunciation}
+                        </span>
+                    </S.SubtileRow>
+                ) : null}
                 <S.SubtileRow>
                     <span className="key">slovní druh:</span>
-                    <span className="value">{props.partOfSpeach}</span>
+                    <span className="value">
+                        {props.basicOverview.partOfSpeach}
+                    </span>
                 </S.SubtileRow>
                 <S.SubtileRow className="footer">
                     <span className="key">Zdroj:</span>
-                    <span className="value">{props.source}</span>
+                    <span className="value">{props.basicOverview.source}</span>
                 </S.SubtileRow>
             </S.Subtile>
         );
@@ -139,12 +157,7 @@ export function init(
 
     const LexOverviewTileView: React.FC<CoreTileComponentProps> = (props) => {
         const state = useModel(model);
-
-        var overview = {
-            pronunciation: null,
-            partOfSpeach: null,
-            source: null,
-        };
+        const basicOverview = {} as BasicOverviewStruct;
 
         const currentVariant =
             state.variants && state.selectedVariantIdx > -1
@@ -152,28 +165,30 @@ export function init(
                 : null;
         if (currentVariant !== null) {
             const variant = state.variants[state.selectedVariantIdx];
-            overview.partOfSpeach = variant.pos;
+            basicOverview.partOfSpeach = variant.pos;
             switch (state.mainSource) {
                 case Source.ASSC:
-                    overview.source = 'Akademický slovník současné češtiny';
+                    basicOverview.source =
+                        'Akademický slovník současné češtiny';
                     if (state.data.assc) {
                         const asscVariant = List.find(
                             (v) => v.key.startsWith(variant.lemma),
                             state.data.assc.variants
                         );
-                        overview.pronunciation = asscVariant.pronunciation;
+                        basicOverview.pronunciation = asscVariant.pronunciation;
                     }
                     break;
                 case Source.IJP:
-                    overview.source = 'Internetová jazyková příručka';
+                    basicOverview.source = 'Internetová jazyková příručka';
                     if (state.data.ijp) {
-                        overview.pronunciation = state.data.ijp.pronunciation;
+                        basicOverview.pronunciation =
+                            state.data.ijp.pronunciation;
                     }
                     break;
             }
         } else {
-            overview.partOfSpeach = state.queryMatch.pos[0].value;
-            overview.source = 'Korpus';
+            basicOverview.partOfSpeach = state.queryMatch.pos[0].value;
+            basicOverview.source = 'Korpus';
         }
 
         return (
@@ -192,11 +207,7 @@ export function init(
                         items={state.variants}
                         backupTitle={state.queryMatch.lemma}
                     />
-                    <LexOverviewBasics
-                        pronunciation={overview.pronunciation}
-                        partOfSpeach={overview.partOfSpeach}
-                        source={overview.source}
-                    />
+                    <LexOverviewBasics basicOverview={basicOverview} />
 
                     {state.data.ijp ? (
                         <langGuideViews.Subtile data={state.data.ijp} />

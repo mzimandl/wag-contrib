@@ -18,13 +18,29 @@
 
 import { Action } from 'kombo';
 import { Actions as GlobalActions } from '../../../models/actions.js';
-import { LexResponse } from './api/api.js';
+import { HTMLBlock } from './api/asscTypes.js';
+import { IJPData } from './api/ijpTypes.js';
 
 export class Actions {
-    static TileDataLoaded: Action<
-        typeof GlobalActions.TileDataLoaded.payload & { data: LexResponse }
-    > = {
-        name: GlobalActions.TileDataLoaded.name,
+    static TileDataLoaded: Action<typeof GlobalActions.TileDataLoaded.payload> =
+        {
+            name: GlobalActions.TileDataLoaded.name,
+        };
+
+    static ASSCTileDataLoaded: Action<{
+        tileId: number;
+        id: string;
+        data: Array<HTMLBlock>;
+    }> = {
+        name: 'LEX_OVERVIEW_ASSC_TILE_DATA_LOADED',
+    };
+
+    static IJPTileDataLoaded: Action<{
+        tileId: number;
+        id: string;
+        data: IJPData;
+    }> = {
+        name: 'LEX_OVERVIEW_IJP_TILE_DATA_LOADED',
     };
 
     static SelectItemVariant: Action<{
