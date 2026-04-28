@@ -29,8 +29,9 @@ import { IJPData as IJPData } from './api/ijpTypes.js';
 import { IDataStreaming } from '../../../page/streaming.js';
 import { ASSCApi } from './api/assc.js';
 import { IJPApi } from './api/ijp.js';
-import { EMPTY, merge, tap } from 'rxjs';
+import { EMPTY, merge, partition, tap } from 'rxjs';
 import { List } from 'cnc-tskit';
+import { isAsscData, isIjpData, LexApi, LexArgs } from './api/lex.js';
 
 interface Data {
     assc: ASSCData;
@@ -54,6 +55,7 @@ export interface LexOverviewModelArgs {
     tileId: number;
     asscApi: ASSCApi;
     ijpApi: IJPApi;
+    lexApi: LexApi;
     appServices: IAppServices;
     queryMatches: RecognizedQueries;
 }
@@ -65,6 +67,8 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
 
     private readonly ijpApi: IJPApi;
 
+    private readonly lexApi: LexApi;
+
     private readonly appServices: IAppServices;
 
     private readonly queryMatches: RecognizedQueries;
@@ -74,6 +78,7 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
         initState,
         asscApi,
         ijpApi,
+        lexApi,
         tileId,
         appServices,
         queryMatches,
@@ -83,6 +88,7 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
         this.appServices = appServices;
         this.asscApi = asscApi;
         this.ijpApi = ijpApi;
+        this.lexApi = lexApi;
         this.queryMatches = queryMatches;
 
         this.addActionHandler(
@@ -96,7 +102,7 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
                 if (state.selectedVariantIdx > -1) {
                     const variant = state.variants[state.selectedVariantIdx];
                     const [asscId, ijpId] = this.getRequestIds(variant);
-                    this.loadData(
+                    this.loadData2(
                         this.appServices.dataStreaming(),
                         dispatch,
                         asscId,
@@ -207,7 +213,7 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
             (state, action, dispatch) => {
                 const variant = state.variants[action.payload.variantIdx];
                 const [asscId, ijpId] = this.getRequestIds(variant);
-                this.loadData(
+                this.loadData2(
                     this.appServices
                         .dataStreaming()
                         .startNewSubgroup(this.tileId),
@@ -219,7 +225,7 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
         );
     }
 
-    private getRequestIds(variant: LexItem) {
+    private getRequestIds(variant: LexItem): [string?, string?] {
         const asscId = variant.sources['assc']
             ? variant.sources['assc'][0].id
             : null;
@@ -293,5 +299,65 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
                 });
             },
         });
+    }
+
+    private loadData2(
+        streaming: IDataStreaming,
+        dispatch: SEDispatcher,
+        asscId?: string,
+        ijpId?: string
+    ) {
+        const args: LexArgs = {
+            asscIds: [asscId],
+            ijpIds: [ijpId],
+        };
+
+        this.lexApi
+            .call(streaming, this.tileId, 0, args)
+            .pipe(
+                tap((v) => {
+                    if (isAsscData(v)) {
+                        dispatch<typeof Actions.ASSCTileDataLoaded>({
+                            name: Actions.ASSCTileDataLoaded.name,
+                            payload: {
+                                tileId: this.tileId,
+                                id: asscId,
+                                data: v.data,
+                            },
+                        });
+                    } else if (isIjpData(v)) {
+                        dispatch<typeof Actions.IJPTileDataLoaded>({
+                            name: Actions.IJPTileDataLoaded.name,
+                            payload: {
+                                tileId: this.tileId,
+                                id: ijpId,
+                                data: v.data,
+                            },
+                        });
+                    }
+                })
+            )
+            .subscribe({
+                complete: () => {
+                    dispatch<typeof Actions.TileDataLoaded>({
+                        name: Actions.TileDataLoaded.name,
+                        payload: {
+                            tileId: this.tileId,
+                            isEmpty: false, // TODO
+                        },
+                    });
+                },
+                error: (error) => {
+                    console.error(error);
+                    dispatch<typeof Actions.TileDataLoaded>({
+                        name: Actions.TileDataLoaded.name,
+                        error,
+                        payload: {
+                            tileId: this.tileId,
+                            isEmpty: true,
+                        },
+                    });
+                },
+            });
     }
 }

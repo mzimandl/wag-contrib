@@ -40,10 +40,12 @@ import { isLexQueryMatch, LexItem, Source } from './common.js';
 import { Dict } from 'cnc-tskit';
 import { ASSCApi } from './api/assc.js';
 import { IJPApi } from './api/ijp.js';
+import { LexApi } from './api/lex.js';
 
 export interface LexOverviewTileConf extends TileConf {
     asscApiURL: string;
     ijpApiURL: string;
+    lexApiURL: string;
     sourcePriority: Array<Source>;
 }
 
@@ -61,6 +63,8 @@ export class LexOverviewBookTile implements ITileProvider {
     private readonly asscApi: ASSCApi;
 
     private readonly ijpApi: IJPApi;
+
+    private readonly lexApi: LexApi;
 
     private view: TileComponent;
 
@@ -90,6 +94,9 @@ export class LexOverviewBookTile implements ITileProvider {
         this.ijpApi = conf.ijpApiURL
             ? new IJPApi(conf.ijpApiURL, appServices)
             : null;
+        this.lexApi = conf.lexApiURL
+            ? new LexApi(conf.lexApiURL, appServices)
+            : null;
 
         const currQueryMatch = findCurrQueryMatch(queryMatches[0]);
         var variants: Array<LexItem> = null;
@@ -112,6 +119,7 @@ export class LexOverviewBookTile implements ITileProvider {
             appServices,
             asscApi: this.asscApi,
             ijpApi: this.ijpApi,
+            lexApi: this.lexApi,
             queryMatches,
             tileId,
             initState: {

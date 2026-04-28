@@ -16,24 +16,33 @@
  * limitations under the License.
  */
 
-import { Dict, HTTP, List, pipe } from 'cnc-tskit';
-import { forkJoin, Observable, of as rxOf } from 'rxjs';
+import { HTTP, List, pipe } from 'cnc-tskit';
+import { Observable, of as rxOf } from 'rxjs';
 import { IApiServices } from '../../../../appServices.js';
 import { ajax$ } from '../../../../page/ajax.js';
 import { ResourceApi, SourceDetails, HTTPHeaders } from '../../../../types.js';
 import { Backlink } from '../../../../page/tile.js';
 import { IDataStreaming } from '../../../../page/streaming.js';
-import { DataItem as ASSCData } from './asscTypes.js';
+import { HTMLBlock } from './asscTypes.js';
 import { IJPData as IJPData } from './ijpTypes.js';
 
 export interface LexArgs {
-    asscId?: string;
-    ijpId?: string;
+    asscIds: string[];
+    ijpIds: string[];
 }
 
-export interface LexResponse {
-    assc: ASSCData;
-    ijp: IJPData;
+export interface LexResponse<T = IJPData | Array<HTMLBlock>> {
+    service: string;
+    id: string;
+    data: T;
+}
+
+export function isAsscData(v: LexResponse): v is LexResponse<Array<HTMLBlock>> {
+    return v.service === 'assc';
+}
+
+export function isIjpData(v: LexResponse): v is LexResponse<IJPData> {
+    return v.service === 'ijp';
 }
 
 export class LexApi implements ResourceApi<LexArgs, LexResponse> {
@@ -49,15 +58,11 @@ export class LexApi implements ResourceApi<LexArgs, LexResponse> {
         this.apiServices = apiServices;
     }
 
-    private prepareArgs(queryArgs: { [k: string]: any }): string {
+    private prepareArgs(key: string, values: string[]): string[] {
         return pipe(
-            {
-                ...queryArgs,
-            },
-            Dict.toEntries(),
-            List.filter(([k, v]) => v !== undefined),
-            List.map(([k, v]) => `${k}=${encodeURIComponent(v)}`),
-            (x) => x.join('&')
+            values,
+            List.filter((v) => !!v),
+            List.map((v) => `${key}=${encodeURIComponent(v)}`)
         );
     }
 
@@ -67,62 +72,22 @@ export class LexApi implements ResourceApi<LexArgs, LexResponse> {
         queryIdx: number,
         queryArgs: LexArgs
     ): Observable<LexResponse> {
-        return forkJoin({
-            assc: queryArgs.asscId
-                ? this.loadASSC(streaming, tileId, 0, queryArgs.asscId)
-                : rxOf(null),
-            ijp: queryArgs.ijpId
-                ? this.loadLGuide(streaming, tileId, 1, queryArgs.ijpId)
-                : rxOf(null),
-        });
-    }
-
-    loadASSC(
-        streaming: IDataStreaming | null,
-        tileId: number,
-        queryIdx: number,
-        id: string
-    ): Observable<ASSCData> {
-        if (!id) {
-            return rxOf(null);
-        }
+        const params = [
+            ...this.prepareArgs('assc_ids', queryArgs.asscIds),
+            ...this.prepareArgs('ijp_ids', queryArgs.ijpIds),
+        ];
         return streaming
-            ? streaming.registerTileRequest<ASSCData>({
+            ? streaming.registerTileRequest<LexResponse>({
                   tileId,
                   queryIdx,
                   method: HTTP.Method.GET,
-                  url: this.apiURL + '/assc?id=' + id,
+                  url: this.apiURL + '/stream?' + params.join('&'),
                   body: {},
                   contentType: 'application/json',
               })
-            : ajax$<ASSCData>(
+            : ajax$<LexResponse>(
                   HTTP.Method.GET,
-                  this.apiURL + '/assc?id=' + id,
-                  {}
-              );
-    }
-
-    loadLGuide(
-        streaming: IDataStreaming | null,
-        tileId: number,
-        queryIdx: number,
-        id: string
-    ): Observable<IJPData> {
-        if (!id) {
-            return rxOf(null);
-        }
-        return streaming
-            ? streaming.registerTileRequest<IJPData>({
-                  tileId,
-                  queryIdx,
-                  method: HTTP.Method.GET,
-                  url: this.apiURL + '/lguide?id=' + id,
-                  body: {},
-                  contentType: 'application/json',
-              })
-            : ajax$<IJPData>(
-                  HTTP.Method.GET,
-                  this.apiURL + '/lguide?id=' + id,
+                  this.apiURL + '/stream?' + params.join('&'),
                   {}
               );
     }
