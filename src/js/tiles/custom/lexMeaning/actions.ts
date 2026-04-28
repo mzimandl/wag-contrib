@@ -20,14 +20,20 @@ import { Action } from 'kombo';
 import { Actions as GlobalActions } from '../../../models/actions.js';
 import { HTMLBlock } from '../lexOverview/api/asscTypes.js';
 
-export interface DataLoadedPayload {
+export interface PartialDataPayload {
+    id: string;
     data: HTMLBlock[];
 }
 
 export class Actions {
-    static TileDataLoaded: Action<
-        typeof GlobalActions.TileDataLoaded.payload & DataLoadedPayload
+    static TileDataLoaded: Action<typeof GlobalActions.TileDataLoaded.payload> =
+        {
+            name: GlobalActions.TileDataLoaded.name,
+        };
+
+    static TilePartialDataLoaded: Action<
+        typeof GlobalActions.TilePartialDataLoaded.payload & PartialDataPayload
     > = {
-        name: GlobalActions.TileDataLoaded.name,
+        name: GlobalActions.TilePartialDataLoaded.name,
     };
 }

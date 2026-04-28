@@ -38,14 +38,10 @@ import {
 import { LexOverviewModel } from './model.js';
 import { isLexQueryMatch, LexItem, Source } from './common.js';
 import { Dict } from 'cnc-tskit';
-import { ASSCApi } from './api/assc.js';
-import { IJPApi } from './api/ijp.js';
 import { LexApi } from './api/lex.js';
 
 export interface LexOverviewTileConf extends TileConf {
-    asscApiURL: string;
-    ijpApiURL: string;
-    lexApiURL: string;
+    apiURL: string;
     sourcePriority: Array<Source>;
 }
 
@@ -59,10 +55,6 @@ export class LexOverviewBookTile implements ITileProvider {
     private readonly model: LexOverviewModel;
 
     private readonly widthFract: number;
-
-    private readonly asscApi: ASSCApi;
-
-    private readonly ijpApi: IJPApi;
 
     private readonly lexApi: LexApi;
 
@@ -88,16 +80,6 @@ export class LexOverviewBookTile implements ITileProvider {
         this.widthFract = widthFract;
         this.configuredLemLevels = conf.lemmatizationLevels || [];
 
-        this.asscApi = conf.asscApiURL
-            ? new ASSCApi(conf.asscApiURL, appServices)
-            : null;
-        this.ijpApi = conf.ijpApiURL
-            ? new IJPApi(conf.ijpApiURL, appServices)
-            : null;
-        this.lexApi = conf.lexApiURL
-            ? new LexApi(conf.lexApiURL, appServices)
-            : null;
-
         const currQueryMatch = findCurrQueryMatch(queryMatches[0]);
         var variants: Array<LexItem> = null;
         var mainSource: Source = null;
@@ -117,9 +99,7 @@ export class LexOverviewBookTile implements ITileProvider {
         this.model = new LexOverviewModel({
             dispatcher,
             appServices,
-            asscApi: this.asscApi,
-            ijpApi: this.ijpApi,
-            lexApi: this.lexApi,
+            lexApi: new LexApi(conf.apiURL, appServices),
             queryMatches,
             tileId,
             initState: {

@@ -110,7 +110,7 @@ export function init(
 
                 {List.map(
                     (variants, i) => (
-                        <h4 className="variant">
+                        <h4 key={i} className="variant">
                             {renderVariants(
                                 i,
                                 true,

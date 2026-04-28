@@ -23,16 +23,11 @@ import { Actions as GlobalActions } from '../../../models/actions.js';
 import { Actions } from './actions.js';
 import { Actions as LexActions } from '../lexOverview/actions.js';
 import { List } from 'cnc-tskit';
-import {
-    findCurrQueryMatch,
-    QueryMatch,
-    RecognizedQueries,
-} from '../../../query/index.js';
+import { findCurrQueryMatch, RecognizedQueries } from '../../../query/index.js';
 import { IDataStreaming } from '../../../page/streaming.js';
-import { map, merge } from 'rxjs';
 import { isLexQueryMatch, LexItem, Source } from '../lexOverview/common.js';
-import { ASSCApi } from '../lexOverview/api/assc.js';
 import { HTMLBlock } from '../lexOverview/api/asscTypes.js';
+import { isAsscData, LexApi, LexArgs } from '../lexOverview/api/lex.js';
 
 export interface LexMeaningModelState {
     isBusy: boolean;
@@ -50,7 +45,7 @@ export interface LexMeaningModelArgs {
     dispatcher: IActionQueue;
     initState: LexMeaningModelState;
     tileId: number;
-    api: ASSCApi;
+    lexApi: LexApi;
     appServices: IAppServices;
     queryMatches: RecognizedQueries;
 }
@@ -58,7 +53,7 @@ export interface LexMeaningModelArgs {
 export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
     private readonly tileId: number;
 
-    private readonly api: ASSCApi;
+    private readonly lexApi: LexApi;
 
     private readonly appServices: IAppServices;
 
@@ -67,7 +62,7 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
     constructor({
         dispatcher,
         initState,
-        api,
+        lexApi,
         tileId,
         appServices,
         queryMatches,
@@ -75,7 +70,7 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
         super(dispatcher, initState);
         this.tileId = tileId;
         this.appServices = appServices;
-        this.api = api;
+        this.lexApi = lexApi;
         this.queryMatches = queryMatches;
 
         this.addActionHandler(
@@ -108,9 +103,15 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
                 state.isBusy = false;
                 if (action.error) {
                     state.error = action.error.message;
-                } else {
-                    state.data.push({ order: 0, blocks: action.payload.data });
                 }
+            }
+        );
+
+        this.addActionSubtypeHandler(
+            Actions.TilePartialDataLoaded,
+            (action) => action.payload.tileId === this.tileId,
+            (state, action) => {
+                state.data.push({ order: 0, blocks: action.payload.data });
             }
         );
 
@@ -119,7 +120,7 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
             (action) => action.payload.tileId === this.tileId,
             null,
             (state, action, dispatch) => {
-                this.api
+                this.lexApi
                     .getSourceDescription(
                         this.appServices.dataStreaming(),
                         this.tileId,
@@ -205,23 +206,33 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
         requestIds: Array<string>,
         dispatch: SEDispatcher
     ): void {
-        merge(
-            ...List.map(
-                (id, i) =>
-                    this.api
-                        .call(streaming, this.tileId, i, { id })
-                        .pipe(map((data) => ({ data, id }))),
-                requestIds
-            )
-        ).subscribe({
+        const args: LexArgs = {
+            asscIds: requestIds,
+            ijpIds: [],
+        };
+        this.lexApi.call(streaming, this.tileId, 0, args).subscribe({
             next: (resp) => {
-                let filteredData = this.filterResultsByIDs(resp.id, resp.data);
+                if (isAsscData(resp)) {
+                    let filteredData = this.filterResultsByIDs(
+                        resp.id,
+                        resp.data
+                    );
+                    dispatch<typeof Actions.TilePartialDataLoaded>({
+                        name: Actions.TilePartialDataLoaded.name,
+                        payload: {
+                            tileId: this.tileId,
+                            id: resp.id,
+                            data: filteredData,
+                        },
+                    });
+                }
+            },
+            complete: () => {
                 dispatch<typeof Actions.TileDataLoaded>({
                     name: Actions.TileDataLoaded.name,
                     payload: {
                         tileId: this.tileId,
-                        isEmpty: filteredData.length === 0,
-                        data: filteredData,
+                        isEmpty: false,
                     },
                 });
             },
@@ -233,7 +244,6 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
                     payload: {
                         tileId: this.tileId,
                         isEmpty: true,
-                        data: [],
                     },
                 });
             },

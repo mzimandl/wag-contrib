@@ -27,9 +27,6 @@ import { LexItem, Source } from './common.js';
 import { HTMLBlock as ASSCData } from './api/asscTypes.js';
 import { IJPData as IJPData } from './api/ijpTypes.js';
 import { IDataStreaming } from '../../../page/streaming.js';
-import { ASSCApi } from './api/assc.js';
-import { IJPApi } from './api/ijp.js';
-import { EMPTY, merge, partition, tap } from 'rxjs';
 import { List } from 'cnc-tskit';
 import { isAsscData, isIjpData, LexApi, LexArgs } from './api/lex.js';
 
@@ -53,8 +50,6 @@ export interface LexOverviewModelArgs {
     dispatcher: IActionQueue;
     initState: LexOverviewModelState;
     tileId: number;
-    asscApi: ASSCApi;
-    ijpApi: IJPApi;
     lexApi: LexApi;
     appServices: IAppServices;
     queryMatches: RecognizedQueries;
@@ -62,10 +57,6 @@ export interface LexOverviewModelArgs {
 
 export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
     private readonly tileId: number;
-
-    private readonly asscApi: ASSCApi;
-
-    private readonly ijpApi: IJPApi;
 
     private readonly lexApi: LexApi;
 
@@ -76,8 +67,6 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
     constructor({
         dispatcher,
         initState,
-        asscApi,
-        ijpApi,
         lexApi,
         tileId,
         appServices,
@@ -86,8 +75,6 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
         super(dispatcher, initState);
         this.tileId = tileId;
         this.appServices = appServices;
-        this.asscApi = asscApi;
-        this.ijpApi = ijpApi;
         this.lexApi = lexApi;
         this.queryMatches = queryMatches;
 
@@ -102,7 +89,7 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
                 if (state.selectedVariantIdx > -1) {
                     const variant = state.variants[state.selectedVariantIdx];
                     const [asscId, ijpId] = this.getRequestIds(variant);
-                    this.loadData2(
+                    this.loadData(
                         this.appServices.dataStreaming(),
                         dispatch,
                         asscId,
@@ -113,29 +100,25 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
         );
 
         this.addActionSubtypeHandler(
-            Actions.ASSCTileDataLoaded,
+            Actions.TilePartialDataLoaded,
             (action) => action.payload.tileId === this.tileId,
             (state, action) => {
-                const block = List.find(
-                    (block) =>
-                        List.some(
-                            (variant) =>
-                                'hid-' + action.payload.id === variant.id,
-                            block.variants
-                        ),
-                    action.payload.data
-                );
-                if (block) {
-                    state.data.assc = block;
+                if (isAsscData(action.payload)) {
+                    const block = List.find(
+                        (block) =>
+                            List.some(
+                                (variant) =>
+                                    'hid-' + action.payload.id === variant.id,
+                                block.variants
+                            ),
+                        action.payload.data
+                    );
+                    if (block) {
+                        state.data.assc = block;
+                    }
+                } else if (isIjpData(action.payload)) {
+                    state.data.ijp = action.payload.data;
                 }
-            }
-        );
-
-        this.addActionSubtypeHandler(
-            Actions.IJPTileDataLoaded,
-            (action) => action.payload.tileId === this.tileId,
-            (state, action) => {
-                state.data.ijp = action.payload.data;
             }
         );
 
@@ -155,8 +138,7 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
             (action) => action.payload.tileId === this.tileId,
             null,
             (state, action, dispatch) => {
-                /*
-                this.api
+                this.lexApi
                     .getSourceDescription(
                         this.appServices.dataStreaming(),
                         this.tileId,
@@ -180,7 +162,6 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
                             });
                         },
                     });
-                */
             }
         );
 
@@ -213,7 +194,7 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
             (state, action, dispatch) => {
                 const variant = state.variants[action.payload.variantIdx];
                 const [asscId, ijpId] = this.getRequestIds(variant);
-                this.loadData2(
+                this.loadData(
                     this.appServices
                         .dataStreaming()
                         .startNewSubgroup(this.tileId),
@@ -241,49 +222,27 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
         asscId?: string,
         ijpId?: string
     ) {
-        const asscObservable =
-            asscId && this.asscApi
-                ? this.asscApi
-                      .call(streaming, this.tileId, 0, { id: asscId })
-                      .pipe(
-                          tap((data) => {
-                              dispatch<typeof Actions.ASSCTileDataLoaded>({
-                                  name: Actions.ASSCTileDataLoaded.name,
-                                  payload: {
-                                      tileId: this.tileId,
-                                      id: asscId,
-                                      data,
-                                  },
-                              });
-                          })
-                      )
-                : EMPTY;
+        const args: LexArgs = {
+            asscIds: [asscId],
+            ijpIds: [ijpId],
+        };
 
-        const ijpObservable =
-            ijpId && this.ijpApi
-                ? this.ijpApi
-                      .call(streaming, this.tileId, 1, { id: ijpId })
-                      .pipe(
-                          tap((data) => {
-                              dispatch<typeof Actions.IJPTileDataLoaded>({
-                                  name: Actions.IJPTileDataLoaded.name,
-                                  payload: {
-                                      tileId: this.tileId,
-                                      id: ijpId,
-                                      data,
-                                  },
-                              });
-                          })
-                      )
-                : EMPTY;
-
-        merge(asscObservable, ijpObservable).subscribe({
+        this.lexApi.call(streaming, this.tileId, 0, args).subscribe({
+            next: (v) => {
+                dispatch<typeof Actions.TilePartialDataLoaded>({
+                    name: Actions.TilePartialDataLoaded.name,
+                    payload: {
+                        tileId: this.tileId,
+                        ...v,
+                    },
+                });
+            },
             complete: () => {
                 dispatch<typeof Actions.TileDataLoaded>({
                     name: Actions.TileDataLoaded.name,
                     payload: {
                         tileId: this.tileId,
-                        isEmpty: false, // TODO
+                        isEmpty: false,
                     },
                 });
             },
@@ -299,65 +258,5 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
                 });
             },
         });
-    }
-
-    private loadData2(
-        streaming: IDataStreaming,
-        dispatch: SEDispatcher,
-        asscId?: string,
-        ijpId?: string
-    ) {
-        const args: LexArgs = {
-            asscIds: [asscId],
-            ijpIds: [ijpId],
-        };
-
-        this.lexApi
-            .call(streaming, this.tileId, 0, args)
-            .pipe(
-                tap((v) => {
-                    if (isAsscData(v)) {
-                        dispatch<typeof Actions.ASSCTileDataLoaded>({
-                            name: Actions.ASSCTileDataLoaded.name,
-                            payload: {
-                                tileId: this.tileId,
-                                id: asscId,
-                                data: v.data,
-                            },
-                        });
-                    } else if (isIjpData(v)) {
-                        dispatch<typeof Actions.IJPTileDataLoaded>({
-                            name: Actions.IJPTileDataLoaded.name,
-                            payload: {
-                                tileId: this.tileId,
-                                id: ijpId,
-                                data: v.data,
-                            },
-                        });
-                    }
-                })
-            )
-            .subscribe({
-                complete: () => {
-                    dispatch<typeof Actions.TileDataLoaded>({
-                        name: Actions.TileDataLoaded.name,
-                        payload: {
-                            tileId: this.tileId,
-                            isEmpty: false, // TODO
-                        },
-                    });
-                },
-                error: (error) => {
-                    console.error(error);
-                    dispatch<typeof Actions.TileDataLoaded>({
-                        name: Actions.TileDataLoaded.name,
-                        error,
-                        payload: {
-                            tileId: this.tileId,
-                            isEmpty: true,
-                        },
-                    });
-                },
-            });
     }
 }

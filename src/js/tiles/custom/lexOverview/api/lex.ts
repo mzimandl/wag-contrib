@@ -25,6 +25,7 @@ import { Backlink } from '../../../../page/tile.js';
 import { IDataStreaming } from '../../../../page/streaming.js';
 import { HTMLBlock } from './asscTypes.js';
 import { IJPData as IJPData } from './ijpTypes.js';
+import { Source } from '../common.js';
 
 export interface LexArgs {
     asscIds: string[];
@@ -32,17 +33,17 @@ export interface LexArgs {
 }
 
 export interface LexResponse<T = IJPData | Array<HTMLBlock>> {
-    service: string;
+    source: Source;
     id: string;
     data: T;
 }
 
 export function isAsscData(v: LexResponse): v is LexResponse<Array<HTMLBlock>> {
-    return v.service === 'assc';
+    return v.source === Source.ASSC;
 }
 
 export function isIjpData(v: LexResponse): v is LexResponse<IJPData> {
-    return v.service === 'ijp';
+    return v.source === Source.IJP;
 }
 
 export class LexApi implements ResourceApi<LexArgs, LexResponse> {
@@ -73,8 +74,8 @@ export class LexApi implements ResourceApi<LexArgs, LexResponse> {
         queryArgs: LexArgs
     ): Observable<LexResponse> {
         const params = [
-            ...this.prepareArgs('assc_ids', queryArgs.asscIds),
-            ...this.prepareArgs('ijp_ids', queryArgs.ijpIds),
+            ...this.prepareArgs('assc_id', queryArgs.asscIds),
+            ...this.prepareArgs('ijp_id', queryArgs.ijpIds),
         ];
         return streaming
             ? streaming.registerTileRequest<LexResponse>({
