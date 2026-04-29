@@ -17,7 +17,7 @@
  */
 
 import { HTTP, List, pipe } from 'cnc-tskit';
-import { Observable, of as rxOf } from 'rxjs';
+import { from, mergeMap, Observable, of as rxOf } from 'rxjs';
 import { IApiServices } from '../../../../appServices.js';
 import { ajax$ } from '../../../../page/ajax.js';
 import { ResourceApi, SourceDetails, HTTPHeaders } from '../../../../types.js';
@@ -76,6 +76,7 @@ export class LexApi implements ResourceApi<LexArgs, LexResponse> {
         const params = [
             ...this.prepareArgs('assc_id', queryArgs.asscIds),
             ...this.prepareArgs('ijp_id', queryArgs.ijpIds),
+            this.prepareArgs('event', [`DataTile-${tileId}.${queryIdx}`]),
         ];
         return streaming
             ? streaming.registerTileRequest<LexResponse>({
@@ -85,12 +86,41 @@ export class LexApi implements ResourceApi<LexArgs, LexResponse> {
                   url: this.apiURL + '/stream?' + params.join('&'),
                   body: {},
                   contentType: 'application/json',
+                  isEventSource: true,
               })
             : ajax$<LexResponse>(
                   HTTP.Method.GET,
                   this.apiURL + '/stream?' + params.join('&'),
                   {}
               );
+    }
+
+    bulk(
+        streaming: IDataStreaming | null,
+        tileId: number,
+        queryIdx: number,
+        queryArgs: LexArgs
+    ): Observable<LexResponse> {
+        const params = [
+            ...this.prepareArgs('assc_id', queryArgs.asscIds),
+            ...this.prepareArgs('ijp_id', queryArgs.ijpIds),
+        ];
+        return (
+            streaming
+                ? streaming.registerTileRequest<Array<LexResponse>>({
+                      tileId,
+                      queryIdx,
+                      method: HTTP.Method.GET,
+                      url: this.apiURL + '/bulk?' + params.join('&'),
+                      body: {},
+                      contentType: 'application/json',
+                  })
+                : ajax$<Array<LexResponse>>(
+                      HTTP.Method.GET,
+                      this.apiURL + '/bulk?' + params.join('&'),
+                      {}
+                  )
+        ).pipe(mergeMap((v) => from(v)));
     }
 
     getSourceDescription(
