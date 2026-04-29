@@ -60,6 +60,8 @@ export class LexOverviewBookTile implements ITileProvider {
 
     private view: TileComponent;
 
+    private readonly dependentTiles: Array<number>;
+
     private readonly configuredLemLevels: Array<LemmatizationLevel>;
 
     constructor({
@@ -72,12 +74,13 @@ export class LexOverviewBookTile implements ITileProvider {
         conf,
         isBusy,
         queryMatches,
-        readDataFromTile,
+        dependentTiles,
     }: TileFactoryArgs<LexOverviewTileConf>) {
         this.tileId = tileId;
         this.dispatcher = dispatcher;
         this.appServices = appServices;
         this.widthFract = widthFract;
+        this.dependentTiles = dependentTiles;
         this.configuredLemLevels = conf.lemmatizationLevels || [];
 
         const currQueryMatch = findCurrQueryMatch(queryMatches[0]);
@@ -102,6 +105,7 @@ export class LexOverviewBookTile implements ITileProvider {
             lexApi: new LexApi(conf.apiURL, appServices),
             queryMatches,
             tileId,
+            dependentTiles,
             initState: {
                 isBusy: isBusy,
                 queryMatch: currQueryMatch,

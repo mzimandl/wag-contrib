@@ -27,7 +27,12 @@ import { findCurrQueryMatch, RecognizedQueries } from '../../../query/index.js';
 import { IDataStreaming } from '../../../page/streaming.js';
 import { isLexQueryMatch, LexItem, Source } from '../lexOverview/common.js';
 import { HTMLBlock } from '../lexOverview/api/asscTypes.js';
-import { isAsscData, LexApi, LexArgs } from '../lexOverview/api/lex.js';
+import {
+    isAsscData,
+    LexApi,
+    LexArgs,
+    LexResponse,
+} from '../lexOverview/api/lex.js';
 
 export interface LexMeaningModelState {
     isBusy: boolean;
@@ -48,6 +53,7 @@ export interface LexMeaningModelArgs {
     lexApi: LexApi;
     appServices: IAppServices;
     queryMatches: RecognizedQueries;
+    readDataFromTile: number | null;
 }
 
 export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
@@ -59,6 +65,8 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
 
     private readonly queryMatches: RecognizedQueries;
 
+    private readonly readDataFromTile: number | null;
+
     constructor({
         dispatcher,
         initState,
@@ -66,12 +74,14 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
         tileId,
         appServices,
         queryMatches,
+        readDataFromTile,
     }: LexMeaningModelArgs) {
         super(dispatcher, initState);
         this.tileId = tileId;
         this.appServices = appServices;
         this.lexApi = lexApi;
         this.queryMatches = queryMatches;
+        this.readDataFromTile = readDataFromTile;
 
         this.addActionHandler(
             GlobalActions.RequestQueryResponse,
@@ -175,13 +185,37 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
                 const requestIds = this.prepareRequestIds(
                     state.selectedVariant
                 );
-                this.loadData(
-                    this.appServices
-                        .dataStreaming()
-                        .startNewSubgroup(this.tileId),
-                    requestIds,
-                    dispatch
-                );
+                if (this.readDataFromTile !== null) {
+                    this.waitForAction({}, (action, data) => {
+                        if (
+                            GlobalActions.isTileSubgroupReady(action) &&
+                            action.payload.mainTileId === this.readDataFromTile
+                        ) {
+                            return null;
+                        }
+                        return data;
+                    }).subscribe({
+                        next: (action) => {
+                            if (GlobalActions.isTileSubgroupReady(action)) {
+                                this.loadData(
+                                    this.appServices
+                                        .dataStreaming()
+                                        .getSubgroup(action.payload.subgroupId),
+                                    requestIds,
+                                    dispatch
+                                );
+                            }
+                        },
+                    });
+                } else {
+                    this.loadData(
+                        this.appServices
+                            .dataStreaming()
+                            .startNewSubgroup(this.tileId),
+                        requestIds,
+                        dispatch
+                    );
+                }
             }
         );
     }
@@ -206,11 +240,19 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
         requestIds: Array<string>,
         dispatch: SEDispatcher
     ): void {
-        const args: LexArgs = {
-            asscIds: requestIds,
-            ijpIds: [],
-        };
-        this.lexApi.call(streaming, this.tileId, 0, args).subscribe({
+        (streaming && typeof this.readDataFromTile === 'number'
+            ? streaming.registerTileRequest<LexResponse>({
+                  tileId: this.tileId,
+                  queryIdx: 0, // TODO
+                  otherTileId: this.readDataFromTile,
+                  otherTileQueryIdx: 0, // TODO
+                  contentType: 'application/json',
+              })
+            : this.lexApi.call(streaming, this.tileId, 0, {
+                  asscIds: requestIds,
+                  ijpIds: [],
+              })
+        ).subscribe({
             next: (resp) => {
                 if (isAsscData(resp)) {
                     let filteredData = this.filterResultsByIDs(

@@ -58,6 +58,8 @@ export class LexMeaningTile implements ITileProvider {
 
     private view: TileComponent;
 
+    private readonly readDataFromTile: number;
+
     private readonly configuredLemLevels: Array<LemmatizationLevel>;
 
     constructor({
@@ -70,12 +72,15 @@ export class LexMeaningTile implements ITileProvider {
         conf,
         isBusy,
         queryMatches,
+        readDataFromTile,
     }: TileFactoryArgs<LexMeaningTileConf>) {
         this.tileId = tileId;
         this.dispatcher = dispatcher;
         this.appServices = appServices;
         this.widthFract = widthFract;
         this.configuredLemLevels = conf.lemmatizationLevels || [];
+        this.readDataFromTile = readDataFromTile;
+
         const currQueryMatch = findCurrQueryMatch(queryMatches[0]);
         this.model = new LexMeaningModel({
             dispatcher,
@@ -83,6 +88,8 @@ export class LexMeaningTile implements ITileProvider {
             lexApi: new LexApi(conf.apiURL, appServices),
             queryMatches,
             tileId,
+            readDataFromTile:
+                typeof readDataFromTile === 'number' ? readDataFromTile : null,
             initState: {
                 isBusy: isBusy,
                 selectedVariantIdx:
@@ -168,7 +175,7 @@ export class LexMeaningTile implements ITileProvider {
     }
 
     getReadDataFrom(): number | null {
-        return null;
+        return this.readDataFromTile;
     }
 
     hideOnNoData(): boolean {

@@ -53,6 +53,7 @@ export interface LexOverviewModelArgs {
     lexApi: LexApi;
     appServices: IAppServices;
     queryMatches: RecognizedQueries;
+    dependentTiles: Array<number>;
 }
 
 export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
@@ -71,6 +72,7 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
         tileId,
         appServices,
         queryMatches,
+        dependentTiles,
     }: LexOverviewModelArgs) {
         super(dispatcher, initState);
         this.tileId = tileId;
@@ -192,16 +194,16 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
                 state.isBusy = true;
             },
             (state, action, dispatch) => {
+                const subg = appServices
+                    .dataStreaming()
+                    .startNewSubgroup(this.tileId, ...dependentTiles);
+                dispatch(GlobalActions.TileSubgroupReady, {
+                    mainTileId: this.tileId,
+                    subgroupId: subg.getId(),
+                });
                 const variant = state.variants[action.payload.variantIdx];
                 const [asscId, ijpId] = this.getRequestIds(variant);
-                this.loadData(
-                    this.appServices
-                        .dataStreaming()
-                        .startNewSubgroup(this.tileId),
-                    dispatch,
-                    asscId,
-                    ijpId
-                );
+                this.loadData(subg, dispatch, asscId, ijpId);
             }
         );
     }
