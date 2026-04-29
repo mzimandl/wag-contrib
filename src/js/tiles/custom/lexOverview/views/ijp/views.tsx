@@ -279,9 +279,9 @@ export function init(
         );
     };
 
-    // -------------------- <LangGuideSubtileView /> -----------------------------------------------
+    // -------------------- <IjpSubtileView /> -----------------------------------------------
 
-    const LangGuideSubtileView: React.FC<{
+    const IjpSubtileView: React.FC<{
         data: IJPData;
         color?: string;
     }> = (props) => {
@@ -351,6 +351,6 @@ export function init(
     };
 
     return {
-        Subtile: LangGuideSubtileView,
+        Subtile: IjpSubtileView,
     };
 }

@@ -26,7 +26,7 @@ import {
 import { GlobalComponents } from '../../../../views/common/index.js';
 import { Actions } from '../actions.js';
 import { LexOverviewModel } from '../model.js';
-import { init as initLangGuideViews } from './langGuide/views.js';
+import { init as initIjpViews } from './ijp/views.js';
 import { init as initCorpusViews } from './corpus/views.js';
 import * as S from './style.js';
 import { List } from 'cnc-tskit';
@@ -45,7 +45,7 @@ export function init(
     model: LexOverviewModel
 ): TileComponent {
     const globalComponents = ut.getComponents();
-    const langGuideViews = initLangGuideViews(dispatcher, ut);
+    const ijpViews = initIjpViews(dispatcher, ut);
     const corpusViews = initCorpusViews(dispatcher, ut);
 
     // -------------------- <LexOverviewHeader /> -----------------------------------------------
@@ -210,7 +210,7 @@ export function init(
                     <LexOverviewBasics basicOverview={basicOverview} />
 
                     {state.data.ijp ? (
-                        <langGuideViews.Subtile data={state.data.ijp} />
+                        <ijpViews.Subtile data={state.data.ijp} />
                     ) : null}
 
                     {!currentVariant ? (
