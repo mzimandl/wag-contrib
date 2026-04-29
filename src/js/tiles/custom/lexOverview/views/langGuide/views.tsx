@@ -20,7 +20,6 @@ import { Dict, List, pipe } from 'cnc-tskit';
 import { IActionDispatcher, ViewUtils } from 'kombo';
 import * as React from 'react';
 import { GlobalComponents } from '../../../../../views/common/index.js';
-import { Actions } from '../../actions.js';
 import {
     CaseData,
     ComparisonData,
@@ -69,12 +68,8 @@ export function init(
                 <tbody>
                     <tr>
                         <td>{props.positive}</td>
-                        <td className="word">
-                            {props.comparisonData.comparative}
-                        </td>
-                        <td className="word">
-                            {props.comparisonData.superlative}
-                        </td>
+                        <td>{props.comparisonData.comparative}</td>
+                        <td>{props.comparisonData.superlative}</td>
                     </tr>
                 </tbody>
             </LS.DataTable>
@@ -90,7 +85,7 @@ export function init(
             <LS.DataTable>
                 <thead>
                     <tr>
-                        <th></th>
+                        <th>{ut.translate('lex_overview__table_case')}</th>
                         <th>{ut.translate('lex_overview__number_singular')}</th>
                         <th>{ut.translate('lex_overview__number_plural')}</th>
                     </tr>
@@ -101,13 +96,9 @@ export function init(
                         Dict.toEntries(),
                         List.map((data, i) => (
                             <tr key={`${i}:${data[0]}`}>
-                                <td>
-                                    {ut.translate(
-                                        `lex_overview__case_${data[0]}`
-                                    )}
-                                </td>
-                                <td className="word">{data[1].singular}</td>
-                                <td className="word">{data[1].plural}</td>
+                                <td>{i + 1}.</td>
+                                <td>{data[1].singular}</td>
+                                <td>{data[1].plural}</td>
                             </tr>
                         ))
                     )}
@@ -141,8 +132,8 @@ export function init(
                                         `lex_overview__conjugation_person_${data[0]}`
                                     )}
                                 </td>
-                                <td className="word">{data[1].singular}</td>
-                                <td className="word">{data[1].plural}</td>
+                                <td>{data[1].singular}</td>
+                                <td>{data[1].plural}</td>
                             </tr>
                         ))
                     )}
@@ -154,12 +145,8 @@ export function init(
                                     'lex_overview__conjugation_imperative'
                                 )}
                             </td>
-                            <td className="word">
-                                {props.conjugationData.imperative.singular}
-                            </td>
-                            <td className="word">
-                                {props.conjugationData.imperative.plural}
-                            </td>
+                            <td>{props.conjugationData.imperative.singular}</td>
+                            <td>{props.conjugationData.imperative.plural}</td>
                         </tr>
                     ) : null}
                     {!!props.conjugationData.participle.active ? (
@@ -169,7 +156,7 @@ export function init(
                                     'lex_overview__conjugation_participle_active'
                                 )}
                             </td>
-                            <td className="word" colSpan={2}>
+                            <td colSpan={2}>
                                 {props.conjugationData.participle.active}
                             </td>
                         </tr>
@@ -181,7 +168,7 @@ export function init(
                                     'lex_overview__conjugation_participle_passive'
                                 )}
                             </td>
-                            <td className="word" colSpan={2}>
+                            <td colSpan={2}>
                                 {props.conjugationData.participle.passive}
                             </td>
                         </tr>
@@ -194,13 +181,13 @@ export function init(
                                     'lex_overview__conjugation_transgressive_past_m'
                                 )}
                             </td>
-                            <td className="word">
+                            <td>
                                 {
                                     props.conjugationData.transgressive.past.m
                                         .singular
                                 }
                             </td>
-                            <td className="word">
+                            <td>
                                 {
                                     props.conjugationData.transgressive.past.m
                                         .plural
@@ -216,13 +203,13 @@ export function init(
                                     'lex_overview__conjugation_transgressive_past_zs'
                                 )}
                             </td>
-                            <td className="word">
+                            <td>
                                 {
                                     props.conjugationData.transgressive.past.zs
                                         .singular
                                 }
                             </td>
-                            <td className="word">
+                            <td>
                                 {
                                     props.conjugationData.transgressive.past.zs
                                         .plural
@@ -238,13 +225,13 @@ export function init(
                                     'lex_overview__conjugation_transgressive_present_m'
                                 )}
                             </td>
-                            <td className="word">
+                            <td>
                                 {
                                     props.conjugationData.transgressive.present
                                         .m.singular
                                 }
                             </td>
-                            <td className="word">
+                            <td>
                                 {
                                     props.conjugationData.transgressive.present
                                         .m.plural
@@ -261,13 +248,13 @@ export function init(
                                     'lex_overview__conjugation_transgressive_present_zs'
                                 )}
                             </td>
-                            <td className="word">
+                            <td>
                                 {
                                     props.conjugationData.transgressive.present
                                         .zs.singular
                                 }
                             </td>
-                            <td className="word">
+                            <td>
                                 {
                                     props.conjugationData.transgressive.present
                                         .zs.plural
@@ -282,7 +269,7 @@ export function init(
                                     'lex_overview__conjugation_verbal_noun'
                                 )}
                             </td>
-                            <td className="word" colSpan={2}>
+                            <td colSpan={2}>
                                 {props.conjugationData.verbalNoun}
                             </td>
                         </tr>

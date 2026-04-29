@@ -19,21 +19,16 @@
 import { Theme } from '../../../../../page/theme.js';
 import { styled } from 'styled-components';
 
-
-export const DataTable = styled.table<{theme:Theme}>`
+export const DataTable = styled.table<{ theme: Theme }>`
     width: 100%;
     border-collapse: collapse;
     border-spacing: 0em;
 
-    td, th {
+    td,
+    th {
         padding: 0.2em 0.5em;
         border: 2px solid #dddddd;
-    }
-
-    td.word, th {
         text-align: center;
         vertical-align: middle;
     }
-
 `;
-
