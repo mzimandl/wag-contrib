@@ -97,7 +97,7 @@ export class LexMeaningTile implements ITileProvider {
                     currQueryMatch.extraData.length > 0
                         ? 0
                         : -1,
-                selectedVariant: null,
+                requestedIds: null,
                 data: [],
                 error: null,
                 backlink: null,

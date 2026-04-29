@@ -41,6 +41,7 @@ export interface LexOverviewModelState {
     mainSource: Source;
     variants: Array<LexItem>;
     selectedVariantIdx: number;
+    requestedIds: LexArgs;
     data: Data;
     error: string;
     backlink: Backlink;
@@ -86,16 +87,19 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
                 state.isBusy = true;
                 state.error = undefined;
                 state.backlink = undefined;
+                if (state.selectedVariantIdx > -1) {
+                    state.requestedIds = this.getRequestIds(
+                        state.variants[state.selectedVariantIdx],
+                        !List.empty(dependentTiles)
+                    );
+                }
             },
             (state, action, dispatch) => {
                 if (state.selectedVariantIdx > -1) {
-                    const variant = state.variants[state.selectedVariantIdx];
-                    const [asscId, ijpId] = this.getRequestIds(variant);
                     this.loadData(
                         this.appServices.dataStreaming(),
                         dispatch,
-                        asscId,
-                        ijpId
+                        state.requestedIds
                     );
                 }
             }
@@ -105,7 +109,9 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
             Actions.TilePartialDataLoaded,
             (action) => action.payload.tileId === this.tileId,
             (state, action) => {
-                if (isAsscData(action.payload)) {
+                // get only first assc data
+                if (isAsscData(action.payload) && !state.data.assc) {
+                    // get only block containig word with the correct id
                     const block = List.find(
                         (block) =>
                             List.some(
@@ -118,8 +124,20 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
                     if (block) {
                         state.data.assc = block;
                     }
-                } else if (isIjpData(action.payload)) {
+                }
+
+                // get only first ijp data
+                if (isIjpData(action.payload) && !state.data.ijp) {
                     state.data.ijp = action.payload.data;
+                }
+
+                if (
+                    (state.data.assc !== null ||
+                        List.empty(state.requestedIds.asscIds)) &&
+                    (state.data.ijp !== null ||
+                        List.empty(state.requestedIds.ijpIds))
+                ) {
+                    state.isBusy = false;
                 }
             }
         );
@@ -189,6 +207,10 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
             (action) => action.payload.tileId === this.tileId,
             (state, action) => {
                 state.selectedVariantIdx = action.payload.variantIdx;
+                state.requestedIds = this.getRequestIds(
+                    state.variants[action.payload.variantIdx],
+                    !List.empty(dependentTiles)
+                );
                 state.data.assc = null;
                 state.data.ijp = null;
                 state.isBusy = true;
@@ -201,34 +223,31 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
                     mainTileId: this.tileId,
                     subgroupId: subg.getId(),
                 });
-                const variant = state.variants[action.payload.variantIdx];
-                const [asscId, ijpId] = this.getRequestIds(variant);
-                this.loadData(subg, dispatch, asscId, ijpId);
+                this.loadData(subg, dispatch, state.requestedIds);
             }
         );
     }
 
-    private getRequestIds(variant: LexItem): [string?, string?] {
-        const asscId = variant.sources['assc']
-            ? variant.sources['assc'][0].id
-            : null;
-        const ijpId = variant.sources['ijp']
-            ? variant.sources['ijp'][0].id
-            : null;
-        return [asscId, ijpId];
+    private getRequestIds(variant: LexItem, requestAll: boolean): LexArgs {
+        return {
+            asscIds: variant.sources['assc']
+                ? requestAll
+                    ? List.map((v) => v.id, variant.sources['assc'])
+                    : [variant.sources['assc'][0].id]
+                : [],
+            ijpIds: variant.sources['ijp']
+                ? requestAll
+                    ? List.map((v) => v.id, variant.sources['ijp'])
+                    : [variant.sources['ijp'][0].id]
+                : [],
+        };
     }
 
     private loadData(
         streaming: IDataStreaming,
         dispatch: SEDispatcher,
-        asscId?: string,
-        ijpId?: string
+        args: LexArgs
     ) {
-        const args: LexArgs = {
-            asscIds: [asscId],
-            ijpIds: [ijpId],
-        };
-
         this.lexApi.call(streaming, this.tileId, 0, args).subscribe({
             next: (v) => {
                 dispatch<typeof Actions.TilePartialDataLoaded>({

@@ -37,7 +37,7 @@ import {
 } from '../../../page/tile.js';
 import { LexOverviewModel } from './model.js';
 import { isLexQueryMatch, LexItem, Source } from './common.js';
-import { Dict } from 'cnc-tskit';
+import { Dict, List } from 'cnc-tskit';
 import { LexApi } from './api/lex.js';
 
 export interface LexOverviewTileConf extends TileConf {
@@ -111,7 +111,8 @@ export class LexOverviewBookTile implements ITileProvider {
                 queryMatch: currQueryMatch,
                 mainSource,
                 variants,
-                selectedVariantIdx: variants && variants.length > 0 ? 0 : -1,
+                selectedVariantIdx: variants && !List.empty(variants) ? 0 : -1,
+                requestedIds: null,
                 data: {
                     assc: null,
                     ijp: null,

@@ -27,19 +27,13 @@ import { findCurrQueryMatch, RecognizedQueries } from '../../../query/index.js';
 import { IDataStreaming } from '../../../page/streaming.js';
 import { isLexQueryMatch, LexItem, Source } from '../lexOverview/common.js';
 import { HTMLBlock } from '../lexOverview/api/asscTypes.js';
-import {
-    isAsscData,
-    LexApi,
-    LexArgs,
-    LexResponse,
-} from '../lexOverview/api/lex.js';
+import { isAsscData, LexApi, LexResponse } from '../lexOverview/api/lex.js';
 
 export interface LexMeaningModelState {
     isBusy: boolean;
     selectedVariantIdx: number;
-    selectedVariant: LexItem;
+    requestedIds: Array<string>;
     data: Array<{
-        order: number;
         blocks: HTMLBlock[];
     }>;
     error: string;
@@ -90,17 +84,14 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
                 state.error = null;
                 state.backlink = null;
                 state.data = [];
-                state.selectedVariant = this.getCurrentVariant(
-                    state.selectedVariantIdx
+                state.requestedIds = this.prepareRequestIds(
+                    this.getCurrentVariant(state.selectedVariantIdx)
                 );
             },
             (state, action, dispatch) => {
-                const requestIds = this.prepareRequestIds(
-                    state.selectedVariant
-                );
                 this.loadData(
                     this.appServices.dataStreaming(),
-                    requestIds,
+                    state.requestedIds,
                     dispatch
                 );
             }
@@ -121,7 +112,10 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
             Actions.TilePartialDataLoaded,
             (action) => action.payload.tileId === this.tileId,
             (state, action) => {
-                state.data.push({ order: 0, blocks: action.payload.data });
+                state.data.push({ blocks: action.payload.data });
+                if (List.size(state.data) === List.size(state.requestedIds)) {
+                    state.isBusy = false;
+                }
             }
         );
 
@@ -176,15 +170,12 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
                     state.isBusy = true;
                     state.data = [];
                     state.selectedVariantIdx = action.payload.variantIdx;
-                    state.selectedVariant = this.getCurrentVariant(
-                        state.selectedVariantIdx
+                    state.requestedIds = this.prepareRequestIds(
+                        this.getCurrentVariant(state.selectedVariantIdx)
                     );
                 }
             },
             (state, action, dispatch) => {
-                const requestIds = this.prepareRequestIds(
-                    state.selectedVariant
-                );
                 if (this.readDataFromTile !== null) {
                     this.waitForAction({}, (action, data) => {
                         if (
@@ -201,7 +192,7 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
                                     this.appServices
                                         .dataStreaming()
                                         .getSubgroup(action.payload.subgroupId),
-                                    requestIds,
+                                    state.requestedIds,
                                     dispatch
                                 );
                             }
@@ -212,7 +203,7 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
                         this.appServices
                             .dataStreaming()
                             .startNewSubgroup(this.tileId),
-                        requestIds,
+                        state.requestedIds,
                         dispatch
                     );
                 }
