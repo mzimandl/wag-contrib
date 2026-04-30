@@ -1,26 +1,8 @@
 {
     "cs-CZ": {
-        "lex_meaning__main_label": "Významy a příklady použití",
-        "lex_meaning__key": "heslo",
-        "lex_meaning__pronunciation": "výslovnost",
-        "lex_meaning__pos": "slovní druh",
-        "lex_meaning__quality": "kvalita",
-        "lex_meaning__forms": "tvary",
-        "lex_meaning__note": "poznámka",
-        "lex_meaning__meaning": "význam",
-        "lex_meaning__examples": "příklady",
-        "lex_meaning__more_data_{num_hidden}": "zdroj obsahuje {num_hidden, plural, one{# další položku} few{# další položky} other{# dalších položek}}"
+        "lex_meaning__main_label": "Významy a příklady užití"
     },
     "en-US": {
-        "lex_meaning__main_label": "Meaning and usage examples",
-        "lex_meaning__key": "key",
-        "lex_meaning__pronunciation": "pronunciation",
-        "lex_meaning__pos": "part of speach",
-        "lex_meaning__quality": "quality",
-        "lex_meaning__forms": "forms",
-        "lex_meaning__note": "note",
-        "lex_meaning__meaning": "meaning",
-        "lex_meaning__examples": "examples",
-        "lex_meaning__more_data_{num_hidden}": "source contains {num_hidden, plural, one{# more item} other{# more items}}"
+        "lex_meaning__main_label": "Meaning and usage examples"
     }
 }

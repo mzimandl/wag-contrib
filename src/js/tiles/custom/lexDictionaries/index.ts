@@ -1,6 +1,6 @@
 /*
- * Copyright 2022 Martin Zimandl <martin.zimandl@gmail.com>
- * Copyright 2022 Institute of the Czech National Corpus,
+ * Copyright 2026 Martin Zimandl <martin.zimandl@gmail.com>
+ * Copyright 2026 Institute of the Czech National Corpus,
  *                Faculty of Arts, Charles University
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,8 +21,16 @@ import { IAppServices } from '../../../appServices.js';
 import { LemmatizationLevel, QueryType } from '../../../query/index.js';
 import { init as viewInit } from './views.js';
 import {
-    TileConf, ITileProvider, TileComponent, TileFactory,
-    TileFactoryArgs, DEFAULT_ALT_VIEW_ICON, ITileReloader, AltViewIconProps, lemLevelSupport } from '../../../page/tile.js';
+    TileConf,
+    ITileProvider,
+    TileComponent,
+    TileFactory,
+    TileFactoryArgs,
+    DEFAULT_ALT_VIEW_ICON,
+    ITileReloader,
+    AltViewIconProps,
+    lemLevelSupport,
+} from '../../../page/tile.js';
 import { LexDictionariesModel } from './model.js';
 import { createApiInstance } from './api/factory.js';
 import { List } from 'cnc-tskit';
@@ -52,7 +60,7 @@ export class LexDictionariesTile implements ITileProvider {
 
     private view: TileComponent;
 
-    private readonly configuredLemLevels:Array<LemmatizationLevel>;
+    private readonly configuredLemLevels: Array<LemmatizationLevel>;
 
     constructor({
         tileId,
@@ -123,7 +131,11 @@ export class LexDictionariesTile implements ITileProvider {
         return null;
     }
 
-    supportsQueryType(qt:QueryType, domain1:string, domain2?:string):boolean {
+    supportsQueryType(
+        qt: QueryType,
+        domain1: string,
+        domain2?: string
+    ): boolean {
         return qt === 'single';
     }
 
@@ -172,11 +184,11 @@ export class LexDictionariesTile implements ITileProvider {
         return null;
     }
 
-    hideOnNoData():boolean {
+    hideOnNoData(): boolean {
         return false;
     }
 
-    supportsLemmatizationLevel(ll:LemmatizationLevel):boolean {
+    supportsLemmatizationLevel(ll: LemmatizationLevel): boolean {
         return lemLevelSupport(this.configuredLemLevels, ll);
     }
 }

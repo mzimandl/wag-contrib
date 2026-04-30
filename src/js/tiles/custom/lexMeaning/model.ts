@@ -1,6 +1,6 @@
 /*
- * Copyright 2022 Martin Zimandl <martin.zimandl@gmail.com>
- * Copyright 2022 Institute of the Czech National Corpus,
+ * Copyright 2026 Martin Zimandl <martin.zimandl@gmail.com>
+ * Copyright 2026 Institute of the Czech National Corpus,
  *                Faculty of Arts, Charles University
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +28,7 @@ import { IDataStreaming } from '../../../page/streaming.js';
 import { isLexQueryMatch, LexItem, Source } from '../lexOverview/common.js';
 import { HTMLBlock } from '../lexOverview/api/asscTypes.js';
 import { isAsscData, LexApi, LexResponse } from '../lexOverview/api/lex.js';
+import { filter } from 'rxjs';
 
 export interface LexMeaningModelState {
     isBusy: boolean;
@@ -243,9 +244,10 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
                   asscIds: requestIds,
                   ijpIds: [],
               })
-        ).subscribe({
-            next: (resp) => {
-                if (isAsscData(resp)) {
+        )
+            .pipe(filter((resp) => isAsscData(resp)))
+            .subscribe({
+                next: (resp) => {
                     let filteredData = this.filterResultsByIDs(
                         resp.id,
                         resp.data
@@ -258,29 +260,28 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
                             data: filteredData,
                         },
                     });
-                }
-            },
-            complete: () => {
-                dispatch<typeof Actions.TileDataLoaded>({
-                    name: Actions.TileDataLoaded.name,
-                    payload: {
-                        tileId: this.tileId,
-                        isEmpty: false,
-                    },
-                });
-            },
-            error: (error) => {
-                console.error(error);
-                dispatch<typeof Actions.TileDataLoaded>({
-                    name: Actions.TileDataLoaded.name,
-                    error,
-                    payload: {
-                        tileId: this.tileId,
-                        isEmpty: true,
-                    },
-                });
-            },
-        });
+                },
+                complete: () => {
+                    dispatch<typeof Actions.TileDataLoaded>({
+                        name: Actions.TileDataLoaded.name,
+                        payload: {
+                            tileId: this.tileId,
+                            isEmpty: false,
+                        },
+                    });
+                },
+                error: (error) => {
+                    console.error(error);
+                    dispatch<typeof Actions.TileDataLoaded>({
+                        name: Actions.TileDataLoaded.name,
+                        error,
+                        payload: {
+                            tileId: this.tileId,
+                            isEmpty: true,
+                        },
+                    });
+                },
+            });
     }
 
     private filterResultsByIDs(id: string, data: HTMLBlock[]): HTMLBlock[] {

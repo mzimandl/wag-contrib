@@ -1,6 +1,6 @@
 /*
- * Copyright 2022 Martin Zimandl <martin.zimandl@gmail.com>
- * Copyright 2022 Institute of the Czech National Corpus,
+ * Copyright 2026 Martin Zimandl <martin.zimandl@gmail.com>
+ * Copyright 2026 Institute of the Czech National Corpus,
  *                Faculty of Arts, Charles University
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,26 +23,64 @@ import { styled } from 'styled-components';
 
 export const SSJCEntry = styled.li`
     /* OdstavcovĂ© elementy */
-    div {font-family: 'Times New Roman', serif; margin-bottom: 0pt; text-align: justify; margin-top: 0px; }
+    div {
+        font-family: 'Times New Roman', serif;
+        margin-bottom: 0pt;
+        text-align: justify;
+        margin-top: 0px;
+    }
     /* .entry {margin-top: 24px; margin-bottom: 12px; width: 325px;} */
-    .entry {margin-top: 24px; margin-bottom: 12px; }
-
+    .entry {
+        margin-top: 24px;
+        margin-bottom: 12px;
+    }
 
     /* ÄŤĂˇsti heslovĂ© stati */
     /* zĂˇkladnĂ­ formĂˇtovĂˇnĂ­ jednotlivĂ˝ch ÄŤĂˇstĂ­ (tlouĹˇĹĄka, velikost a kurzĂ­va) */
-    .bo { font-weight: bold; }
-    .it { font-style: italic; }
-    .np { font-size: 80%; }
+    .bo {
+        font-weight: bold;
+    }
+    .it {
+        font-style: italic;
+    }
+    .np {
+        font-size: 80%;
+    }
 
-    .hw, .phrasem, .xref, .colloc, .hom, .construction { font-weight: bold; }
-    .hw, .delim, .hom {font-family: 'Arial', sans-serif; font-size: 80%;}
-    .snserif {font-weight: normal !important; }
-    .source, .val, .lang, .qual { font-size: 80%; }
-    .def { font-style: italic; }
-    .restored { color: #C0C0C0; }
+    .hw,
+    .phrasem,
+    .xref,
+    .colloc,
+    .hom,
+    .construction {
+        font-weight: bold;
+    }
+    .hw,
+    .delim,
+    .hom {
+        font-family: 'Arial', sans-serif;
+        font-size: 80%;
+    }
+    .snserif {
+        font-weight: normal !important;
+    }
+    .source,
+    .val,
+    .lang,
+    .qual {
+        font-size: 80%;
+    }
+    .def {
+        font-style: italic;
+    }
+    .restored {
+        color: #c0c0c0;
+    }
 
     /* odliĹˇenĂ­ dĂ­lÄŤĂ­ch ÄŤĂˇstĂ­ heslovĂ© stati */
-    .xref {color: #333333; }
+    .xref {
+        color: #333333;
+    }
 `;
 
 // ---------------- <PSJCEntry /> --------------------------------------
@@ -50,9 +88,9 @@ export const SSJCEntry = styled.li`
 export const PSJCEntry = styled.li`
     .e {
         font-size: 12pt;
-        width:320px;
-        text-align:justify;
-        font-family: 'Times New Roman' , Times, serif;
+        width: 320px;
+        text-align: justify;
+        font-family: 'Times New Roman', Times, serif;
     }
     .hw {
         font-family: Arial, Helvetica, sans-serif;
@@ -60,10 +98,11 @@ export const PSJCEntry = styled.li`
         font-weight: bold;
     }
     .n {
-        font-family: 'Times New Roman' , Times, serif;
+        font-family: 'Times New Roman', Times, serif;
         font-size: 100%;
     }
-    .i, .see {
+    .i,
+    .see {
         font-style: italic;
     }
     .submitlink {
@@ -82,10 +121,11 @@ export const PSJCEntry = styled.li`
     .np {
         font-size: 80%;
     }
-    .sep, .delim {
+    .sep,
+    .delim {
         font-size: 90%;
         background-color: #808080;
-        color: #FFFFFF;
+        color: #ffffff;
         font-weight: bold;
     }
     .b {
@@ -139,7 +179,7 @@ export const Tabs = styled.div`
 
 // ---------------- <TabButton /> --------------------------------------
 
-export const TabButton = styled.span<{theme: Theme}>`
+export const TabButton = styled.span<{ theme: Theme }>`
     color: ${(props) => props.theme.colorDefaultText};
 
     span.item {
@@ -164,11 +204,10 @@ export const TabButton = styled.span<{theme: Theme}>`
     }
 
     span.item.current {
-        border-bottom: 2px solid ${props => props.theme.colorLogoBlue};
+        border-bottom: 2px solid ${(props) => props.theme.colorLogoBlue};
     }
 `;
 
 // ---------------- <LexDictionariesTileView /> --------------------------------------
 
-export const LexDictionariesTileView = styled.div`
-`;
+export const LexDictionariesTileView = styled.div``;
