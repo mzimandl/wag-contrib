@@ -95,9 +95,10 @@ export class LexNotesModel extends StatelessModel<LexNotesModelState> {
                     ijp: [],
                     assc: [],
                 };
-                state.requestedIds = this.getRequestIds(
-                    this.getCurrentVariant(state.selectedVariantIdx)
+                const currentVariant = this.getCurrentVariant(
+                    state.selectedVariantIdx
                 );
+                state.requestedIds = this.getRequestIds(currentVariant);
             },
             (state, action, dispatch) => {
                 this.loadData(
@@ -188,9 +189,10 @@ export class LexNotesModel extends StatelessModel<LexNotesModelState> {
                         assc: [],
                     };
                     state.selectedVariantIdx = action.payload.variantIdx;
-                    state.requestedIds = this.getRequestIds(
-                        this.getCurrentVariant(state.selectedVariantIdx)
+                    const currentVariant = this.getCurrentVariant(
+                        state.selectedVariantIdx
                     );
+                    state.requestedIds = this.getRequestIds(currentVariant);
                 }
             },
             (state, action, dispatch) => {
@@ -230,6 +232,9 @@ export class LexNotesModel extends StatelessModel<LexNotesModelState> {
     }
 
     private getCurrentVariant(variantIdx: number): LexItem {
+        if (List.empty(this.queryMatches)) {
+            return null;
+        }
         const currentQueryMatch = findCurrQueryMatch(
             List.head(this.queryMatches)
         );
@@ -309,12 +314,14 @@ export class LexNotesModel extends StatelessModel<LexNotesModelState> {
 
     private getRequestIds(variant: LexItem): LexArgs {
         return {
-            asscIds: variant.sources['assc']
-                ? List.map((v) => v.id, variant.sources['assc'])
-                : [],
-            ijpIds: variant.sources['ijp']
-                ? List.map((v) => v.id, variant.sources['ijp'])
-                : [],
+            asscIds:
+                variant && variant.sources['assc']
+                    ? List.map((v) => v.id, variant.sources['assc'])
+                    : [],
+            ijpIds:
+                variant && variant.sources['ijp']
+                    ? List.map((v) => v.id, variant.sources['ijp'])
+                    : [],
         };
     }
 

@@ -19,10 +19,14 @@
 import { IActionQueue, SEDispatcher, StatelessModel } from 'kombo';
 import { IAppServices } from '../../../appServices.js';
 import { Backlink } from '../../../page/tile.js';
-import { QueryMatch, RecognizedQueries } from '../../../query/index.js';
+import {
+    findCurrQueryMatch,
+    QueryMatch,
+    RecognizedQueries,
+} from '../../../query/index.js';
 import { Actions as GlobalActions } from '../../../models/actions.js';
 import { Actions } from './actions.js';
-import { LexItem, Source } from './common.js';
+import { isLexQueryMatch, LexItem, Source } from './common.js';
 
 import { HTMLBlock as ASSCData } from './api/asscTypes.js';
 import { IJPData as IJPData } from './api/ijpTypes.js';
@@ -87,21 +91,20 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
                 state.isBusy = true;
                 state.error = undefined;
                 state.backlink = undefined;
-                if (state.selectedVariantIdx > -1) {
-                    state.requestedIds = this.getRequestIds(
-                        state.variants[state.selectedVariantIdx],
-                        !List.empty(dependentTiles)
-                    );
-                }
+                const currentVariant = this.getCurrentVariant(
+                    state.selectedVariantIdx
+                );
+                state.requestedIds = this.getRequestIds(
+                    currentVariant,
+                    !List.empty(dependentTiles)
+                );
             },
             (state, action, dispatch) => {
-                if (state.selectedVariantIdx > -1) {
-                    this.loadData(
-                        this.appServices.dataStreaming(),
-                        dispatch,
-                        state.requestedIds
-                    );
-                }
+                this.loadData(
+                    this.appServices.dataStreaming(),
+                    dispatch,
+                    state.requestedIds
+                );
             }
         );
 
@@ -207,12 +210,17 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
             (action) => action.payload.tileId === this.tileId,
             (state, action) => {
                 state.selectedVariantIdx = action.payload.variantIdx;
+                const currentVariant = this.getCurrentVariant(
+                    state.selectedVariantIdx
+                );
                 state.requestedIds = this.getRequestIds(
-                    state.variants[action.payload.variantIdx],
+                    currentVariant,
                     !List.empty(dependentTiles)
                 );
-                state.data.assc = null;
-                state.data.ijp = null;
+                state.data = {
+                    assc: null,
+                    ijp: null,
+                };
                 state.isBusy = true;
             },
             (state, action, dispatch) => {
@@ -228,18 +236,32 @@ export class LexOverviewModel extends StatelessModel<LexOverviewModelState> {
         );
     }
 
+    private getCurrentVariant(variantIdx: number): LexItem {
+        if (List.empty(this.queryMatches)) {
+            return null;
+        }
+        const currentQueryMatch = findCurrQueryMatch(
+            List.head(this.queryMatches)
+        );
+        return isLexQueryMatch(currentQueryMatch)
+            ? currentQueryMatch.extraData[variantIdx]
+            : null;
+    }
+
     private getRequestIds(variant: LexItem, requestAll: boolean): LexArgs {
         return {
-            asscIds: variant.sources['assc']
-                ? requestAll
-                    ? List.map((v) => v.id, variant.sources['assc'])
-                    : [variant.sources['assc'][0].id]
-                : [],
-            ijpIds: variant.sources['ijp']
-                ? requestAll
-                    ? List.map((v) => v.id, variant.sources['ijp'])
-                    : [variant.sources['ijp'][0].id]
-                : [],
+            asscIds:
+                variant && variant.sources['assc']
+                    ? requestAll
+                        ? List.map((v) => v.id, variant.sources['assc'])
+                        : [variant.sources['assc'][0].id]
+                    : [],
+            ijpIds:
+                variant && variant.sources['ijp']
+                    ? requestAll
+                        ? List.map((v) => v.id, variant.sources['ijp'])
+                        : [variant.sources['ijp'][0].id]
+                    : [],
         };
     }
 

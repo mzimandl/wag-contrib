@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-import { HTTP, List, pipe } from 'cnc-tskit';
-import { from, mergeMap, Observable, of as rxOf } from 'rxjs';
+import { Dict, HTTP, List, pipe } from 'cnc-tskit';
+import { EMPTY, from, mergeMap, Observable, of as rxOf } from 'rxjs';
 import { IApiServices } from '../../../../appServices.js';
 import { ajax$ } from '../../../../page/ajax.js';
 import { ResourceApi, SourceDetails, HTTPHeaders } from '../../../../types.js';
@@ -39,11 +39,11 @@ export interface LexResponse<T = IJPData | Array<HTMLBlock>> {
 }
 
 export function isAsscData(v: LexResponse): v is LexResponse<Array<HTMLBlock>> {
-    return v.source === Source.ASSC;
+    return v && v.source === Source.ASSC;
 }
 
 export function isIjpData(v: LexResponse): v is LexResponse<IJPData> {
-    return v.source === Source.IJP;
+    return v && v.source === Source.IJP;
 }
 
 export class LexApi implements ResourceApi<LexArgs, LexResponse> {
@@ -78,21 +78,26 @@ export class LexApi implements ResourceApi<LexArgs, LexResponse> {
             ...this.prepareArgs('ijp_id', queryArgs.ijpIds),
             this.prepareArgs('event', [`DataTile-${tileId}.${queryIdx}`]),
         ];
+        const emptyArgs = Dict.every((v) => List.empty(v), queryArgs);
         return streaming
             ? streaming.registerTileRequest<LexResponse>({
                   tileId,
                   queryIdx,
                   method: HTTP.Method.GET,
-                  url: this.apiURL + '/stream?' + params.join('&'),
+                  url: emptyArgs
+                      ? ''
+                      : this.apiURL + '/stream?' + params.join('&'),
                   body: {},
                   contentType: 'application/json',
-                  isEventSource: true,
+                  isEventSource: !emptyArgs,
               })
-            : ajax$<LexResponse>(
-                  HTTP.Method.GET,
-                  this.apiURL + '/stream?' + params.join('&'),
-                  {}
-              );
+            : emptyArgs
+              ? EMPTY
+              : ajax$<LexResponse>(
+                    HTTP.Method.GET,
+                    this.apiURL + '/stream?' + params.join('&'),
+                    {}
+                );
     }
 
     bulk(

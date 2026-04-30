@@ -37,7 +37,6 @@ export function init(
 
     const LexNotesTileView: React.FC<CoreTileComponentProps> = (props) => {
         const state = useModel(model);
-        console.log(state.notes);
 
         return (
             <globalComponents.TileWrapper

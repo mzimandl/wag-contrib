@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+import { List } from 'cnc-tskit';
 import { QueryMatch } from '../../../query/index.js';
 
 export enum Source {
@@ -100,5 +101,12 @@ export interface LexItem {
 export function isLexQueryMatch(
     qm: QueryMatch<any>
 ): qm is QueryMatch<Array<LexItem>> {
-    return qm.extraData !== undefined && Array.isArray(qm.extraData);
+    return (
+        qm.extraData !== undefined &&
+        Array.isArray(qm.extraData) &&
+        List.every(
+            (d) => 'lemma' in d && 'pos' in d && 'sources' in d,
+            qm.extraData
+        )
+    );
 }

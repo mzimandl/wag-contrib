@@ -27,13 +27,18 @@ import { findCurrQueryMatch, RecognizedQueries } from '../../../query/index.js';
 import { IDataStreaming } from '../../../page/streaming.js';
 import { isLexQueryMatch, LexItem, Source } from '../lexOverview/common.js';
 import { HTMLBlock } from '../lexOverview/api/asscTypes.js';
-import { isAsscData, LexApi, LexResponse } from '../lexOverview/api/lex.js';
+import {
+    isAsscData,
+    LexApi,
+    LexArgs,
+    LexResponse,
+} from '../lexOverview/api/lex.js';
 import { filter } from 'rxjs';
 
 export interface LexMeaningModelState {
     isBusy: boolean;
     selectedVariantIdx: number;
-    requestedIds: Array<string>;
+    requestedIds: LexArgs;
     data: Array<{
         blocks: HTMLBlock[];
     }>;
@@ -85,7 +90,7 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
                 state.error = null;
                 state.backlink = null;
                 state.data = [];
-                state.requestedIds = this.prepareRequestIds(
+                state.requestedIds = this.getRequestIds(
                     this.getCurrentVariant(state.selectedVariantIdx)
                 );
             },
@@ -114,7 +119,10 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
             (action) => action.payload.tileId === this.tileId,
             (state, action) => {
                 state.data.push({ blocks: action.payload.data });
-                if (List.size(state.data) === List.size(state.requestedIds)) {
+                if (
+                    List.size(state.data) ===
+                    List.size(state.requestedIds.asscIds)
+                ) {
                     state.isBusy = false;
                 }
             }
@@ -171,7 +179,7 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
                     state.isBusy = true;
                     state.data = [];
                     state.selectedVariantIdx = action.payload.variantIdx;
-                    state.requestedIds = this.prepareRequestIds(
+                    state.requestedIds = this.getRequestIds(
                         this.getCurrentVariant(state.selectedVariantIdx)
                     );
                 }
@@ -221,15 +229,19 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
             : null;
     }
 
-    private prepareRequestIds(variant: LexItem): Array<string> {
-        return variant
-            ? List.map((v) => v.id, variant.sources[Source.ASSC] || [])
-            : [];
+    private getRequestIds(variant: LexItem): LexArgs {
+        return {
+            asscIds:
+                variant && variant.sources['assc']
+                    ? List.map((v) => v.id, variant.sources['assc'])
+                    : [],
+            ijpIds: [],
+        };
     }
 
     private loadData(
         streaming: IDataStreaming,
-        requestIds: Array<string>,
+        requestIds: LexArgs,
         dispatch: SEDispatcher
     ): void {
         (streaming && typeof this.readDataFromTile === 'number'
@@ -240,10 +252,7 @@ export class LexMeaningModel extends StatelessModel<LexMeaningModelState> {
                   otherTileQueryIdx: 0, // TODO
                   contentType: 'application/json',
               })
-            : this.lexApi.call(streaming, this.tileId, 0, {
-                  asscIds: requestIds,
-                  ijpIds: [],
-              })
+            : this.lexApi.call(streaming, this.tileId, 0, requestIds)
         )
             .pipe(filter((resp) => isAsscData(resp)))
             .subscribe({
