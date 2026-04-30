@@ -133,20 +133,29 @@ export function init(
             <S.Subtile color="#d4e2f4">
                 {props.basicOverview.pronunciation ? (
                     <S.SubtileRow>
-                        <span className="key">výslovnost:</span>
+                        <span className="key">
+                            {ut.translate(
+                                'lex_overview__overview_pronunciation'
+                            )}
+                            :
+                        </span>
                         <span className="value">
                             {props.basicOverview.pronunciation}
                         </span>
                     </S.SubtileRow>
                 ) : null}
                 <S.SubtileRow>
-                    <span className="key">slovní druh:</span>
+                    <span className="key">
+                        {ut.translate('lex_overview__overview_part_of_speech')}:
+                    </span>
                     <span className="value">
                         {props.basicOverview.partOfSpeach}
                     </span>
                 </S.SubtileRow>
                 <S.SubtileRow className="footer">
-                    <span className="key">Zdroj:</span>
+                    <span className="key">
+                        {ut.translate('lex_overview__source')}:
+                    </span>
                     <span className="value">{props.basicOverview.source}</span>
                 </S.SubtileRow>
             </S.Subtile>

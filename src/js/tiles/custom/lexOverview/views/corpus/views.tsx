@@ -99,7 +99,9 @@ export function init(
             )}
 
             <div className="content footer">
-                <span className="key">Zdroj:</span>
+                <span className="key">
+                    {ut.translate('lex_overview__source')}:
+                </span>
                 <span className="value">{props.source}</span>
             </div>
         </S.Subtile>

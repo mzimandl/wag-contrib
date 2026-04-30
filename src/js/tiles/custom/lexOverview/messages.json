@@ -1,12 +1,10 @@
 {
     "cs-CZ": {
         "lex_overview__overview_word": "slovo",
-        "lex_overview__overview_meaning": "význam",
+        "lex_overview__overview_part_of_speech": "slovní druh",
+        "lex_overview__overview_pronunciation": "výslovnost",
         "lex_overview__overview_syllabification": "dělení",
         "lex_overview__overview_gender": "rod",
-        "lex_overview__overview_examples": "příklady",
-        "lex_overview__overview_alternatives": "alternativy",
-        "lex_overview__overview_notes": "poznámky",
         "lex_overview__number": "číslo",
         "lex_overview__number_singular": "jednotné číslo",
         "lex_overview__number_plural": "množné číslo",
@@ -27,16 +25,15 @@
         "lex_overview__conjugation_transgressive_past_zs": "přechodník minulý, zs.",
         "lex_overview__conjugation_transgressive_present_m": "přechodník přítomný, m.",
         "lex_overview__conjugation_transgressive_present_zs": "přechodník přítomný, zs.",
-        "lex_overview__conjugation_verbal_noun": "verbální substantivum"
+        "lex_overview__conjugation_verbal_noun": "verbální substantivum",
+        "lex_overview__source": "Zdroj"
     },
     "en-US": {
         "lex_overview__overview_word": "word",
-        "lex_overview__overview_meaning": "meaning",
+        "lex_overview__overview_part_of_speech": "part of speech",
+        "lex_overview__overview_pronunciation": "pronunciation",
         "lex_overview__overview_syllabification": "syllabification",
         "lex_overview__overview_gender": "gender",
-        "lex_overview__overview_examples": "examples",
-        "lex_overview__overview_alternatives": "alternatives",
-        "lex_overview__overview_notes": "notes",
         "lex_overview__number": "number",
         "lex_overview__number_singular": "singular",
         "lex_overview__number_plural": "plural",
@@ -57,6 +54,7 @@
         "lex_overview__conjugation_transgressive_past_zs": "transgressive past, zs.",
         "lex_overview__conjugation_transgressive_present_m": "transgressive present, m.",
         "lex_overview__conjugation_transgressive_present_zs": "transgressive present, zs.",
-        "lex_overview__conjugation_verbal_noun": "verbal noun"
+        "lex_overview__conjugation_verbal_noun": "verbal noun",
+        "lex_overview__source": "Source"
     }
 }

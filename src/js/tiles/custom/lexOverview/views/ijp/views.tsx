@@ -343,7 +343,9 @@ export function init(
                 ) : null}
 
                 <S.SubtileRow className="footer">
-                    <span className="key">Zdroj:</span>
+                    <span className="key">
+                        {ut.translate('lex_overview__source')}:
+                    </span>
                     <span className="value">Internetová jazyková příručka</span>
                 </S.SubtileRow>
             </S.Subtile>
