@@ -111,29 +111,7 @@ export class LexOverviewModel extends TileStatelessModel<LexOverviewModelState> 
                 state.isBusy = true;
             },
             (state, action, dispatch, ds) => {
-                if (!!action.payload?.newQueryMatches) {
-                    this.waitForAction({}, (action, data) => {
-                        if (
-                            GlobalActions.isTileSubgroupReady(action) &&
-                            action.payload.mainTileId === this.readDataFromTile
-                        ) {
-                            return null;
-                        }
-                        return data;
-                    }).subscribe({
-                        next: (action) => {
-                            if (GlobalActions.isTileSubgroupReady(action)) {
-                                this.loadData(
-                                    ds.getSubgroup(action.payload.subgroupId),
-                                    dispatch,
-                                    state
-                                );
-                            }
-                        },
-                    });
-                } else {
-                    this.loadData(ds, dispatch, state);
-                }
+                this.loadData(ds, dispatch, state);
             }
         );
 

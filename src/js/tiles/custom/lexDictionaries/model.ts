@@ -22,10 +22,7 @@ import { Backlink } from '../../../page/tile.js';
 import { Actions as GlobalActions } from '../../../models/actions.js';
 import { Actions } from './actions.js';
 import { List } from 'cnc-tskit';
-import {
-    LemmatizationLevel,
-    QueryMatch,
-} from '../../../query/index.js';
+import { LemmatizationLevel, QueryMatch } from '../../../query/index.js';
 import { TileStatelessModel } from '../../../models/tiles/base.js';
 import {
     isSSJCDataStructure,
@@ -113,15 +110,7 @@ export class LexDictionariesModel extends TileStatelessModel<LexDictionariesMode
                     searchTerm =
                         state.currQueryMatch.lemma || state.currQueryMatch.word;
                 }
-                if (!!action.payload?.newQueryMatches) {
-                    this.loadData(
-                        ds.startNewSubgroup(this.tileId),
-                        dispatch,
-                        searchTerm
-                    );
-                } else {
-                    this.loadData(ds, dispatch, searchTerm);
-                }
+                this.loadData(ds, dispatch, searchTerm);
             }
         );
 

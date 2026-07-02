@@ -89,28 +89,7 @@ export class LexNotesModel extends TileStatelessModel<LexNotesModelState> {
                 state.isBusy = true;
             },
             (state, action, dispatch, ds) => {
-                if (!!action.payload?.newQueryMatches) {
-                    this.waitForAction({}, (action, data) => {
-                        if (
-                            GlobalActions.isTileSubgroupReady(action) &&
-                            action.payload.mainTileId === this.readDataFromTile
-                        ) {
-                            return null;
-                        }
-                        return data;
-                    }).subscribe({
-                        next: (action) => {
-                            if (GlobalActions.isTileSubgroupReady(action)) {
-                                this.loadData(
-                                    ds.getSubgroup(action.payload.subgroupId),
-                                    dispatch
-                                );
-                            }
-                        },
-                    });
-                } else {
-                    this.loadData(ds, dispatch);
-                }
+                this.loadData(ds, dispatch);
             }
         );
 

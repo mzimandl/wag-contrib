@@ -24,7 +24,6 @@ import {
     TileComponent,
 } from '../../../../page/tile.js';
 import { GlobalComponents } from '../../../../views/common/index.js';
-import { Actions as CommonActions } from '../../lexCommon/actions.js';
 import { Actions as GlobalActions } from '../../../../models/actions.js';
 import { LexOverviewModel } from '../model.js';
 import { init as initAsscViews } from './assc/views.js';
@@ -105,16 +104,8 @@ export function init(
         queryMatches: Array<QueryMatch>;
     }> = (props) => {
         const handleVariantClick = (variantIdx: number) => {
-            dispatcher.dispatch<typeof GlobalActions.ChangeCurrQueryMatch>({
-                name: GlobalActions.ChangeCurrQueryMatch.name,
-                payload: {
-                    queryIdx: 0,
-                    matchId: props.queryMatches[variantIdx].localId,
-                    softReload: true,
-                },
-            });
-            dispatcher.dispatch<typeof GlobalActions.RequestQueryResponse>({
-                name: GlobalActions.RequestQueryResponse.name,
+            dispatcher.dispatch<typeof GlobalActions.UpdateQueryMatches>({
+                name: GlobalActions.UpdateQueryMatches.name,
                 payload: {
                     newQueryMatches: [
                         {
@@ -348,7 +339,7 @@ export function init(
                         state.sourceData.assc.data[0].parsedVariants
                     );
                     // selected variant may not be in detailed data, for example "hranolky" is only mentioned in hranolka/hranolek
-                    if (asscVariant) {
+                    if (asscVariant !== undefined) {
                         basicOverview.pronunciation = asscVariant.pronunciation;
                         basicOverview.audioLink = asscVariant.audioFile;
                     } else {

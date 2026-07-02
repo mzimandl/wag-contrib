@@ -18,10 +18,7 @@
 
 import { IActionQueue, SEDispatcher } from 'kombo';
 import { IAppServices } from '../../../appServices.js';
-import {
-    LemmatizationLevel,
-    QueryMatch,
-} from '../../../query/index.js';
+import { LemmatizationLevel, QueryMatch } from '../../../query/index.js';
 import { Actions as GlobalActions } from '../../../models/actions.js';
 import { Actions } from './actions.js';
 import { getCurrentVariant } from './types/dictionary.js';
@@ -45,10 +42,7 @@ export interface LexCommonModelArgs {
 }
 
 export class LexCommonModel extends TileStatelessModel<LexCommonModelState> {
-
     private readonly lexApi: LexApi;
-
-    private dataStreaming: IDataStreaming | null;
 
     constructor({
         dispatcher,
@@ -68,7 +62,6 @@ export class LexCommonModel extends TileStatelessModel<LexCommonModelState> {
             lemLevelSupport,
         });
         this.lexApi = lexApi;
-        this.dataStreaming = null;
 
         this.addSearchActionHandler(
             (state, action) => {
@@ -85,17 +78,7 @@ export class LexCommonModel extends TileStatelessModel<LexCommonModelState> {
                         isEmpty: true,
                     },
                 });
-                if (this.dataStreaming !== null) {
-                    this.dataStreaming.cancel();
-                }
-                this.dataStreaming = ds;
-                if (!!action.payload?.newQueryMatches) {
-                    dispatch(GlobalActions.TileSubgroupReady, {
-                        mainTileId: this.tileId,
-                        subgroupId: this.dataStreaming.getId(),
-                    });
-                }
-                this.loadData(state, this.dataStreaming, dispatch);
+                this.loadData(state, ds, dispatch);
             }
         );
 
@@ -149,7 +132,11 @@ export class LexCommonModel extends TileStatelessModel<LexCommonModelState> {
         );
     }
 
-    private loadData(state: LexCommonModelState, streaming: IDataStreaming, dispatch: SEDispatcher) {
+    private loadData(
+        state: LexCommonModelState,
+        streaming: IDataStreaming,
+        dispatch: SEDispatcher
+    ) {
         const variant = getCurrentVariant(state.currQueryMatch);
         const args = {
             asscIds:
@@ -170,7 +157,6 @@ export class LexCommonModel extends TileStatelessModel<LexCommonModelState> {
                         isEmpty: true,
                     },
                 });
-                this.dataStreaming = null;
             },
             error: (err) => {
                 console.error('lex api error:', err);
