@@ -177,7 +177,7 @@ export const MeaningBody = styled.div`
         }
     }
 
-    .korpus_odkaz {
+    .korpus_odkaz, .ext_pozn_pripoj {
         display: none;
     }
 

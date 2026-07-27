@@ -174,7 +174,7 @@ export function init(
                                           )
                                         : null}
                                     {variant.uninflected
-                                        ? ' ' +
+                                        ? withInfo ? ' ' : '' +
                                           ut.translate(
                                               'lex_common__uninflected_short'
                                           )
@@ -199,7 +199,7 @@ export function init(
                                           )
                                         : null}
                                     {variant.uninflected
-                                        ? ' ' +
+                                        ? withInfo ? ' ' : '' +
                                           ut.translate(
                                               'lex_common__uninflected_short'
                                           )
