@@ -147,6 +147,13 @@ export function init(
             withPosInfo: boolean,
             clickHandler?: () => void
         ) => {
+            const info = [];
+            if (withInfo) {
+                info.push(translateMorfology(variant, withPosInfo, true));
+            }
+            if (variant.uninflected) {
+                info.push(ut.translate('lex_common__uninflected_short'));
+            }
             return (
                 <h4
                     key={key}
@@ -161,54 +168,20 @@ export function init(
                     {clickHandler ? (
                         <a>
                             {variant.lemma}
-                            {(withInfo || variant.uninflected) &&
-                            variant.pos ? (
+                            {!List.empty(info) ? (
                                 <span className="morphology">
                                     {' '}
-                                    (
-                                    {withInfo
-                                        ? translateMorfology(
-                                              variant,
-                                              withPosInfo,
-                                              true
-                                          )
-                                        : null}
-                                    {variant.uninflected
-                                        ? withInfo
-                                            ? ' '
-                                            : '' +
-                                              ut.translate(
-                                                  'lex_common__uninflected_short'
-                                              )
-                                        : null}
-                                    )
+                                    ({info.join(' ')})
                                 </span>
                             ) : null}
                         </a>
                     ) : (
                         <span>
                             {variant.lemma}
-                            {(withInfo || variant.uninflected) &&
-                            variant.pos ? (
+                            {!List.empty(info) ? (
                                 <span className="morphology">
                                     {' '}
-                                    (
-                                    {withInfo
-                                        ? translateMorfology(
-                                              variant,
-                                              withPosInfo,
-                                              true
-                                          )
-                                        : null}
-                                    {variant.uninflected
-                                        ? withInfo
-                                            ? ' '
-                                            : '' +
-                                              ut.translate(
-                                                  'lex_common__uninflected_short'
-                                              )
-                                        : null}
-                                    )
+                                    ({info.join(' ')})
                                 </span>
                             ) : null}
                         </span>
