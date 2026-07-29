@@ -16,6 +16,11 @@
  * limitations under the License.
  */
 
+export interface FormStruct {
+    key: string;
+    value: string;
+}
+
 export interface VariantData {
     id: string;
     key: string;
@@ -23,7 +28,7 @@ export interface VariantData {
     pronunciation: string;
     audioFile: string;
     quality: string;
-    forms: { [key: string]: string };
+    forms: Array<FormStruct>;
     pos: string;
     origin: string;
 }

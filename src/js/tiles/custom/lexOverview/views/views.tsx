@@ -30,7 +30,7 @@ import { init as initAsscViews } from './assc/views.js';
 import { init as initIjpViews } from './ijp/views.js';
 import { init as initCorpusViews } from './corpus/views.js';
 import * as S from './style.js';
-import { Dict, List, pipe, tuple } from 'cnc-tskit';
+import { List, pipe } from 'cnc-tskit';
 import { initLexComponents } from '../../lexCommon/views.js';
 import { LexItem } from '../../lexCommon/types/dictionary.js';
 import { SubtileRow } from '../../lexCommon/style.js';
@@ -174,10 +174,12 @@ export function init(
                                           )
                                         : null}
                                     {variant.uninflected
-                                        ? withInfo ? ' ' : '' +
-                                          ut.translate(
-                                              'lex_common__uninflected_short'
-                                          )
+                                        ? withInfo
+                                            ? ' '
+                                            : '' +
+                                              ut.translate(
+                                                  'lex_common__uninflected_short'
+                                              )
                                         : null}
                                     )
                                 </span>
@@ -199,10 +201,12 @@ export function init(
                                           )
                                         : null}
                                     {variant.uninflected
-                                        ? withInfo ? ' ' : '' +
-                                          ut.translate(
-                                              'lex_common__uninflected_short'
-                                          )
+                                        ? withInfo
+                                            ? ' '
+                                            : '' +
+                                              ut.translate(
+                                                  'lex_common__uninflected_short'
+                                              )
                                         : null}
                                     )
                                 </span>
@@ -461,7 +465,7 @@ export function init(
                         />
                     ) : null}
                     {asscVariantData &&
-                    !Dict.empty(asscVariantData.forms) &&
+                    !List.empty(asscVariantData.forms) &&
                     !ijpHasForms() ? (
                         <asscViews.Subtile
                             tileId={props.tileId}
