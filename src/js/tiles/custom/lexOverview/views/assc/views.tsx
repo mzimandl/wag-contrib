@@ -56,10 +56,27 @@ export function init(
                         (item) => (
                             <tr>
                                 <td className="tableKey">
-                                    {!item.value ? null : item.key}
+                                    {List.empty(item.values) ? null : item.key}
                                 </td>
                                 <td className="tableValue">
-                                    {!item.value ? item.key : item.value}
+                                    {List.empty(item.values)
+                                        ? item.key
+                                        : List.map(
+                                              (item, i) => (
+                                                  <>
+                                                      {i > 0 ? ', ' : null}
+                                                      {item.comment ? (
+                                                          <span className="comment">
+                                                              {
+                                                                  item.comment
+                                                              }{' '}
+                                                          </span>
+                                                      ) : null}
+                                                      {item.value}
+                                                  </>
+                                              ),
+                                              item.values
+                                          )}
                                 </td>
                             </tr>
                         ),

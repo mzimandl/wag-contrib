@@ -18,6 +18,11 @@
 
 export interface FormStruct {
     key: string;
+    values: Array<FormStructValue>;
+}
+
+export interface FormStructValue {
+    comment: string;
     value: string;
 }
 
