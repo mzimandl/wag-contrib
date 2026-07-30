@@ -149,13 +149,24 @@ export class LexCommonModel extends TileStatelessModel<LexCommonModelState> {
         const args = {
             asscIds:
                 variant && variant.sources['assc']
-                    ? List.map((v) => v.id, variant.sources['assc'])
+                    ? pipe(
+                          variant.sources['assc'],
+                          List.map((v) => v.id),
+                          List.reduce(
+                              (acc, curr, i) => List.addUnique(curr, acc),
+                              []
+                          )
+                      )
                     : [],
             ijpIds:
                 variant && variant.sources['ijp']
                     ? pipe(
                           variant.sources['ijp'],
                           List.map((v) => v.id),
+                          List.reduce(
+                              (acc, curr, i) => List.addUnique(curr, acc),
+                              []
+                          ),
                           List.filter((id) => this.isValidIjpId(id))
                       )
                     : [],
