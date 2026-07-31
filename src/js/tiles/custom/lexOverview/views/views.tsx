@@ -220,7 +220,8 @@ export function init(
         return (
             <S.Header source={props.source} width={itemWidth}>
                 <h2>{props.selectedVariant.lemma}</h2>
-                {List.size(props.variants) > 1 ? (
+                {List.size(props.variants) > 1 ||
+                props.variants[0].plurality > 0 ? (
                     <div className="variant-grid">
                         {pipe(
                             props.variants,
