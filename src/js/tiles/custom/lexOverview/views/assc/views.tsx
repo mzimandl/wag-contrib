@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-import { Dict, List, pipe } from 'cnc-tskit';
+import { List } from 'cnc-tskit';
 import { IActionDispatcher, ViewUtils } from 'kombo';
 import * as React from 'react';
 import { GlobalComponents } from '../../../../../views/common/index.js';
@@ -24,7 +24,7 @@ import * as LS from './style.js';
 import { initLexComponents } from '../../../lexCommon/views.js';
 import { SubtileRow } from '../../../lexCommon/style.js';
 import { Source } from '../../../lexCommon/types/enums.js';
-import { HTMLBlock, VariantData } from '../../../lexCommon/types/assc.js';
+import { FormStruct, VariantData } from '../../../lexCommon/types/assc.js';
 
 export function init(
     dispatcher: IActionDispatcher,
@@ -41,7 +41,7 @@ export function init(
 
     const FormsTable: React.FC<{
         basicForm: string;
-        forms: { [key: string]: string };
+        forms: Array<FormStruct>;
     }> = (props) => {
         return (
             <LS.DataTable>
@@ -52,19 +52,35 @@ export function init(
                         </td>
                         <td className="tableValue">{props.basicForm}</td>
                     </tr>
-                    {pipe(
-                        props.forms,
-                        Dict.toEntries(),
-                        List.map(([key, value]) => (
+                    {List.map(
+                        (item) => (
                             <tr>
                                 <td className="tableKey">
-                                    {!value ? null : key}
+                                    {List.empty(item.values) ? null : item.key}
                                 </td>
                                 <td className="tableValue">
-                                    {!value ? key : value}
+                                    {List.empty(item.values)
+                                        ? item.key
+                                        : List.map(
+                                              (item, i) => (
+                                                  <>
+                                                      {i > 0 ? ', ' : null}
+                                                      {item.comment ? (
+                                                          <span className="comment">
+                                                              {
+                                                                  item.comment
+                                                              }{' '}
+                                                          </span>
+                                                      ) : null}
+                                                      {item.value}
+                                                  </>
+                                              ),
+                                              item.values
+                                          )}
                                 </td>
                             </tr>
-                        ))
+                        ),
+                        props.forms
                     )}
                 </tbody>
             </LS.DataTable>
@@ -79,7 +95,7 @@ export function init(
     }> = (props) => {
         return (
             <lexComponents.Subtile tileId={props.tileId} source={Source.ASSC}>
-                {!Dict.empty(props.variant.forms) ? (
+                {!List.empty(props.variant.forms) ? (
                     <SubtileRow>
                         <span className="key">
                             {ut.translate('lex_overview__forms')}:

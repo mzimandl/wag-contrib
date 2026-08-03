@@ -24,9 +24,9 @@
         "lex_overview__conjugation_participle_active": "příčestí činné",
         "lex_overview__conjugation_participle_passive": "příčestí trpné",
         "lex_overview__conjugation_transgressive_past_m": "přechodník minulý, m.",
-        "lex_overview__conjugation_transgressive_past_zs": "přechodník minulý, zs.",
+        "lex_overview__conjugation_transgressive_past_zs": "přechodník minulý, ž. + s.",
         "lex_overview__conjugation_transgressive_present_m": "přechodník přítomný, m.",
-        "lex_overview__conjugation_transgressive_present_zs": "přechodník přítomný, zs.",
+        "lex_overview__conjugation_transgressive_present_zs": "přechodník přítomný, ž. + s.",
         "lex_overview__conjugation_verbal_noun": "verbální substantivum",
         "lex_overview__origin": "původ",
         "lex_overview__no_freq": "K frekvenci slova nejsou v korpusu k dispozici žádné informace."
@@ -56,9 +56,9 @@
         "lex_overview__conjugation_participle_active": "participle active",
         "lex_overview__conjugation_participle_passive": "participle passive",
         "lex_overview__conjugation_transgressive_past_m": "transgressive past, m.",
-        "lex_overview__conjugation_transgressive_past_zs": "transgressive past, zs.",
+        "lex_overview__conjugation_transgressive_past_zs": "transgressive past, f. + n.",
         "lex_overview__conjugation_transgressive_present_m": "transgressive present, m.",
-        "lex_overview__conjugation_transgressive_present_zs": "transgressive present, zs.",
+        "lex_overview__conjugation_transgressive_present_zs": "transgressive present, f + n.",
         "lex_overview__conjugation_verbal_noun": "verbal noun",
         "lex_overview__origin": "origin",
         "lex_overview__no_freq": "No information about word frequency is available in the corpus."

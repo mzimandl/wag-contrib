@@ -30,7 +30,7 @@ import { init as initAsscViews } from './assc/views.js';
 import { init as initIjpViews } from './ijp/views.js';
 import { init as initCorpusViews } from './corpus/views.js';
 import * as S from './style.js';
-import { Dict, List, pipe, tuple } from 'cnc-tskit';
+import { List, pipe } from 'cnc-tskit';
 import { initLexComponents } from '../../lexCommon/views.js';
 import { LexItem } from '../../lexCommon/types/dictionary.js';
 import { SubtileRow } from '../../lexCommon/style.js';
@@ -147,6 +147,13 @@ export function init(
             withPosInfo: boolean,
             clickHandler?: () => void
         ) => {
+            const info = [];
+            if (withInfo) {
+                info.push(translateMorfology(variant, withPosInfo, true));
+            }
+            if (variant.uninflected) {
+                info.push(ut.translate('lex_common__uninflected_short'));
+            }
             return (
                 <h4
                     key={key}
@@ -161,50 +168,20 @@ export function init(
                     {clickHandler ? (
                         <a>
                             {variant.lemma}
-                            {(withInfo || variant.uninflected) &&
-                            variant.pos ? (
+                            {!List.empty(info) ? (
                                 <span className="morphology">
                                     {' '}
-                                    (
-                                    {withInfo
-                                        ? translateMorfology(
-                                              variant,
-                                              withPosInfo,
-                                              true
-                                          )
-                                        : null}
-                                    {variant.uninflected
-                                        ? ' ' +
-                                          ut.translate(
-                                              'lex_common__uninflected_short'
-                                          )
-                                        : null}
-                                    )
+                                    ({info.join(' ')})
                                 </span>
                             ) : null}
                         </a>
                     ) : (
                         <span>
                             {variant.lemma}
-                            {(withInfo || variant.uninflected) &&
-                            variant.pos ? (
+                            {!List.empty(info) ? (
                                 <span className="morphology">
                                     {' '}
-                                    (
-                                    {withInfo
-                                        ? translateMorfology(
-                                              variant,
-                                              withPosInfo,
-                                              true
-                                          )
-                                        : null}
-                                    {variant.uninflected
-                                        ? ' ' +
-                                          ut.translate(
-                                              'lex_common__uninflected_short'
-                                          )
-                                        : null}
-                                    )
+                                    ({info.join(' ')})
                                 </span>
                             ) : null}
                         </span>
@@ -243,7 +220,8 @@ export function init(
         return (
             <S.Header source={props.source} width={itemWidth}>
                 <h2>{props.selectedVariant.lemma}</h2>
-                {List.size(props.variants) > 1 ? (
+                {List.size(props.variants) > 1 ||
+                props.variants[0].plurality > 0 ? (
                     <div className="variant-grid">
                         {pipe(
                             props.variants,
@@ -461,7 +439,7 @@ export function init(
                         />
                     ) : null}
                     {asscVariantData &&
-                    !Dict.empty(asscVariantData.forms) &&
+                    !List.empty(asscVariantData.forms) &&
                     !ijpHasForms() ? (
                         <asscViews.Subtile
                             tileId={props.tileId}
