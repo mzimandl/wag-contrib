@@ -1,5 +1,7 @@
 {
     "cs-CZ": {
+        "lex_common__term": "Heslo",
+        "lex_common__terms": "Hesla",
         "lex_common__source": "Zdroj",
         "lex_common__source_corpus": "Český národní korpus",
         "lex_common__source_assc": "Akademický slovník současné češtiny",
@@ -75,6 +77,8 @@
         "lex_common__ijp_not_found": "Položka nebyla nalezena v Internetové jazykové příručce"
     },
     "en-US": {
+        "lex_common__term": "Term",
+        "lex_common__terms": "Terms",
         "lex_common__source": "Source",
         "lex_common__source_corpus": "Czech National Corpus",
         "lex_common__source_assc": "Academic Dictionary of Contemporary Czech",
