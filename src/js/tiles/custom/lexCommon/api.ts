@@ -263,6 +263,10 @@ export class LexApi implements ResourceApi<LexArgs, LexResponse> {
         return null;
     }
 
+    isBacklinkSupported(source: Source): boolean {
+        return !!this.backlinkConf[source];
+    }
+
     getBacklinkURL(source: Source, id: string): URL {
         const url = new URL(
             this.backlinkConf[source].url.replace(

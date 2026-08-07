@@ -4,6 +4,9 @@
         "apiURL": {
             "type": "string"
         },
+        "backlinkConf": {
+            "$ref": "#/definitions/Partial<Record<Source,{url:string;}>>"
+        },
         "tileType": {
             "description": "An identifier as defined by tiles configuration interface",
             "type": "string"
@@ -74,9 +77,92 @@
     },
     "required": [
         "apiURL",
+        "backlinkConf",
         "tileType"
     ],
     "definitions": {
+        "Partial<Record<Source,{url:string;}>>": {
+            "type": "object",
+            "properties": {
+                "assc": {
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "url"
+                    ]
+                },
+                "ijp": {
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "url"
+                    ]
+                },
+                "ssjc": {
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "url"
+                    ]
+                },
+                "psjc": {
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "url"
+                    ]
+                },
+                "sjc": {
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "url"
+                    ]
+                },
+                "djd": {
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "url"
+                    ]
+                },
+                "corpus": {
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "url"
+                    ]
+                }
+            }
+        },
         "BacklinkConf": {
             "type": "object",
             "properties": {

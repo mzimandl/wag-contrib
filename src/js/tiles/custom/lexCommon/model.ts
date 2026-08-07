@@ -116,7 +116,12 @@ export class LexCommonModel extends TileStatelessModel<LexCommonModelState> {
                             const variant = getCurrentVariant(
                                 state.currQueryMatch
                             );
-                            if (variant) {
+                            if (
+                                variant &&
+                                this.lexApi.isBacklinkSupported(
+                                    action.payload.corpusId as Source
+                                )
+                            ) {
                                 data.backlink = {
                                     key:
                                         List.size(
