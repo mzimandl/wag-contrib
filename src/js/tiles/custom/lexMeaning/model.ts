@@ -184,8 +184,10 @@ export class LexMeaningModel extends TileStatelessModel<LexMeaningModelState> {
                                 },
                             });
                             if (
-                                resp.data.examples.length > 0 ||
-                                resp.data.notes.length > 0
+                                (!!resp.data.examples &&
+                                    !List.empty(resp.data.examples)) ||
+                                (!!resp.data.notes &&
+                                    !List.empty(resp.data.notes))
                             ) {
                                 data.hasData = true;
                             }

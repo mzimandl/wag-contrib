@@ -196,6 +196,9 @@ export function init(
         const validIjpData = pipe(
             state.data.ijp,
             List.filter((d) => isIjpData(d)),
+            List.filter(
+                (d) => !!d.data.examples && !List.empty(d.data.examples)
+            ),
             List.map((d) => d.data)
         );
 
