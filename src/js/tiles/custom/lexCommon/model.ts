@@ -26,6 +26,7 @@ import { LexApi } from './api.js';
 import { List, pipe } from 'cnc-tskit';
 import { IDataStreaming } from '../../../page/streaming.js';
 import { TileStatelessModel } from '../../../models/tiles/base.js';
+import { Source } from './types/enums.js';
 
 export interface LexCommonModelState {
     currQueryMatch: QueryMatch;
@@ -108,10 +109,44 @@ export class LexCommonModel extends TileStatelessModel<LexCommonModelState> {
                             .startNewSubgroup(this.tileId),
                         this.tileId,
                         this.appServices.getISO639UILang(),
-                        action.payload.corpusId
+                        action.payload.corpusId // todo change to sourceId
                     )
                     .subscribe({
                         next: (data) => {
+                            const variant = getCurrentVariant(
+                                state.currQueryMatch
+                            );
+                            if (variant) {
+                                data.backlink = {
+                                    key:
+                                        List.size(
+                                            variant.sources[
+                                                action.payload.corpusId
+                                            ]
+                                        ) > 1
+                                            ? this.appServices.translate(
+                                                  'lex_common__terms'
+                                              )
+                                            : this.appServices.translate(
+                                                  'lex_common__term'
+                                              ),
+                                    links: List.map(
+                                        (sourceItem) => ({
+                                            label: `${variant.lemma} ${this.homonymToGreek(sourceItem.homonym)}`,
+                                            url: this.lexApi
+                                                .getBacklinkURL(
+                                                    action.payload
+                                                        .corpusId as Source,
+                                                    sourceItem.id
+                                                )
+                                                .toString(),
+                                        }),
+                                        variant.sources[
+                                            action.payload.corpusId
+                                        ] || []
+                                    ),
+                                };
+                            }
                             dispatch({
                                 name: GlobalActions.GetSourceInfoDone.name,
                                 payload: {
@@ -185,5 +220,30 @@ export class LexCommonModel extends TileStatelessModel<LexCommonModelState> {
                 console.error('lex api error:', err);
             },
         });
+    }
+
+    private homonymToGreek(homonym: number): string {
+        switch (homonym) {
+            case 1:
+                return 'I';
+            case 2:
+                return 'II';
+            case 3:
+                return 'III';
+            case 4:
+                return 'IV';
+            case 5:
+                return 'V';
+            case 6:
+                return 'VI';
+            case 7:
+                return 'VII';
+            case 8:
+                return 'VIII';
+            case 9:
+                return 'IX';
+            default:
+                return '';
+        }
     }
 }

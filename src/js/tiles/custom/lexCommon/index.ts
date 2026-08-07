@@ -37,9 +37,11 @@ import {
 } from '../../../page/tile.js';
 import { LexCommonModel } from './model.js';
 import { LexApi } from './api.js';
+import { Source } from './types/enums.js';
 
 export interface LexCommonTileConf extends TileConf {
     apiURL: string;
+    backlinkConf: Record<Source, { url: string }>;
 }
 
 export class LexCommonTile implements ITileProvider {
@@ -79,7 +81,12 @@ export class LexCommonTile implements ITileProvider {
         this.widthFract = widthFract;
         this.dependentTiles = dependentTiles;
         this.configuredLemLevels = conf.lemmatizationLevels || [];
-        this.lexApi = new LexApi(conf.apiURL, conf.srcInfoURL, appServices);
+        this.lexApi = new LexApi(
+            conf.apiURL,
+            conf.srcInfoURL,
+            appServices,
+            conf.backlinkConf
+        );
 
         this.model = new LexCommonModel({
             dispatcher,

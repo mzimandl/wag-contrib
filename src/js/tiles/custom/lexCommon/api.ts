@@ -138,11 +138,19 @@ export class LexApi implements ResourceApi<LexArgs, LexResponse> {
 
     private readonly corpusInfoApi: CorpusInfoAPI;
 
-    constructor(apiURL: string, srcInfoURL: string, apiServices: IApiServices) {
+    private readonly backlinkConf: Record<Source, { url: string }>;
+
+    constructor(
+        apiURL: string,
+        srcInfoURL: string,
+        apiServices: IApiServices,
+        backlinkConf: Record<Source, { url: string }>
+    ) {
         this.apiURL = apiURL;
         this.customHeaders = apiServices.getApiHeaders(apiURL) || {};
         this.apiServices = apiServices;
         this.corpusInfoApi = new CorpusInfoAPI(srcInfoURL, apiServices);
+        this.backlinkConf = backlinkConf;
     }
 
     private prepareArgs(key: string, values: string[]): string[] {
@@ -252,9 +260,16 @@ export class LexApi implements ResourceApi<LexArgs, LexResponse> {
     }
 
     getBacklink(queryId: number, subqueryId?: number): Backlink | null {
-        return {
-            queryId,
-            label: 'heslo v Akademickém slovníku současné češtiny',
-        };
+        return null;
+    }
+
+    getBacklinkURL(source: Source, id: string): URL {
+        const url = new URL(
+            this.backlinkConf[source].url.replace(
+                '{id}',
+                encodeURIComponent(id)
+            )
+        );
+        return url;
     }
 }

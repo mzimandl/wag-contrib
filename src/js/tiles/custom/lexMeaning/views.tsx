@@ -37,6 +37,7 @@ import {
     isIjpError,
 } from '../lexCommon/api.js';
 import { SystemMessageType } from '../../../types.js';
+import { IJPData } from '../lexCommon/types/ijp.js';
 
 export function init(
     dispatcher: IActionDispatcher,
@@ -49,7 +50,7 @@ export function init(
 
     // -------------------- <Header /> -----------------------------------------------
 
-    const Header: React.FC<{ i: number; line: string }> = (props) => {
+    const ASSCHeader: React.FC<{ i: number; line: string }> = (props) => {
         const [collapsed, setCollapsed] = React.useState(true);
 
         const onClick = (ev: React.MouseEvent<HTMLDivElement>) => {
@@ -75,12 +76,25 @@ export function init(
         );
     };
 
+    const IJPHeader: React.FC<{
+        i: number;
+        term: string;
+        partOfSpeech: string;
+    }> = (props) => {
+        return (
+            <S.ASSCStyle key={props.i} className={'header-line'}>
+                <span className="heslo">{props.term}</span>
+                <span className="sl_druh">{props.partOfSpeech}</span>
+            </S.ASSCStyle>
+        );
+    };
+
     // -------------------- <LexMeaningTileView /> -----------------------------------------------
 
     const LexMeaningTileView: React.FC<CoreTileComponentProps> = (props) => {
         const state = useModel(model);
 
-        const renderDataItem = (
+        const renderASSCDataItem = (
             key: string,
             data: HTMLBlock,
             isParent: boolean
@@ -90,7 +104,7 @@ export function init(
                     <S.MeaningHead>
                         {List.map(
                             (line, i) => (
-                                <Header i={i} line={line} />
+                                <ASSCHeader i={i} line={line} />
                             ),
                             data.formattedVariants
                         )}
@@ -138,15 +152,57 @@ export function init(
             );
         };
 
+        const renderIJPDataItem = (key: string, data: IJPData) => {
+            return (
+                <S.MeaningItem key={key}>
+                    <S.MeaningHead>
+                        <IJPHeader
+                            i={0}
+                            term={data.heading}
+                            partOfSpeech={data.gender}
+                        />
+                    </S.MeaningHead>
+                    <S.MeaningBody>
+                        <S.ASSCStyle className="meaning-block">
+                            <span className="exeplifikace">
+                                {List.map(
+                                    (example, i) => (
+                                        <>
+                                            {i > 0 ? <br /> : null}
+                                            <span
+                                                style={{ fontStyle: 'italic' }}
+                                            >
+                                                <span className="normalni">
+                                                    {example}
+                                                </span>
+                                            </span>
+                                        </>
+                                    ),
+                                    data.examples
+                                )}
+                            </span>
+                        </S.ASSCStyle>
+                    </S.MeaningBody>
+                </S.MeaningItem>
+            );
+        };
+
         const validAsscData = pipe(
             state.data.assc,
             List.filter((d) => isAsscHtml(d)),
             List.map((d) => d.data)
         );
 
+        const validIjpData = pipe(
+            state.data.ijp,
+            List.filter((d) => isIjpData(d)),
+            List.map((d) => d.data)
+        );
+
         const ijpNotes = pipe(
             state.data.ijp,
             List.filter((v) => isIjpData(v)),
+            List.filter((v) => !List.empty(v.data.notes)),
             List.flatMap((v) => v.data.notes)
         );
 
@@ -169,7 +225,10 @@ export function init(
                 <globalComponents.Subtile
                     tileId={props.tileId}
                     isBusy={state.isBusy}
-                    hasData={!List.empty(validAsscData)}
+                    hasData={
+                        !List.empty(validAsscData) ||
+                        (!List.empty(validIjpData) && !state.isBusy)
+                    }
                     setMaxHeight={true}
                 >
                     {props.tileHeader}
@@ -218,7 +277,7 @@ export function init(
                                                                     ke slovu
                                                                 </span>
                                                             ) : null}
-                                                            {renderDataItem(
+                                                            {renderASSCDataItem(
                                                                 `item-${i}-${j}`,
                                                                 block,
                                                                 isParent
@@ -227,6 +286,31 @@ export function init(
                                                     );
                                                 }, blocks),
                                             validAsscData
+                                        )}
+                                    </SubtileRow>
+                                </lexComponents.Subtile>
+                            ) : null}
+
+                            {List.empty(validAsscData) &&
+                            !List.empty(validIjpData) &&
+                            !state.isBusy ? (
+                                <lexComponents.Subtile
+                                    tileId={props.tileId}
+                                    source={Source.IJP}
+                                    className="data-box"
+                                >
+                                    <SubtileRow className="scroller">
+                                        {List.map(
+                                            (item, i) => (
+                                                <>
+                                                    {i > 0 ? <hr /> : null}
+                                                    {renderIJPDataItem(
+                                                        `item-${i}`,
+                                                        item
+                                                    )}
+                                                </>
+                                            ),
+                                            validIjpData
                                         )}
                                     </SubtileRow>
                                 </lexComponents.Subtile>
