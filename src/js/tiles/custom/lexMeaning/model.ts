@@ -175,10 +175,7 @@ export class LexMeaningModel extends TileStatelessModel<LexMeaningModelState> {
                                 });
                                 data.hasData = true;
                             }
-                        } else if (
-                            isIjpData(resp) &&
-                            List.size(resp.data.notes) > 0
-                        ) {
+                        } else if (isIjpData(resp)) {
                             dispatch<typeof Actions.TilePartialDataLoaded>({
                                 name: Actions.TilePartialDataLoaded.name,
                                 payload: {
@@ -186,7 +183,12 @@ export class LexMeaningModel extends TileStatelessModel<LexMeaningModelState> {
                                     response: resp,
                                 },
                             });
-                            data.hasData = true;
+                            if (
+                                resp.data.examples.length > 0 ||
+                                resp.data.notes.length > 0
+                            ) {
+                                data.hasData = true;
+                            }
                         } else if (isAsscError(resp) || isIjpError(resp)) {
                             dispatch<typeof Actions.TilePartialDataLoaded>({
                                 name: Actions.TilePartialDataLoaded.name,
