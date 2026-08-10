@@ -1,6 +1,22 @@
 {
     "type": "object",
     "properties": {
+        "sourcePriority": {
+            "type": "array",
+            "items": {
+                "enum": [
+                    "assc",
+                    "corpus",
+                    "djd",
+                    "ijp",
+                    "psjc",
+                    "sjc",
+                    "ssc",
+                    "ssjc"
+                ],
+                "type": "string"
+            }
+        },
         "tileType": {
             "description": "An identifier as defined by tiles configuration interface",
             "type": "string"
@@ -70,6 +86,7 @@
         }
     },
     "required": [
+        "sourcePriority",
         "tileType"
     ],
     "definitions": {
