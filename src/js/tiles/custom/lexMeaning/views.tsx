@@ -35,9 +35,12 @@ import {
     isAsscHtml,
     isIjpData,
     isIjpError,
+    isSscData,
+    isSscError,
 } from '../lexCommon/api.js';
 import { SystemMessageType } from '../../../types.js';
 import { IJPData } from '../lexCommon/types/ijp.js';
+import { SSCData } from '../lexCommon/types/ssc.js';
 
 export function init(
     dispatcher: IActionDispatcher,
@@ -187,6 +190,20 @@ export function init(
             );
         };
 
+        const renderSSCDataItem = (key: string, data: SSCData) => {
+            return (
+                <S.MeaningItem key={key}>
+                    <S.MeaningHead>
+                        <div
+                            dangerouslySetInnerHTML={{
+                                __html: data.html_content,
+                            }}
+                        />
+                    </S.MeaningHead>
+                </S.MeaningItem>
+            );
+        };
+
         const validAsscData = pipe(
             state.data.assc,
             List.filter((d) => isAsscHtml(d)),
@@ -199,6 +216,12 @@ export function init(
             List.filter(
                 (d) => !!d.data.examples && !List.empty(d.data.examples)
             ),
+            List.map((d) => d.data)
+        );
+
+        const validSscData = pipe(
+            state.data.ssc,
+            List.filter((d) => isSscData(d)),
             List.map((d) => d.data)
         );
 
@@ -230,7 +253,8 @@ export function init(
                     isBusy={state.isBusy}
                     hasData={
                         !List.empty(validAsscData) ||
-                        (!List.empty(validIjpData) && !state.isBusy)
+                        (!List.empty(validIjpData) && !state.isBusy) ||
+                        (!List.empty(validSscData) && !state.isBusy)
                     }
                     setMaxHeight={true}
                 >
@@ -239,9 +263,16 @@ export function init(
                     <S.MeaningTileView>
                         <div className="stretch">
                             {pipe(
-                                [...state.data.ijp, ...state.data.assc],
+                                [
+                                    ...state.data.ijp,
+                                    ...state.data.assc,
+                                    ...state.data.ssc,
+                                ],
                                 List.filter(
-                                    (v) => isIjpError(v) || isAsscError(v)
+                                    (v) =>
+                                        isIjpError(v) ||
+                                        isAsscError(v) ||
+                                        isSscError(v)
                                 ),
                                 List.map((v) => (
                                     <lexComponents.MessageSubtile
@@ -295,6 +326,32 @@ export function init(
                             ) : null}
 
                             {List.empty(validAsscData) &&
+                            !List.empty(validSscData) &&
+                            !state.isBusy ? (
+                                <lexComponents.Subtile
+                                    tileId={props.tileId}
+                                    source={Source.SSC}
+                                    className="data-box"
+                                >
+                                    <SubtileRow className="scroller">
+                                        {List.map(
+                                            (item, i) => (
+                                                <>
+                                                    {i > 0 ? <hr /> : null}
+                                                    {renderSSCDataItem(
+                                                        `item-${i}`,
+                                                        item
+                                                    )}
+                                                </>
+                                            ),
+                                            validSscData
+                                        )}
+                                    </SubtileRow>
+                                </lexComponents.Subtile>
+                            ) : null}
+
+                            {List.empty(validAsscData) &&
+                            List.empty(validSscData) &&
                             !List.empty(validIjpData) &&
                             !state.isBusy ? (
                                 <lexComponents.Subtile

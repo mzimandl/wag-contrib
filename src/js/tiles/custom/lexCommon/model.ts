@@ -22,7 +22,7 @@ import { LemmatizationLevel, QueryMatch } from '../../../query/index.js';
 import { Actions as GlobalActions } from '../../../models/actions.js';
 import { Actions } from './actions.js';
 import { getCurrentVariant } from './types/dictionary.js';
-import { LexApi } from './api.js';
+import { LexApi, LexArgs } from './api.js';
 import { List, pipe } from 'cnc-tskit';
 import { IDataStreaming } from '../../../page/streaming.js';
 import { TileStatelessModel } from '../../../models/tiles/base.js';
@@ -186,7 +186,7 @@ export class LexCommonModel extends TileStatelessModel<LexCommonModelState> {
         dispatch: SEDispatcher
     ) {
         const variant = getCurrentVariant(state.currQueryMatch);
-        const args = {
+        const args: LexArgs = {
             asscIds:
                 variant && variant.sources['assc']
                     ? pipe(
@@ -208,6 +208,17 @@ export class LexCommonModel extends TileStatelessModel<LexCommonModelState> {
                               []
                           ),
                           List.filter((id) => this.isValidIjpId(id))
+                      )
+                    : [],
+            sscIds:
+                variant && variant.sources['ssc']
+                    ? pipe(
+                          variant.sources['ssc'],
+                          List.map((v) => v.id),
+                          List.reduce(
+                              (acc, curr, i) => List.addUnique(curr, acc),
+                              []
+                          )
                       )
                     : [],
         };

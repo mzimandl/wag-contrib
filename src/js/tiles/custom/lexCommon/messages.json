@@ -71,10 +71,13 @@
         "lex_common__not_found": "Litujeme, v tomto zdroji se hledaný výraz nevyskytuje",
         "lex_common__assc_unavailable": "Litujeme, Akademický slovník současné češtiny není dostupný",
         "lex_common__ijp_unavailable": "Litujeme, Internetová jazyková příručka není dostupná",
+        "lex_common__ssc_unavailable": "Litujeme, Slovník spisovné češtiny není dostupný",
         "lex_common__assc_failed": "Litujeme, nepodařilo se načíst data z Akademického slovníku současné češtiny",
         "lex_common__ijp_failed": "Litujeme, nepodařilo se načíst data z Internetové jazykové příručky",
+        "lex_common__ssc_failed": "Litujeme, nepodařilo se načíst data z Slovníku spisovné češtiny",
         "lex_common__assc_not_found": "Položka nebyla nalezena v Akademickém slovníku současné češtiny",
-        "lex_common__ijp_not_found": "Položka nebyla nalezena v Internetové jazykové příručce"
+        "lex_common__ijp_not_found": "Položka nebyla nalezena v Internetové jazykové příručce",
+        "lex_common__ssc_not_found": "Položka nebyla nalezena v Slovníku spisovné češtiny"
     },
     "en-US": {
         "lex_common__term": "Term",
@@ -148,9 +151,12 @@
         "lex_common__not_found": "Our apologies, the searched term does not occur in this source",
         "lex_common__assc_unavailable": "Our apologies, the Academic Dictionary of Contemporary Czech is unavailable",
         "lex_common__ijp_unavailable": "Our apologies, the Internet Language Guide is unavailable",
+        "lex_common__ssc_unavailable": "Our apologies, the Dictionary of Standard Czech is unavailable",
         "lex_common__assc_failed": "Our apologies, loading data from the Academic Dictionary of Contemporary Czech failed",
         "lex_common__ijp_failed": "Our apologies, loading data from the Internet Language Guide failed",
+        "lex_common__ssc_failed": "Our apologies, loading data from the Dictionary of Standard Czech failed",
         "lex_common__assc_not_found": "Item not found in the Academic Dictionary of Contemporary Czech",
-        "lex_common__ijp_not_found": "Item not found in the Internet Language Guide"
+        "lex_common__ijp_not_found": "Item not found in the Internet Language Guide",
+        "lex_common__ssc_not_found": "Item not found in the Dictionary of Standard Czech"
     }
 }

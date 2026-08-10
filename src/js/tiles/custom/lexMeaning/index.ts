@@ -97,6 +97,7 @@ export class LexMeaningTile implements ITileProvider {
                 data: {
                     assc: [],
                     ijp: [],
+                    ssc: [],
                 },
                 error: null,
                 backlink: null,

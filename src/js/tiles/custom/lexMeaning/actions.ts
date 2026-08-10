@@ -21,9 +21,10 @@ import { Actions as GlobalActions } from '../../../models/actions.js';
 import { HTMLBlock } from '../lexCommon/types/assc.js';
 import { LexResponse } from '../lexCommon/api.js';
 import { IJPData } from '../lexCommon/types/ijp.js';
+import { SSCData } from '../lexCommon/types/ssc.js';
 
 export interface PartialDataPayload {
-    response: LexResponse<HTMLBlock[] | IJPData | string>;
+    response: LexResponse<HTMLBlock[] | IJPData | SSCData | string>;
 }
 
 export class Actions {

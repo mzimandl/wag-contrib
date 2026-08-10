@@ -27,10 +27,12 @@ import { HTMLBlock, VariantData } from './types/assc.js';
 import { IJPData as IJPData } from './types/ijp.js';
 import { Source, Type } from './types/enums.js';
 import { CorpusInfoAPI } from '../../../api/vendor/mquery/corpusInfo.js';
+import { SSCData } from './types/ssc.js';
 
 export interface LexArgs {
     asscIds: string[];
     ijpIds: string[];
+    sscIds: string[];
 }
 
 export function isEmptyArgs(args: LexArgs): boolean {
@@ -38,7 +40,13 @@ export function isEmptyArgs(args: LexArgs): boolean {
 }
 
 export interface LexResponse<
-    T = IJPData | Array<VariantData> | Array<HTMLBlock> | 'done' | string,
+    T =
+        | SSCData
+        | IJPData
+        | Array<VariantData>
+        | Array<HTMLBlock>
+        | 'done'
+        | string,
 > {
     source: Source;
     type: string;
@@ -115,6 +123,35 @@ export function isIjpError(v: LexResponse): v is LexResponse<string> {
     );
 }
 
+export function isSscData(v: LexResponse): v is LexResponse<SSCData> {
+    return (
+        v &&
+        v.source === Source.SSC &&
+        !!v.data &&
+        v.data !== 'done' &&
+        typeof v.data !== 'string'
+    );
+}
+
+export function isSscDone(v: LexResponse): v is LexResponse<'done'> {
+    return (
+        v &&
+        v.source === Source.SSC &&
+        v.statusCode === 200 &&
+        v.data === 'done'
+    );
+}
+
+export function isSscError(v: LexResponse): v is LexResponse<string> {
+    return (
+        v &&
+        v.source === Source.SSC &&
+        v.statusCode >= 400 &&
+        typeof v.data === 'string' &&
+        v.data !== 'done'
+    );
+}
+
 export function getErrorMessage(lexResponse: LexResponse): Array<string> {
     switch (lexResponse.statusCode) {
         case 503:
@@ -170,6 +207,7 @@ export class LexApi implements ResourceApi<LexArgs, LexResponse> {
         const params = [
             ...this.prepareArgs('assc_id', queryArgs.asscIds),
             ...this.prepareArgs('ijp_id', queryArgs.ijpIds),
+            ...this.prepareArgs('ssc_id', queryArgs.sscIds),
             this.prepareArgs('event', [`DataTile-${tileId}.${queryIdx}`]),
         ];
         const emptyArgs = isEmptyArgs(queryArgs);

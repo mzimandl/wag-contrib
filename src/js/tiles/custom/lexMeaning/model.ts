@@ -33,12 +33,16 @@ import {
     isIjpData,
     isIjpDone,
     isIjpError,
+    isSscData,
+    isSscDone,
+    isSscError,
     LexResponse,
 } from '../lexCommon/api.js';
 import { scan } from 'rxjs';
 import { TileStatelessModel } from '../../../models/tiles/base.js';
 import { IJPData } from '../lexCommon/types/ijp.js';
 import { Source } from '../lexCommon/types/enums.js';
+import { SSCData } from '../lexCommon/types/ssc.js';
 
 export interface LexMeaningModelState {
     isBusy: boolean;
@@ -46,6 +50,7 @@ export interface LexMeaningModelState {
     data: {
         ijp: Array<LexResponse<IJPData | string>>;
         assc: Array<LexResponse<HTMLBlock[] | string>>;
+        ssc: Array<LexResponse<SSCData | string>>;
     };
     error: string;
     backlink: Backlink;
@@ -89,6 +94,7 @@ export class LexMeaningModel extends TileStatelessModel<LexMeaningModelState> {
                 state.data = {
                     ijp: [],
                     assc: [],
+                    ssc: [],
                 };
                 state.isBusy = true;
             },
@@ -122,6 +128,11 @@ export class LexMeaningModel extends TileStatelessModel<LexMeaningModelState> {
                     isIjpError(action.payload.response)
                 ) {
                     state.data.ijp.push(action.payload.response);
+                } else if (
+                    isSscData(action.payload.response) ||
+                    isSscError(action.payload.response)
+                ) {
+                    state.data.ssc.push(action.payload.response);
                 }
             }
         );
@@ -151,7 +162,7 @@ export class LexMeaningModel extends TileStatelessModel<LexMeaningModelState> {
             .pipe(
                 scan(
                     (data, resp) => {
-                        if (data.done.assc && data.done.ijp) {
+                        if (data.done.assc && data.done.ijp && data.done.ssc) {
                             data.dispatched = true;
                             return data;
                         }
@@ -193,7 +204,22 @@ export class LexMeaningModel extends TileStatelessModel<LexMeaningModelState> {
                             ) {
                                 data.hasData = true;
                             }
-                        } else if (isAsscError(resp) || isIjpError(resp)) {
+                        } else if (isSscData(resp)) {
+                            dispatch<typeof Actions.TilePartialDataLoaded>({
+                                name: Actions.TilePartialDataLoaded.name,
+                                payload: {
+                                    tileId: this.tileId,
+                                    response: resp,
+                                },
+                            });
+                            if (!!resp.data.html_content) {
+                                data.hasData = true;
+                            }
+                        } else if (
+                            isAsscError(resp) ||
+                            isIjpError(resp) ||
+                            isSscError(resp)
+                        ) {
                             dispatch<typeof Actions.TilePartialDataLoaded>({
                                 name: Actions.TilePartialDataLoaded.name,
                                 payload: {
@@ -206,15 +232,18 @@ export class LexMeaningModel extends TileStatelessModel<LexMeaningModelState> {
                             data.done.assc = true;
                         } else if (isIjpDone(resp)) {
                             data.done.ijp = true;
+                        } else if (isSscDone(resp)) {
+                            data.done.ssc = true;
                         } else if (resp === null) {
                             data.done.assc = true;
                             data.done.ijp = true;
+                            data.done.ssc = true;
                         }
                         return data;
                     },
                     {
                         hasData: false,
-                        done: { assc: false, ijp: false },
+                        done: { assc: false, ijp: false, ssc: false },
                         dispatched: false,
                     }
                 )
