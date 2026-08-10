@@ -138,13 +138,13 @@ export class LexApi implements ResourceApi<LexArgs, LexResponse> {
 
     private readonly corpusInfoApi: CorpusInfoAPI;
 
-    private readonly backlinkConf: Record<Source, { url: string }>;
+    private readonly backlinkConf: Partial<Record<Source, { url: string }>>;
 
     constructor(
         apiURL: string,
         srcInfoURL: string,
         apiServices: IApiServices,
-        backlinkConf: Record<Source, { url: string }>
+        backlinkConf: Partial<Record<Source, { url: string }>>
     ) {
         this.apiURL = apiURL;
         this.customHeaders = apiServices.getApiHeaders(apiURL) || {};
@@ -201,6 +201,12 @@ export class LexApi implements ResourceApi<LexArgs, LexResponse> {
         source: string
     ): Observable<SourceDetails> {
         switch (source) {
+            case Source.Corpus:
+                return this.corpusInfoApi.call(streaming, tileId, 0, {
+                    corpname: source,
+                    lang,
+                });
+
             case Source.ASSC:
                 return rxOf({
                     tileId,
@@ -252,11 +258,42 @@ export class LexApi implements ResourceApi<LexArgs, LexResponse> {
                     author: 'Ústav pro jazyk český AV ČR',
                     href: 'https://ujc.cas.cz/cs/jazykova-poradna/',
                 });
+
+            case Source.SSC:
+                return rxOf({
+                    tileId,
+                    title: this.apiServices.importExternalMessage({
+                        'cs-CZ':
+                            'Slovník spisovné češtiny pro školu a veřejnost',
+                        'en-US':
+                            'Slovník spisovné češtiny pro školu a veřejnost UNTRANSLATED',
+                    }),
+                    description: this.apiServices.importExternalMessage({
+                        'cs-CZ':
+                            'Slovník spisovné češtiny pro školu a veřejnost, zkratka SSČ, je normativní výkladový slovník českého jazyka zpracovaný a průběžně aktualizovaný Ústavem pro jazyk český Akademie věd České republiky a vydávaný nakladatelstvím Academia. Slovník zahrnuje téměř 50 000 hesel současné češtiny.',
+                        'en-US':
+                            'Slovník spisovné češtiny pro školu a veřejnost, zkratka SSČ, je normativní výkladový slovník českého jazyka zpracovaný a průběžně aktualizovaný Ústavem pro jazyk český Akademie věd České republiky a vydávaný nakladatelstvím Academia. Slovník zahrnuje téměř 50 000 hesel současné češtiny. UNTRANSLATED',
+                    }),
+                    author: 'Ústav pro jazyk český AV ČR',
+                    href: null,
+                });
+
+            default:
+                return rxOf({
+                    tileId,
+                    title: this.apiServices.importExternalMessage({
+                        'cs-CZ': `Neznámý zdroj "${source}"`,
+                        'en-US': `Unknown source "${source}"`,
+                    }),
+                    description: this.apiServices.importExternalMessage({
+                        'cs-CZ': 'Informace o zdroji nejsou dostupné.',
+                        'en-US':
+                            'Information about the source is not available.',
+                    }),
+                    author: '',
+                    href: null,
+                });
         }
-        return this.corpusInfoApi.call(streaming, tileId, 0, {
-            corpname: source,
-            lang,
-        });
     }
 
     getBacklink(queryId: number, subqueryId?: number): Backlink | null {

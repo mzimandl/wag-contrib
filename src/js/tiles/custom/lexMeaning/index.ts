@@ -37,8 +37,11 @@ import {
     lemLevelSupport,
 } from '../../../page/tile.js';
 import { LexMeaningModel } from './model.js';
+import { Source } from '../lexCommon/types/enums.js';
 
-export interface LexMeaningTileConf extends TileConf {}
+export interface LexMeaningTileConf extends TileConf {
+    sourcePriority: Array<Source>;
+}
 
 export class LexMeaningTile implements ITileProvider {
     private readonly tileId: number;
@@ -90,6 +93,7 @@ export class LexMeaningTile implements ITileProvider {
             initState: {
                 isBusy: isBusy,
                 queryMatches: List.map(findCurrQueryMatch, queryMatches),
+                sourcePriority: conf.sourcePriority,
                 data: {
                     assc: [],
                     ijp: [],

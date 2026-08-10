@@ -38,9 +38,11 @@ import {
 import { scan } from 'rxjs';
 import { TileStatelessModel } from '../../../models/tiles/base.js';
 import { IJPData } from '../lexCommon/types/ijp.js';
+import { Source } from '../lexCommon/types/enums.js';
 
 export interface LexMeaningModelState {
     isBusy: boolean;
+    sourcePriority: Array<Source>;
     data: {
         ijp: Array<LexResponse<IJPData | string>>;
         assc: Array<LexResponse<HTMLBlock[] | string>>;
