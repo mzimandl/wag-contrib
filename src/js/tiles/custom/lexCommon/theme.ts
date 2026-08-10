@@ -33,16 +33,24 @@ function isLexTheme(theme: Theme): theme is Theme<LexTheme> {
 }
 
 export function getLexTheme(theme: Theme): LexTheme {
-    if (isLexTheme(theme)) {
-        return theme.extraTheme;
-    }
-
-    // default theme
-    return {
+    const defaultTheme: LexTheme = {
         sourceColors: {
             [Source.ASSC]: '#d4e2f4',
+            [Source.SSC]: '#dae8f6',
             [Source.IJP]: '#e5eef8',
             [Source.Corpus]: '#fae9da',
         },
     };
+
+    if (isLexTheme(theme)) {
+        return {
+            ...defaultTheme,
+            ...theme.extraTheme,
+            sourceColors: {
+                ...defaultTheme.sourceColors,
+                ...theme.extraTheme.sourceColors,
+            },
+        };
+    }
+    return defaultTheme;
 }
