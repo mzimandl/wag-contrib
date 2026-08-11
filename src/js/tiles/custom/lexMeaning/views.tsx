@@ -193,13 +193,11 @@ export function init(
         const renderSSCDataItem = (key: string, data: SSCData) => {
             return (
                 <S.MeaningItem key={key}>
-                    <S.MeaningHead>
-                        <div
-                            dangerouslySetInnerHTML={{
-                                __html: data.html_content,
-                            }}
-                        />
-                    </S.MeaningHead>
+                    <S.SSCStyle
+                        dangerouslySetInnerHTML={{
+                            __html: data.html_content,
+                        }}
+                    />
                 </S.MeaningItem>
             );
         };

@@ -177,7 +177,8 @@ export const MeaningBody = styled.div`
         }
     }
 
-    .korpus_odkaz, .ext_pozn_pripoj {
+    .korpus_odkaz,
+    .ext_pozn_pripoj {
         display: none;
     }
 
@@ -469,4 +470,172 @@ export const ASSCStyle = styled.div`
     .metavyklad2 {
         font-size: 11px;
     }
+`;
+
+// ---------------- <SSCStyle /> --------------------------------------
+
+export const SSCStyle = styled.div`
+    html,
+    .entry,
+    .page-number,
+    .footnotes-container {
+        font-family: 'Times New Roman', Times, serif;
+    }
+
+    .bold {
+        font-weight: bold;
+    }
+
+    .italic {
+        font-style: italic;
+    }
+
+    .entry {
+        display: block;
+        padding-left: 0.7cm;
+        text-indent: -0.7cm;
+    }
+
+    .entry,
+    .page-number {
+        // margin: 16px 0;
+        line-height: 1.5;
+    }
+
+    .page-number {
+        /*
+        font-size: smaller;
+        padding-top: 2pt;
+        */
+        text-align: center;
+        width: 5rem; /* originally: 10% */
+    }
+
+    /* Rešl: reg-ularization (cf. VelNomQ) */
+    .cs-x-transcr {
+        font-size: 95%;
+        font-style: italic;
+    }
+
+    /* NOTE: to hide original Czech text:
+    .cs-x-translit, .cs .equivalentDelimiter
+    {
+        display: none;
+    }
+    */
+
+    /*mark*/
+    .reader-search-result-match {
+        /*
+        NOTE: the light yellow (#fff3cd) background with some padding from Bootstrap
+            are fine
+        */
+        font-weight: bold;
+    }
+
+    .itj-pb {
+        font-weight: bold;
+        text-decoration: none;
+    }
+
+    .tooltip {
+        display: none;
+    }
+
+    /*
+    copied from:
+    base.css
+    */
+
+    /* citace hlavního textu v emendační poznámce */
+    span.corr {
+        font-style: italic;
+        margin-right: 1px;
+    }
+
+    .note-ref {
+        font-weight: bold;
+        text-decoration: none;
+    }
+
+    a[id^='footnote-'] {
+        text-decoration: none;
+    }
+
+    div.footnote {
+        display: flex;
+        /* NOPE: hopefully this margin makes column-spanning paragraphs live better
+                in Firefox: even if not just one but two lines break across the two
+                columns the last one’s line height is half of what it should be!
+            XXX: again, it only improved a little in some cases; luckily, break-inside:
+                avoid-column exists to save the day */
+        /* margin-bottom: 3px; */
+    }
+
+    div.footnote p {
+        margin: 0;
+        text-indent: 0 !important;
+        line-height: 1.2 !important;
+        /* NOPE: the below margins (top + bottom) also seemed to help avoiding rendering
+                text from a previous column over text in the right column but it looked
+                like sorcery and proved to be unreliable; yep, the two “solutions”
+                interfere and are case-dependent, ugh */
+        /* margin: 1px 0 1px 0; */
+        break-inside: avoid-column; /* only THIS solved the problem for good! */
+        text-align: left;
+    }
+
+    div.footnote .note-ref-container {
+        /* XXX: inline-block caused overflowing text from the left column paragraph
+                to be positioned over a first paragraph in the right column */
+        display: block;
+        min-width: 2.5em;
+        text-align: right;
+        margin-right: 0.5em;
+    }
+
+    /*
+    .footnotes-container
+    {
+        margin-bottom: 40px;
+    }
+    */
+
+    .footnotes-container::before {
+        content: '';
+        border-top: 1px solid black;
+        display: block;
+        width: 30%;
+    }
+
+    .footnotes {
+        column-count: 2;
+        column-fill: balance;
+        margin-top: 10px;
+        margin-bottom: 20px;
+        gap: 30px;
+    }
+
+    .single-note {
+        column-count: 1;
+    }
+
+    /* “two-column” layout with entries in one and pagination in the other */
+    .entries {
+        display: flex;
+        flex-flow: wrap;
+    }
+
+    /* .entries > :nth-child(2n) */
+    /* .entries > .entry, .entries > h3, .footnotes-container */
+    .entries > :not(.page-number) {
+        width: calc(100% - 5rem); /* originally: 90% */
+    }
+
+    /*
+    .entries > :nth-child(2n + 1)
+    {
+        width: 10%;
+    }
+    */
 `;
