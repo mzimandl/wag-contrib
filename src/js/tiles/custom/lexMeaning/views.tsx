@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-import { List, pipe } from 'cnc-tskit';
+import { Dict, List, pipe } from 'cnc-tskit';
 import { IActionDispatcher, ViewUtils, useModel } from 'kombo';
 import * as React from 'react';
 import { Theme } from '../../../page/theme.js';
@@ -202,27 +202,6 @@ export function init(
             );
         };
 
-        const validAsscData = pipe(
-            state.data.assc,
-            List.filter((d) => isAsscHtml(d)),
-            List.map((d) => d.data)
-        );
-
-        const validIjpData = pipe(
-            state.data.ijp,
-            List.filter((d) => isIjpData(d)),
-            List.filter(
-                (d) => !!d.data.examples && !List.empty(d.data.examples)
-            ),
-            List.map((d) => d.data)
-        );
-
-        const validSscData = pipe(
-            state.data.ssc,
-            List.filter((d) => isSscData(d)),
-            List.map((d) => d.data)
-        );
-
         const ijpNotes = pipe(
             state.data.ijp,
             List.filter((v) => isIjpData(v)),
@@ -231,8 +210,8 @@ export function init(
         );
 
         const asscNotes = pipe(
-            validAsscData,
-            List.flatMap((v) => v),
+            state.data.assc,
+            List.flatMap((v) => v.data),
             List.flatMap((v) => v.notes)
         );
 
@@ -250,9 +229,8 @@ export function init(
                     tileId={props.tileId}
                     isBusy={state.isBusy}
                     hasData={
-                        !List.empty(validAsscData) ||
-                        (!List.empty(validIjpData) && !state.isBusy) ||
-                        (!List.empty(validSscData) && !state.isBusy)
+                        !List.empty(state.data[state.usedSource]) ||
+                        Dict.some((v) => !List.empty(v), state.sourceErrors)
                     }
                     setMaxHeight={true}
                 >
@@ -262,16 +240,10 @@ export function init(
                         <div className="stretch">
                             {pipe(
                                 [
-                                    ...state.data.ijp,
-                                    ...state.data.assc,
-                                    ...state.data.ssc,
+                                    ...state.sourceErrors.ijp,
+                                    ...state.sourceErrors.assc,
+                                    ...state.sourceErrors.ssc,
                                 ],
-                                List.filter(
-                                    (v) =>
-                                        isIjpError(v) ||
-                                        isAsscError(v) ||
-                                        isSscError(v)
-                                ),
                                 List.map((v) => (
                                     <lexComponents.MessageSubtile
                                         systemMessageType={
@@ -287,7 +259,7 @@ export function init(
                                 ))
                             )}
 
-                            {!List.empty(validAsscData) ? (
+                            {!List.empty(state.data.assc) ? (
                                 <lexComponents.Subtile
                                     tileId={props.tileId}
                                     source={Source.ASSC}
@@ -316,15 +288,15 @@ export function init(
                                                             )}
                                                         </>
                                                     );
-                                                }, blocks),
-                                            validAsscData
+                                                }, blocks.data),
+                                            state.data.assc
                                         )}
                                     </SubtileRow>
                                 </lexComponents.Subtile>
                             ) : null}
 
-                            {List.empty(validAsscData) &&
-                            !List.empty(validSscData) &&
+                            {List.empty(state.data.assc) &&
+                            !List.empty(state.data.ssc) &&
                             !state.isBusy ? (
                                 <lexComponents.Subtile
                                     tileId={props.tileId}
@@ -338,19 +310,19 @@ export function init(
                                                     {i > 0 ? <hr /> : null}
                                                     {renderSSCDataItem(
                                                         `item-${i}`,
-                                                        item
+                                                        item.data
                                                     )}
                                                 </>
                                             ),
-                                            validSscData
+                                            state.data.ssc
                                         )}
                                     </SubtileRow>
                                 </lexComponents.Subtile>
                             ) : null}
 
-                            {List.empty(validAsscData) &&
-                            List.empty(validSscData) &&
-                            !List.empty(validIjpData) &&
+                            {List.empty(state.data.assc) &&
+                            List.empty(state.data.ssc) &&
+                            !List.empty(state.data.ijp) &&
                             !state.isBusy ? (
                                 <lexComponents.Subtile
                                     tileId={props.tileId}
@@ -364,11 +336,11 @@ export function init(
                                                     {i > 0 ? <hr /> : null}
                                                     {renderIJPDataItem(
                                                         `item-${i}`,
-                                                        item
+                                                        item.data
                                                     )}
                                                 </>
                                             ),
-                                            validIjpData
+                                            state.data.ijp
                                         )}
                                     </SubtileRow>
                                 </lexComponents.Subtile>

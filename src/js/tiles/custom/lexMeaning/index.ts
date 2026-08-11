@@ -92,9 +92,15 @@ export class LexMeaningTile implements ITileProvider {
             lemLevelSupport: this.configuredLemLevels,
             initState: {
                 isBusy: isBusy,
-                queryMatches: List.map(findCurrQueryMatch, queryMatches),
+                currQueryMatch: List.map(findCurrQueryMatch, queryMatches)[0],
                 sourcePriority: conf.sourcePriority,
+                usedSource: conf.sourcePriority[0] || Source.ASSC,
                 data: {
+                    [Source.ASSC]: [],
+                    [Source.IJP]: [],
+                    [Source.SSC]: [],
+                },
+                sourceErrors: {
                     [Source.ASSC]: [],
                     [Source.IJP]: [],
                     [Source.SSC]: [],
