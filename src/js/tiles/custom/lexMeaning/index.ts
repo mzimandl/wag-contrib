@@ -95,9 +95,9 @@ export class LexMeaningTile implements ITileProvider {
                 queryMatches: List.map(findCurrQueryMatch, queryMatches),
                 sourcePriority: conf.sourcePriority,
                 data: {
-                    assc: [],
-                    ijp: [],
-                    ssc: [],
+                    [Source.ASSC]: [],
+                    [Source.IJP]: [],
+                    [Source.SSC]: [],
                 },
                 error: null,
                 backlink: null,

@@ -21,7 +21,7 @@ import { IAppServices } from '../../../appServices.js';
 import { Backlink } from '../../../page/tile.js';
 import { Actions as GlobalActions } from '../../../models/actions.js';
 import { Actions } from './actions.js';
-import { List } from 'cnc-tskit';
+import { Dict, List } from 'cnc-tskit';
 import { LemmatizationLevel, QueryMatch } from '../../../query/index.js';
 import { IDataStreaming } from '../../../page/streaming.js';
 import { HTMLBlock } from '../lexCommon/types/assc.js';
@@ -48,9 +48,9 @@ export interface LexMeaningModelState {
     isBusy: boolean;
     sourcePriority: Array<Source>;
     data: {
-        ijp: Array<LexResponse<IJPData | string>>;
-        assc: Array<LexResponse<HTMLBlock[] | string>>;
-        ssc: Array<LexResponse<SSCData | string>>;
+        [Source.IJP]: Array<LexResponse<IJPData | string>>;
+        [Source.ASSC]: Array<LexResponse<HTMLBlock[] | string>>;
+        [Source.SSC]: Array<LexResponse<SSCData | string>>;
     };
     error: string;
     backlink: Backlink;
@@ -91,11 +91,7 @@ export class LexMeaningModel extends TileStatelessModel<LexMeaningModelState> {
             (state, action) => {
                 state.error = null;
                 state.backlink = null;
-                state.data = {
-                    ijp: [],
-                    assc: [],
-                    ssc: [],
-                };
+                state.data = Dict.map(() => [], state.data);
                 state.isBusy = true;
             },
             (state, action, dispatch, ds) => {
