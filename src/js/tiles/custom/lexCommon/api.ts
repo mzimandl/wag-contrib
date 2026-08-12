@@ -152,7 +152,9 @@ export function isSscError(v: LexResponse): v is LexResponse<string> {
     );
 }
 
-export function getErrorMessage(lexResponse: LexResponse): Array<string> {
+export function getErrorMessage(
+    lexResponse: LexResponse<string>
+): Array<string> {
     switch (lexResponse.statusCode) {
         case 503:
             return [`lex_common__${lexResponse.source}_unavailable`];

@@ -150,6 +150,17 @@
                         "url"
                     ]
                 },
+                "ssc": {
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "url"
+                    ]
+                },
                 "corpus": {
                     "type": "object",
                     "properties": {

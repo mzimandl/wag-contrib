@@ -19,14 +19,12 @@
 import { IActionQueue, SEDispatcher } from 'kombo';
 import { IAppServices } from '../../../appServices.js';
 import { Backlink } from '../../../page/tile.js';
-import { Actions as GlobalActions } from '../../../models/actions.js';
 import { Actions } from './actions.js';
 import { Dict, List } from 'cnc-tskit';
 import { LemmatizationLevel, QueryMatch } from '../../../query/index.js';
 import { IDataStreaming } from '../../../page/streaming.js';
 import { HTMLBlock } from '../lexCommon/types/assc.js';
 import {
-    isAsscData,
     isAsscDone,
     isAsscError,
     isAsscHtml,
@@ -101,6 +99,7 @@ export class LexMeaningModel extends TileStatelessModel<LexMeaningModelState> {
                 if (!!action.payload?.newQueryMatches) {
                     state.currQueryMatch = action.payload.newQueryMatches[0];
                 }
+                // set used source to first source with data based on priority
                 const currVariant = getCurrentVariant(state.currQueryMatch);
                 for (const source of state.sourcePriority) {
                     if (currVariant.sources[source]?.length > 0) {
@@ -122,6 +121,7 @@ export class LexMeaningModel extends TileStatelessModel<LexMeaningModelState> {
             (action) => action.payload.tileId === this.tileId,
             (state, action) => {
                 state.isBusy = false;
+                // if empty data for used source, get next not empty source based on priority
                 if (List.empty(state.data[state.usedSource])) {
                     for (const source of state.sourcePriority) {
                         if (!List.empty(state.data[source])) {
@@ -158,18 +158,6 @@ export class LexMeaningModel extends TileStatelessModel<LexMeaningModelState> {
                     );
                 }
                 console.log('Partial data loaded', action.payload.response);
-            }
-        );
-
-        this.addActionSubtypeHandler(
-            GlobalActions.FollowBacklink,
-            (action) => action.payload.tileId === this.tileId,
-            null,
-            (state, action, dispatch) => {
-                window.open(
-                    `https://slovnikcestiny.cz/heslo/state.data.query/`,
-                    '_blank'
-                );
             }
         );
     }

@@ -20,7 +20,6 @@ import { IActionQueue, SEDispatcher } from 'kombo';
 import { IAppServices } from '../../../appServices.js';
 import { Backlink } from '../../../page/tile.js';
 import { QueryMatch, LemmatizationLevel } from '../../../query/index.js';
-import { Actions as GlobalActions } from '../../../models/actions.js';
 import { Actions } from './actions.js';
 import { TileStatelessModel } from '../../../models/tiles/base.js';
 
@@ -142,23 +141,6 @@ export class LexOverviewModel extends TileStatelessModel<LexOverviewModelState> 
                 if (action.error) {
                     state.error = action.error.message;
                 }
-            }
-        );
-
-        this.addActionSubtypeHandler(
-            GlobalActions.FollowBacklink,
-            (action) => action.payload.tileId === this.tileId,
-            null,
-            (state, action, dispatch) => {
-                const backlinkUrl = new URL('https://prirucka.ujc.cas.cz/');
-                /* --- TODO ---
-                if (state.data.isDirect) {
-                    backlinkUrl.searchParams.set('id', state.data.rawQuery);
-                } else {
-                    backlinkUrl.searchParams.set('slovo', state.data.rawQuery);
-                }
-                */
-                window.open(backlinkUrl.toString(), '_blank');
             }
         );
 

@@ -6,13 +6,8 @@
             "items": {
                 "enum": [
                     "assc",
-                    "corpus",
-                    "djd",
                     "ijp",
-                    "psjc",
-                    "sjc",
-                    "ssc",
-                    "ssjc"
+                    "ssc"
                 ],
                 "type": "string"
             }

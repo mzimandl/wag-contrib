@@ -39,8 +39,10 @@ import {
 import { LexMeaningModel } from './model.js';
 import { Source } from '../lexCommon/types/enums.js';
 
+export type SupportedSource = Source.ASSC | Source.IJP | Source.SSC;
+
 export interface LexMeaningTileConf extends TileConf {
-    sourcePriority: Array<Source>;
+    sourcePriority: Array<SupportedSource>;
 }
 
 export class LexMeaningTile implements ITileProvider {
