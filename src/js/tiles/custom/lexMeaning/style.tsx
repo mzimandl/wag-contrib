@@ -475,6 +475,12 @@ export const ASSCStyle = styled.div`
 // ---------------- <SSCStyle /> --------------------------------------
 
 export const SSCStyle = styled.div`
+    .lemma {
+        color: rgb(108, 116, 240);
+    }
+
+    // SSC original styles
+
     html,
     .entry,
     .page-number,
