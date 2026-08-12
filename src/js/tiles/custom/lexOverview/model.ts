@@ -20,12 +20,11 @@ import { IActionQueue, SEDispatcher } from 'kombo';
 import { IAppServices } from '../../../appServices.js';
 import { Backlink } from '../../../page/tile.js';
 import { QueryMatch, LemmatizationLevel } from '../../../query/index.js';
-import { Actions as GlobalActions } from '../../../models/actions.js';
 import { Actions } from './actions.js';
 import { TileStatelessModel } from '../../../models/tiles/base.js';
 
 import { IDataStreaming } from '../../../page/streaming.js';
-import { List } from 'cnc-tskit';
+import { Dict, List } from 'cnc-tskit';
 import { VariantData } from '../lexCommon/types/assc.js';
 import { Source } from '../lexCommon/types/enums.js';
 import { LexItem } from '../lexCommon/types/dictionary.js';
@@ -42,8 +41,8 @@ import { IJPData } from '../lexCommon/types/ijp.js';
 import { scan } from 'rxjs';
 
 interface SourceData {
-    assc: LexResponse<VariantData[] | string> | null;
-    ijp: LexResponse<IJPData | string> | null;
+    [Source.ASSC]: LexResponse<VariantData[] | string> | null;
+    [Source.IJP]: LexResponse<IJPData | string> | null;
 }
 
 export interface LexOverviewModelState {
@@ -106,8 +105,7 @@ export class LexOverviewModel extends TileStatelessModel<LexOverviewModelState> 
                     (match) => match.isCurrent,
                     state.availQueryMatches
                 );
-                state.sourceData.assc = null;
-                state.sourceData.ijp = null;
+                state.sourceData = Dict.map(() => null, state.sourceData);
                 state.error = undefined;
                 state.backlink = undefined;
                 state.isBusy = true;
@@ -143,23 +141,6 @@ export class LexOverviewModel extends TileStatelessModel<LexOverviewModelState> 
                 if (action.error) {
                     state.error = action.error.message;
                 }
-            }
-        );
-
-        this.addActionSubtypeHandler(
-            GlobalActions.FollowBacklink,
-            (action) => action.payload.tileId === this.tileId,
-            null,
-            (state, action, dispatch) => {
-                const backlinkUrl = new URL('https://prirucka.ujc.cas.cz/');
-                /* --- TODO ---
-                if (state.data.isDirect) {
-                    backlinkUrl.searchParams.set('id', state.data.rawQuery);
-                } else {
-                    backlinkUrl.searchParams.set('slovo', state.data.rawQuery);
-                }
-                */
-                window.open(backlinkUrl.toString(), '_blank');
             }
         );
 

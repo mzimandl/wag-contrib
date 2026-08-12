@@ -27,10 +27,12 @@ import { HTMLBlock, VariantData } from './types/assc.js';
 import { IJPData as IJPData } from './types/ijp.js';
 import { Source, Type } from './types/enums.js';
 import { CorpusInfoAPI } from '../../../api/vendor/mquery/corpusInfo.js';
+import { SSCData } from './types/ssc.js';
 
 export interface LexArgs {
     asscIds: string[];
     ijpIds: string[];
+    sscIds: string[];
 }
 
 export function isEmptyArgs(args: LexArgs): boolean {
@@ -38,7 +40,13 @@ export function isEmptyArgs(args: LexArgs): boolean {
 }
 
 export interface LexResponse<
-    T = IJPData | Array<VariantData> | Array<HTMLBlock> | 'done' | string,
+    T =
+        | SSCData
+        | IJPData
+        | Array<VariantData>
+        | Array<HTMLBlock>
+        | 'done'
+        | string,
 > {
     source: Source;
     type: string;
@@ -115,7 +123,38 @@ export function isIjpError(v: LexResponse): v is LexResponse<string> {
     );
 }
 
-export function getErrorMessage(lexResponse: LexResponse): Array<string> {
+export function isSscData(v: LexResponse): v is LexResponse<SSCData> {
+    return (
+        v &&
+        v.source === Source.SSC &&
+        !!v.data &&
+        v.data !== 'done' &&
+        typeof v.data !== 'string'
+    );
+}
+
+export function isSscDone(v: LexResponse): v is LexResponse<'done'> {
+    return (
+        v &&
+        v.source === Source.SSC &&
+        v.statusCode === 200 &&
+        v.data === 'done'
+    );
+}
+
+export function isSscError(v: LexResponse): v is LexResponse<string> {
+    return (
+        v &&
+        v.source === Source.SSC &&
+        v.statusCode >= 400 &&
+        typeof v.data === 'string' &&
+        v.data !== 'done'
+    );
+}
+
+export function getErrorMessage(
+    lexResponse: LexResponse<string>
+): Array<string> {
     switch (lexResponse.statusCode) {
         case 503:
             return [`lex_common__${lexResponse.source}_unavailable`];
@@ -138,13 +177,13 @@ export class LexApi implements ResourceApi<LexArgs, LexResponse> {
 
     private readonly corpusInfoApi: CorpusInfoAPI;
 
-    private readonly backlinkConf: Record<Source, { url: string }>;
+    private readonly backlinkConf: Partial<Record<Source, { url: string }>>;
 
     constructor(
         apiURL: string,
         srcInfoURL: string,
         apiServices: IApiServices,
-        backlinkConf: Record<Source, { url: string }>
+        backlinkConf: Partial<Record<Source, { url: string }>>
     ) {
         this.apiURL = apiURL;
         this.customHeaders = apiServices.getApiHeaders(apiURL) || {};
@@ -170,6 +209,7 @@ export class LexApi implements ResourceApi<LexArgs, LexResponse> {
         const params = [
             ...this.prepareArgs('assc_id', queryArgs.asscIds),
             ...this.prepareArgs('ijp_id', queryArgs.ijpIds),
+            ...this.prepareArgs('ssc_id', queryArgs.sscIds),
             this.prepareArgs('event', [`DataTile-${tileId}.${queryIdx}`]),
         ];
         const emptyArgs = isEmptyArgs(queryArgs);
@@ -201,6 +241,12 @@ export class LexApi implements ResourceApi<LexArgs, LexResponse> {
         source: string
     ): Observable<SourceDetails> {
         switch (source) {
+            case Source.Corpus:
+                return this.corpusInfoApi.call(streaming, tileId, 0, {
+                    corpname: source,
+                    lang,
+                });
+
             case Source.ASSC:
                 return rxOf({
                     tileId,
@@ -252,15 +298,50 @@ export class LexApi implements ResourceApi<LexArgs, LexResponse> {
                     author: 'Ústav pro jazyk český AV ČR',
                     href: 'https://ujc.cas.cz/cs/jazykova-poradna/',
                 });
+
+            case Source.SSC:
+                return rxOf({
+                    tileId,
+                    title: this.apiServices.importExternalMessage({
+                        'cs-CZ':
+                            'Slovník spisovné češtiny pro školu a veřejnost',
+                        'en-US':
+                            'Slovník spisovné češtiny pro školu a veřejnost UNTRANSLATED',
+                    }),
+                    description: this.apiServices.importExternalMessage({
+                        'cs-CZ':
+                            'Slovník spisovné češtiny pro školu a veřejnost, zkratka SSČ, je normativní výkladový slovník českého jazyka zpracovaný a průběžně aktualizovaný Ústavem pro jazyk český Akademie věd České republiky a vydávaný nakladatelstvím Academia. Slovník zahrnuje téměř 50 000 hesel současné češtiny.',
+                        'en-US':
+                            'Slovník spisovné češtiny pro školu a veřejnost, zkratka SSČ, je normativní výkladový slovník českého jazyka zpracovaný a průběžně aktualizovaný Ústavem pro jazyk český Akademie věd České republiky a vydávaný nakladatelstvím Academia. Slovník zahrnuje téměř 50 000 hesel současné češtiny. UNTRANSLATED',
+                    }),
+                    author: 'Ústav pro jazyk český AV ČR',
+                    href: null,
+                });
+
+            default:
+                return rxOf({
+                    tileId,
+                    title: this.apiServices.importExternalMessage({
+                        'cs-CZ': `Neznámý zdroj "${source}"`,
+                        'en-US': `Unknown source "${source}"`,
+                    }),
+                    description: this.apiServices.importExternalMessage({
+                        'cs-CZ': 'Informace o zdroji nejsou dostupné.',
+                        'en-US':
+                            'Information about the source is not available.',
+                    }),
+                    author: '',
+                    href: null,
+                });
         }
-        return this.corpusInfoApi.call(streaming, tileId, 0, {
-            corpname: source,
-            lang,
-        });
     }
 
     getBacklink(queryId: number, subqueryId?: number): Backlink | null {
         return null;
+    }
+
+    isBacklinkSupported(source: Source): boolean {
+        return !!this.backlinkConf[source];
     }
 
     getBacklinkURL(source: Source, id: string): URL {

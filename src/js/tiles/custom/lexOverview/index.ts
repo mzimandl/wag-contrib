@@ -88,7 +88,7 @@ export class LexOverviewTile implements ITileProvider {
                 return {
                     lemma: match.lemma || match.word,
                 } as LexItem;
-            }),
+            })
         );
 
         this.model = new LexOverviewModel({
@@ -110,8 +110,8 @@ export class LexOverviewTile implements ITileProvider {
                     queryMatches[0]
                 ),
                 sourceData: {
-                    assc: null,
-                    ijp: null,
+                    [Source.ASSC]: null,
+                    [Source.IJP]: null,
                 },
                 error: undefined,
                 backlink: undefined,

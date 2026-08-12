@@ -37,8 +37,13 @@ import {
     lemLevelSupport,
 } from '../../../page/tile.js';
 import { LexMeaningModel } from './model.js';
+import { Source } from '../lexCommon/types/enums.js';
 
-export interface LexMeaningTileConf extends TileConf {}
+export type SupportedSource = Source.ASSC | Source.IJP | Source.SSC;
+
+export interface LexMeaningTileConf extends TileConf {
+    sourcePriority: Array<SupportedSource>;
+}
 
 export class LexMeaningTile implements ITileProvider {
     private readonly tileId: number;
@@ -89,10 +94,18 @@ export class LexMeaningTile implements ITileProvider {
             lemLevelSupport: this.configuredLemLevels,
             initState: {
                 isBusy: isBusy,
-                queryMatches: List.map(findCurrQueryMatch, queryMatches),
+                currQueryMatch: List.map(findCurrQueryMatch, queryMatches)[0],
+                sourcePriority: conf.sourcePriority,
+                usedSource: conf.sourcePriority[0] || Source.ASSC,
                 data: {
-                    assc: [],
-                    ijp: [],
+                    [Source.ASSC]: [],
+                    [Source.IJP]: [],
+                    [Source.SSC]: [],
+                },
+                sourceErrors: {
+                    [Source.ASSC]: [],
+                    [Source.IJP]: [],
+                    [Source.SSC]: [],
                 },
                 error: null,
                 backlink: null,

@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-import { List, pipe } from 'cnc-tskit';
+import { Dict, List, pipe } from 'cnc-tskit';
 import { IActionDispatcher, ViewUtils, useModel } from 'kombo';
 import * as React from 'react';
 import { Theme } from '../../../page/theme.js';
@@ -28,16 +28,8 @@ import { HTMLBlock } from '../lexCommon/types/assc.js';
 import { SubtileRow } from '../lexCommon/style.js';
 import { Source } from '../lexCommon/types/enums.js';
 import { initLexComponents } from '../lexCommon/views.js';
-import {
-    getErrorMessage,
-    isAsscData,
-    isAsscError,
-    isAsscHtml,
-    isIjpData,
-    isIjpError,
-} from '../lexCommon/api.js';
+import { getErrorMessage, LexResponse } from '../lexCommon/api.js';
 import { SystemMessageType } from '../../../types.js';
-import { IJPData } from '../lexCommon/types/ijp.js';
 
 export function init(
     dispatcher: IActionDispatcher,
@@ -48,7 +40,7 @@ export function init(
     const globalComponents = ut.getComponents();
     const lexComponents = initLexComponents(dispatcher, ut);
 
-    // -------------------- <Header /> -----------------------------------------------
+    // -------------------- <ASSCHeader /> -----------------------------------------------
 
     const ASSCHeader: React.FC<{ i: number; line: string }> = (props) => {
         const [collapsed, setCollapsed] = React.useState(true);
@@ -76,17 +68,278 @@ export function init(
         );
     };
 
-    const IJPHeader: React.FC<{
-        i: number;
-        term: string;
-        partOfSpeech: string;
-    }> = (props) => {
+    // -------------------- <ASSCLexSubtile /> -----------------------------------
+
+    const ASSCLexSubtile: React.FC<{ tileId: number }> = (props) => {
+        const state = useModel(model);
+
         return (
-            <S.ASSCStyle key={props.i} className={'header-line'}>
-                <span className="heslo">{props.term}</span>
-                <span className="sl_druh">{props.partOfSpeech}</span>
-            </S.ASSCStyle>
+            <lexComponents.Subtile
+                tileId={props.tileId}
+                source={Source.ASSC}
+                className="data-box"
+            >
+                <SubtileRow className="scroller">
+                    {List.flatMap(
+                        (blocks, i) =>
+                            List.map((block, j) => {
+                                const isParent = j > 0;
+                                return (
+                                    <>
+                                        {i > 0 && j === 0 ? <hr /> : null}
+                                        {isParent ? (
+                                            <span className="ke-slovu">
+                                                ke slovu
+                                            </span>
+                                        ) : null}
+                                        {
+                                            <S.MeaningItem
+                                                key={i}
+                                                className={
+                                                    isParent ? 'parent' : ''
+                                                }
+                                            >
+                                                <S.MeaningHead>
+                                                    {List.map(
+                                                        (line, i) => (
+                                                            <ASSCHeader
+                                                                i={i}
+                                                                line={line}
+                                                            />
+                                                        ),
+                                                        block.formattedVariants
+                                                    )}
+                                                </S.MeaningHead>
+                                                <S.MeaningBody>
+                                                    {List.map(
+                                                        (item, i) => (
+                                                            <S.ASSCStyle
+                                                                key={`block${i}`}
+                                                                className={
+                                                                    'meaning-block' +
+                                                                    (item.includes(
+                                                                        '□'
+                                                                    )
+                                                                        ? ' style_souslovi'
+                                                                        : '')
+                                                                }
+                                                                dangerouslySetInnerHTML={{
+                                                                    __html: item,
+                                                                }}
+                                                            />
+                                                        ),
+                                                        block.meanings
+                                                    )}
+                                                    {List.map(
+                                                        (nest, i) => (
+                                                            <S.ASSCStyle
+                                                                key={`nest${i}`}
+                                                                className="nest-line"
+                                                                dangerouslySetInnerHTML={{
+                                                                    __html: nest,
+                                                                }}
+                                                            />
+                                                        ),
+                                                        block.nestedVariants
+                                                    )}
+                                                    {List.map(
+                                                        (links, i) => (
+                                                            <S.ASSCStyle
+                                                                key={`links${i}`}
+                                                                className="links"
+                                                                dangerouslySetInnerHTML={{
+                                                                    __html: links,
+                                                                }}
+                                                            />
+                                                        ),
+                                                        block.links
+                                                    )}
+                                                </S.MeaningBody>
+                                            </S.MeaningItem>
+                                        }
+                                    </>
+                                );
+                            }, blocks.data),
+                        state.data.assc
+                    )}
+                </SubtileRow>
+            </lexComponents.Subtile>
         );
+    };
+
+    // -------------------- <IJPLexSubtile /> -----------------------------------
+
+    const IJPLexSubtile: React.FC<{ tileId: number }> = (props) => {
+        const state = useModel(model);
+
+        return (
+            <lexComponents.Subtile
+                tileId={props.tileId}
+                source={Source.IJP}
+                className="data-box"
+            >
+                <SubtileRow className="scroller">
+                    {List.map(
+                        (item, i) => (
+                            <>
+                                {i > 0 ? <hr /> : null}
+                                {
+                                    <S.MeaningItem key={i}>
+                                        <S.MeaningHead>
+                                            <S.ASSCStyle
+                                                className={'header-line'}
+                                            >
+                                                <span className="heslo">
+                                                    {item.data.heading}
+                                                </span>
+                                                <span className="sl_druh">
+                                                    {item.data.gender}
+                                                </span>
+                                            </S.ASSCStyle>
+                                        </S.MeaningHead>
+                                        <S.MeaningBody>
+                                            <S.ASSCStyle className="meaning-block">
+                                                <span className="exeplifikace">
+                                                    {List.map(
+                                                        (example, i) => (
+                                                            <>
+                                                                {i > 0 ? (
+                                                                    <br />
+                                                                ) : null}
+                                                                <span
+                                                                    style={{
+                                                                        fontStyle:
+                                                                            'italic',
+                                                                    }}
+                                                                >
+                                                                    <span className="normalni">
+                                                                        {
+                                                                            example
+                                                                        }
+                                                                    </span>
+                                                                </span>
+                                                            </>
+                                                        ),
+                                                        item.data.examples
+                                                    )}
+                                                </span>
+                                            </S.ASSCStyle>
+                                        </S.MeaningBody>
+                                    </S.MeaningItem>
+                                }
+                            </>
+                        ),
+                        state.data.ijp
+                    )}
+                </SubtileRow>
+            </lexComponents.Subtile>
+        );
+    };
+
+    // -------------------- <SSCLexSubtile /> -----------------------------------
+
+    const SSCLexSubtile: React.FC<{ tileId: number }> = (props) => {
+        const state = useModel(model);
+
+        return (
+            <lexComponents.Subtile
+                tileId={props.tileId}
+                source={Source.SSC}
+                className="data-box"
+            >
+                <SubtileRow className="scroller">
+                    {List.map(
+                        (item, i) => (
+                            <>
+                                {i > 0 ? <hr /> : null}
+                                {
+                                    <S.MeaningItem key={i}>
+                                        <S.SSCStyle
+                                            dangerouslySetInnerHTML={{
+                                                __html: item.data.html_content,
+                                            }}
+                                        />
+                                    </S.MeaningItem>
+                                }
+                            </>
+                        ),
+                        state.data.ssc
+                    )}
+                </SubtileRow>
+            </lexComponents.Subtile>
+        );
+    };
+
+    // -------------------- <UsageNotesSubileView /> -----------------------------------
+
+    const UsageNotesSubtileView: React.FC<{ tileId: number }> = (props) => {
+        const state = useModel(model);
+
+        const ijpNotes = pipe(
+            state.data.ijp,
+            List.filter((v) => !List.empty(v.data.notes)),
+            List.flatMap((v) => v.data.notes)
+        );
+
+        const asscNotes = pipe(
+            state.data.assc,
+            List.flatMap((v) => v.data),
+            List.flatMap((v) => v.notes)
+        );
+
+        return !List.empty(asscNotes) || !List.empty(ijpNotes) ? (
+            <globalComponents.Subtile
+                tileId={props.tileId}
+                heading={ut.translate('lex_meaning__usage_notes')}
+                isBusy={state.isBusy}
+                hasData={true}
+            >
+                <S.UsageNotesTileView>
+                    {!List.empty(ijpNotes) ? (
+                        <lexComponents.Subtile
+                            tileId={props.tileId}
+                            source={
+                                List.some(
+                                    (data) => data.includes('</a>'),
+                                    ijpNotes
+                                )
+                                    ? [Source.IJP, Source.DJD]
+                                    : Source.IJP
+                            }
+                        >
+                            {List.map(
+                                (note, i) => (
+                                    <SubtileRow
+                                        dangerouslySetInnerHTML={{
+                                            __html: note,
+                                        }}
+                                    />
+                                ),
+                                ijpNotes
+                            )}
+                        </lexComponents.Subtile>
+                    ) : null}
+
+                    {!List.empty(asscNotes) ? (
+                        <lexComponents.Subtile
+                            tileId={props.tileId}
+                            source={Source.ASSC}
+                        >
+                            {List.map(
+                                (note, i) => (
+                                    <SubtileRow
+                                        dangerouslySetInnerHTML={{
+                                            __html: note,
+                                        }}
+                                    />
+                                ),
+                                asscNotes
+                            )}
+                        </lexComponents.Subtile>
+                    ) : null}
+                </S.UsageNotesTileView>
+            </globalComponents.Subtile>
+        ) : null;
     };
 
     // -------------------- <LexMeaningTileView /> -----------------------------------------------
@@ -94,123 +347,41 @@ export function init(
     const LexMeaningTileView: React.FC<CoreTileComponentProps> = (props) => {
         const state = useModel(model);
 
-        const renderASSCDataItem = (
-            key: string,
-            data: HTMLBlock,
-            isParent: boolean
-        ) => {
-            return (
-                <S.MeaningItem key={key} className={isParent ? 'parent' : ''}>
-                    <S.MeaningHead>
+        const renderErrors = () => {
+            return pipe(
+                state.sourcePriority,
+                List.flatMap(
+                    (source) =>
+                        (state.sourceErrors[source] || []) as Array<
+                            LexResponse<string>
+                        >
+                ),
+                List.map((errResp) => (
+                    <lexComponents.MessageSubtile
+                        systemMessageType={SystemMessageType.ERROR}
+                        className="error-box"
+                    >
                         {List.map(
-                            (line, i) => (
-                                <ASSCHeader i={i} line={line} />
-                            ),
-                            data.formattedVariants
+                            (msg) => ut.translate(msg),
+                            getErrorMessage(errResp)
                         )}
-                    </S.MeaningHead>
-                    <S.MeaningBody>
-                        {List.map(
-                            (block, i) => (
-                                <S.ASSCStyle
-                                    key={`block${i}`}
-                                    className={
-                                        'meaning-block' +
-                                        (block.includes('□')
-                                            ? ' style_souslovi'
-                                            : '')
-                                    }
-                                    dangerouslySetInnerHTML={{ __html: block }}
-                                />
-                            ),
-                            data.meanings
-                        )}
-                        {List.map(
-                            (nest, i) => (
-                                <S.ASSCStyle
-                                    key={`nest${i}`}
-                                    className="nest-line"
-                                    dangerouslySetInnerHTML={{ __html: nest }}
-                                />
-                            ),
-                            data.nestedVariants
-                        )}
-                        {List.map(
-                            (links, i) => (
-                                <S.ASSCStyle
-                                    key={`links${i}`}
-                                    className="links"
-                                    dangerouslySetInnerHTML={{
-                                        __html: links,
-                                    }}
-                                />
-                            ),
-                            data.links
-                        )}
-                    </S.MeaningBody>
-                </S.MeaningItem>
+                    </lexComponents.MessageSubtile>
+                ))
             );
         };
 
-        const renderIJPDataItem = (key: string, data: IJPData) => {
-            return (
-                <S.MeaningItem key={key}>
-                    <S.MeaningHead>
-                        <IJPHeader
-                            i={0}
-                            term={data.heading}
-                            partOfSpeech={data.gender}
-                        />
-                    </S.MeaningHead>
-                    <S.MeaningBody>
-                        <S.ASSCStyle className="meaning-block">
-                            <span className="exeplifikace">
-                                {List.map(
-                                    (example, i) => (
-                                        <>
-                                            {i > 0 ? <br /> : null}
-                                            <span
-                                                style={{ fontStyle: 'italic' }}
-                                            >
-                                                <span className="normalni">
-                                                    {example}
-                                                </span>
-                                            </span>
-                                        </>
-                                    ),
-                                    data.examples
-                                )}
-                            </span>
-                        </S.ASSCStyle>
-                    </S.MeaningBody>
-                </S.MeaningItem>
-            );
+        const renderData = (usedSource: string) => {
+            switch (usedSource) {
+                case Source.ASSC:
+                    return <ASSCLexSubtile tileId={props.tileId} />;
+                case Source.IJP:
+                    return <IJPLexSubtile tileId={props.tileId} />;
+                case Source.SSC:
+                    return <SSCLexSubtile tileId={props.tileId} />;
+                default:
+                    return null;
+            }
         };
-
-        const validAsscData = pipe(
-            state.data.assc,
-            List.filter((d) => isAsscHtml(d)),
-            List.map((d) => d.data)
-        );
-
-        const validIjpData = pipe(
-            state.data.ijp,
-            List.filter((d) => isIjpData(d)),
-            List.map((d) => d.data)
-        );
-
-        const ijpNotes = pipe(
-            state.data.ijp,
-            List.filter((v) => isIjpData(v)),
-            List.filter((v) => !List.empty(v.data.notes)),
-            List.flatMap((v) => v.data.notes)
-        );
-
-        const asscNotes = pipe(
-            validAsscData,
-            List.flatMap((v) => v),
-            List.flatMap((v) => v.notes)
-        );
 
         return (
             <globalComponents.TileWrapper
@@ -226,8 +397,8 @@ export function init(
                     tileId={props.tileId}
                     isBusy={state.isBusy}
                     hasData={
-                        !List.empty(validAsscData) ||
-                        (!List.empty(validIjpData) && !state.isBusy)
+                        !List.empty(state.data[state.usedSource]) ||
+                        Dict.some((v) => !List.empty(v), state.sourceErrors)
                     }
                     setMaxHeight={true}
                 >
@@ -235,143 +406,13 @@ export function init(
 
                     <S.MeaningTileView>
                         <div className="stretch">
-                            {pipe(
-                                [...state.data.ijp, ...state.data.assc],
-                                List.filter(
-                                    (v) => isIjpError(v) || isAsscError(v)
-                                ),
-                                List.map((v) => (
-                                    <lexComponents.MessageSubtile
-                                        systemMessageType={
-                                            SystemMessageType.ERROR
-                                        }
-                                        className="error-box"
-                                    >
-                                        {List.map(
-                                            (msg) => ut.translate(msg),
-                                            getErrorMessage(v)
-                                        )}
-                                    </lexComponents.MessageSubtile>
-                                ))
-                            )}
-
-                            {!List.empty(validAsscData) ? (
-                                <lexComponents.Subtile
-                                    tileId={props.tileId}
-                                    source={Source.ASSC}
-                                    className="data-box"
-                                >
-                                    <SubtileRow className="scroller">
-                                        {List.flatMap(
-                                            (blocks, i) =>
-                                                List.map((block, j) => {
-                                                    const isParent = j > 0;
-                                                    return (
-                                                        <>
-                                                            {i > 0 &&
-                                                            j === 0 ? (
-                                                                <hr />
-                                                            ) : null}
-                                                            {isParent ? (
-                                                                <span className="ke-slovu">
-                                                                    ke slovu
-                                                                </span>
-                                                            ) : null}
-                                                            {renderASSCDataItem(
-                                                                `item-${i}-${j}`,
-                                                                block,
-                                                                isParent
-                                                            )}
-                                                        </>
-                                                    );
-                                                }, blocks),
-                                            validAsscData
-                                        )}
-                                    </SubtileRow>
-                                </lexComponents.Subtile>
-                            ) : null}
-
-                            {List.empty(validAsscData) &&
-                            !List.empty(validIjpData) &&
-                            !state.isBusy ? (
-                                <lexComponents.Subtile
-                                    tileId={props.tileId}
-                                    source={Source.IJP}
-                                    className="data-box"
-                                >
-                                    <SubtileRow className="scroller">
-                                        {List.map(
-                                            (item, i) => (
-                                                <>
-                                                    {i > 0 ? <hr /> : null}
-                                                    {renderIJPDataItem(
-                                                        `item-${i}`,
-                                                        item
-                                                    )}
-                                                </>
-                                            ),
-                                            validIjpData
-                                        )}
-                                    </SubtileRow>
-                                </lexComponents.Subtile>
-                            ) : null}
+                            {renderErrors()}
+                            {renderData(state.usedSource)}
                         </div>
                     </S.MeaningTileView>
                 </globalComponents.Subtile>
 
-                {!List.empty(asscNotes) || !List.empty(ijpNotes) ? (
-                    <globalComponents.Subtile
-                        tileId={props.tileId}
-                        heading={ut.translate('lex_meaning__usage_notes')}
-                        isBusy={state.isBusy}
-                        hasData={true}
-                    >
-                        <S.UsageNotesTileView>
-                            {!List.empty(ijpNotes) ? (
-                                <lexComponents.Subtile
-                                    tileId={props.tileId}
-                                    source={
-                                        List.some(
-                                            (data) => data.includes('</a>'),
-                                            ijpNotes
-                                        )
-                                            ? [Source.IJP, Source.DJD]
-                                            : Source.IJP
-                                    }
-                                >
-                                    {List.map(
-                                        (note, i) => (
-                                            <SubtileRow
-                                                dangerouslySetInnerHTML={{
-                                                    __html: note,
-                                                }}
-                                            />
-                                        ),
-                                        ijpNotes
-                                    )}
-                                </lexComponents.Subtile>
-                            ) : null}
-
-                            {!List.empty(asscNotes) ? (
-                                <lexComponents.Subtile
-                                    tileId={props.tileId}
-                                    source={Source.ASSC}
-                                >
-                                    {List.map(
-                                        (note, i) => (
-                                            <SubtileRow
-                                                dangerouslySetInnerHTML={{
-                                                    __html: note,
-                                                }}
-                                            />
-                                        ),
-                                        asscNotes
-                                    )}
-                                </lexComponents.Subtile>
-                            ) : null}
-                        </S.UsageNotesTileView>
-                    </globalComponents.Subtile>
-                ) : null}
+                <UsageNotesSubtileView tileId={props.tileId} />
             </globalComponents.TileWrapper>
         );
     };

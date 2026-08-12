@@ -19,35 +19,47 @@
 import { IActionQueue, SEDispatcher } from 'kombo';
 import { IAppServices } from '../../../appServices.js';
 import { Backlink } from '../../../page/tile.js';
-import { Actions as GlobalActions } from '../../../models/actions.js';
 import { Actions } from './actions.js';
-import { List } from 'cnc-tskit';
+import { Dict, List } from 'cnc-tskit';
 import { LemmatizationLevel, QueryMatch } from '../../../query/index.js';
 import { IDataStreaming } from '../../../page/streaming.js';
 import { HTMLBlock } from '../lexCommon/types/assc.js';
 import {
-    isAsscData,
     isAsscDone,
     isAsscError,
     isAsscHtml,
     isIjpData,
     isIjpDone,
     isIjpError,
+    isSscData,
+    isSscDone,
+    isSscError,
     LexResponse,
 } from '../lexCommon/api.js';
-import { scan } from 'rxjs';
+import { filter, scan } from 'rxjs';
 import { TileStatelessModel } from '../../../models/tiles/base.js';
 import { IJPData } from '../lexCommon/types/ijp.js';
+import { Source } from '../lexCommon/types/enums.js';
+import { SSCData } from '../lexCommon/types/ssc.js';
+import { getCurrentVariant } from '../lexCommon/types/dictionary.js';
 
 export interface LexMeaningModelState {
     isBusy: boolean;
+    sourcePriority: Array<Source>;
+    usedSource: Source;
     data: {
-        ijp: Array<LexResponse<IJPData | string>>;
-        assc: Array<LexResponse<HTMLBlock[] | string>>;
+        [Source.IJP]: Array<LexResponse<IJPData>>;
+        [Source.ASSC]: Array<LexResponse<HTMLBlock[]>>;
+        [Source.SSC]: Array<LexResponse<SSCData>>;
+    };
+    sourceErrors: {
+        [Source.IJP]: Array<LexResponse<string>>;
+        [Source.ASSC]: Array<LexResponse<string>>;
+        [Source.SSC]: Array<LexResponse<string>>;
     };
     error: string;
     backlink: Backlink;
-    queryMatches: Array<QueryMatch>;
+    currQueryMatch: QueryMatch;
 }
 
 export interface LexMeaningModelArgs {
@@ -84,14 +96,23 @@ export class LexMeaningModel extends TileStatelessModel<LexMeaningModelState> {
             (state, action) => {
                 state.error = null;
                 state.backlink = null;
-                state.data = {
-                    ijp: [],
-                    assc: [],
-                };
+                if (!!action.payload?.newQueryMatches) {
+                    state.currQueryMatch = action.payload.newQueryMatches[0];
+                }
+                // set used source to first source with data based on priority
+                const currVariant = getCurrentVariant(state.currQueryMatch);
+                for (const source of state.sourcePriority) {
+                    if (currVariant.sources[source]?.length > 0) {
+                        state.usedSource = source;
+                        break;
+                    }
+                }
+                state.data = Dict.map(() => [], state.data);
+                state.sourceErrors = Dict.map(() => [], state.sourceErrors);
                 state.isBusy = true;
             },
             (state, action, dispatch, ds) => {
-                this.loadData(ds, dispatch);
+                this.loadData(state, ds, dispatch);
             }
         );
 
@@ -100,6 +121,15 @@ export class LexMeaningModel extends TileStatelessModel<LexMeaningModelState> {
             (action) => action.payload.tileId === this.tileId,
             (state, action) => {
                 state.isBusy = false;
+                // if empty data for used source, get next not empty source based on priority
+                if (List.empty(state.data[state.usedSource])) {
+                    for (const source of state.sourcePriority) {
+                        if (!List.empty(state.data[source])) {
+                            state.usedSource = source;
+                            break;
+                        }
+                    }
+                }
                 if (action.error) {
                     state.error = action.error.message;
                 }
@@ -112,32 +142,31 @@ export class LexMeaningModel extends TileStatelessModel<LexMeaningModelState> {
             (state, action) => {
                 if (
                     isAsscHtml(action.payload.response) ||
-                    isAsscError(action.payload.response)
-                ) {
-                    state.data.assc.push(action.payload.response);
-                } else if (
                     isIjpData(action.payload.response) ||
-                    isIjpError(action.payload.response)
+                    isSscData(action.payload.response)
                 ) {
-                    state.data.ijp.push(action.payload.response);
+                    state.data[action.payload.response.source].push(
+                        action.payload.response
+                    );
+                } else if (
+                    isAsscError(action.payload.response) ||
+                    isIjpError(action.payload.response) ||
+                    isSscError(action.payload.response)
+                ) {
+                    state.sourceErrors[action.payload.response.source].push(
+                        action.payload.response
+                    );
                 }
-            }
-        );
-
-        this.addActionSubtypeHandler(
-            GlobalActions.FollowBacklink,
-            (action) => action.payload.tileId === this.tileId,
-            null,
-            (state, action, dispatch) => {
-                window.open(
-                    `https://slovnikcestiny.cz/heslo/state.data.query/`,
-                    '_blank'
-                );
+                console.log('Partial data loaded', action.payload.response);
             }
         );
     }
 
-    private loadData(streaming: IDataStreaming, dispatch: SEDispatcher): void {
+    private loadData(
+        state: LexMeaningModelState,
+        streaming: IDataStreaming,
+        dispatch: SEDispatcher
+    ): void {
         streaming
             .registerTileRequest<LexResponse>({
                 tileId: this.tileId,
@@ -147,9 +176,17 @@ export class LexMeaningModel extends TileStatelessModel<LexMeaningModelState> {
                 contentType: 'application/json',
             })
             .pipe(
+                filter(
+                    (resp) =>
+                        resp === null ||
+                        List.some(
+                            (v) => resp.source === v,
+                            state.sourcePriority
+                        )
+                ),
                 scan(
                     (data, resp) => {
-                        if (data.done.assc && data.done.ijp) {
+                        if (Dict.every((done) => done, data.done)) {
                             data.dispatched = true;
                             return data;
                         }
@@ -184,12 +221,29 @@ export class LexMeaningModel extends TileStatelessModel<LexMeaningModelState> {
                                 },
                             });
                             if (
-                                resp.data.examples.length > 0 ||
-                                resp.data.notes.length > 0
+                                (!!resp.data.examples &&
+                                    !List.empty(resp.data.examples)) ||
+                                (!!resp.data.notes &&
+                                    !List.empty(resp.data.notes))
                             ) {
                                 data.hasData = true;
                             }
-                        } else if (isAsscError(resp) || isIjpError(resp)) {
+                        } else if (isSscData(resp)) {
+                            dispatch<typeof Actions.TilePartialDataLoaded>({
+                                name: Actions.TilePartialDataLoaded.name,
+                                payload: {
+                                    tileId: this.tileId,
+                                    response: resp,
+                                },
+                            });
+                            if (!!resp.data.html_content) {
+                                data.hasData = true;
+                            }
+                        } else if (
+                            isAsscError(resp) ||
+                            isIjpError(resp) ||
+                            isSscError(resp)
+                        ) {
                             dispatch<typeof Actions.TilePartialDataLoaded>({
                                 name: Actions.TilePartialDataLoaded.name,
                                 payload: {
@@ -198,19 +252,20 @@ export class LexMeaningModel extends TileStatelessModel<LexMeaningModelState> {
                                 },
                             });
                             data.hasData = true;
-                        } else if (isAsscDone(resp)) {
-                            data.done.assc = true;
-                        } else if (isIjpDone(resp)) {
-                            data.done.ijp = true;
+                        } else if (
+                            isAsscDone(resp) ||
+                            isIjpDone(resp) ||
+                            isSscDone(resp)
+                        ) {
+                            data.done[resp.source] = true;
                         } else if (resp === null) {
-                            data.done.assc = true;
-                            data.done.ijp = true;
+                            data.done = Dict.map((_) => true, data.done);
                         }
                         return data;
                     },
                     {
                         hasData: false,
-                        done: { assc: false, ijp: false },
+                        done: { assc: false, ijp: false, ssc: false },
                         dispatched: false,
                     }
                 )

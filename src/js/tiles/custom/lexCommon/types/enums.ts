@@ -23,6 +23,7 @@ export enum Source {
     PSJC = 'psjc',
     SJC = 'sjc',
     DJD = 'djd',
+    SSC = 'ssc',
     Corpus = 'corpus',
 }
 

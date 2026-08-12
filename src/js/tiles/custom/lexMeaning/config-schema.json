@@ -1,6 +1,17 @@
 {
     "type": "object",
     "properties": {
+        "sourcePriority": {
+            "type": "array",
+            "items": {
+                "enum": [
+                    "assc",
+                    "ijp",
+                    "ssc"
+                ],
+                "type": "string"
+            }
+        },
         "tileType": {
             "description": "An identifier as defined by tiles configuration interface",
             "type": "string"
@@ -70,6 +81,7 @@
         }
     },
     "required": [
+        "sourcePriority",
         "tileType"
     ],
     "definitions": {

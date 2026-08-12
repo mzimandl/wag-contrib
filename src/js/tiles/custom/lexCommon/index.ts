@@ -41,7 +41,7 @@ import { Source } from './types/enums.js';
 
 export interface LexCommonTileConf extends TileConf {
     apiURL: string;
-    backlinkConf: Record<Source, { url: string }>;
+    backlinkConf: Partial<Record<Source, { url: string }>>;
 }
 
 export class LexCommonTile implements ITileProvider {
