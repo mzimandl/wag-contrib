@@ -272,7 +272,7 @@ export class LexMeaningModel extends TileStatelessModel<LexMeaningModelState> {
             )
             .subscribe({
                 next: (data) => {
-                    if (data.done.assc && data.done.ijp && !data.dispatched) {
+                    if (Dict.every((done) => done, data.done) && !data.dispatched) {
                         dispatch<typeof Actions.TileDataLoaded>({
                             name: Actions.TileDataLoaded.name,
                             payload: {
