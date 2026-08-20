@@ -101,10 +101,12 @@ export class LexMeaningModel extends TileStatelessModel<LexMeaningModelState> {
                 }
                 // set used source to first source with data based on priority
                 const currVariant = getCurrentVariant(state.currQueryMatch);
-                for (const source of state.sourcePriority) {
-                    if (currVariant.sources[source]?.length > 0) {
-                        state.usedSource = source;
-                        break;
+                if (currVariant !== null) {
+                    for (const source of state.sourcePriority) {
+                        if (currVariant.sources[source]?.length > 0) {
+                            state.usedSource = source;
+                            break;
+                        }
                     }
                 }
                 state.data = Dict.map(() => [], state.data);
@@ -272,7 +274,10 @@ export class LexMeaningModel extends TileStatelessModel<LexMeaningModelState> {
             )
             .subscribe({
                 next: (data) => {
-                    if (data.done.assc && data.done.ijp && !data.dispatched) {
+                    if (
+                        Dict.every((done) => done, data.done) &&
+                        !data.dispatched
+                    ) {
                         dispatch<typeof Actions.TileDataLoaded>({
                             name: Actions.TileDataLoaded.name,
                             payload: {

@@ -199,30 +199,41 @@ export function init(
                                         </S.MeaningHead>
                                         <S.MeaningBody>
                                             <S.ASSCStyle className="meaning-block">
-                                                <span className="exeplifikace">
-                                                    {List.map(
-                                                        (example, i) => (
-                                                            <>
-                                                                {i > 0 ? (
-                                                                    <br />
-                                                                ) : null}
-                                                                <span
-                                                                    style={{
-                                                                        fontStyle:
-                                                                            'italic',
-                                                                    }}
-                                                                >
-                                                                    <span className="normalni">
-                                                                        {
-                                                                            example
-                                                                        }
-                                                                    </span>
-                                                                </span>
-                                                            </>
-                                                        ),
-                                                        item.data.examples
-                                                    )}
-                                                </span>
+                                                {!List.empty(
+                                                    item.data.examples
+                                                ) ? (
+                                                    <>
+                                                        <span className="key">
+                                                            {ut.translate(
+                                                                'lex_meaning__examples'
+                                                            )}
+                                                            :
+                                                        </span>
+                                                        <span className="exeplifikace">
+                                                            {List.map(
+                                                                (example) => (
+                                                                    <>
+                                                                        <br />
+                                                                        <span
+                                                                            style={{
+                                                                                fontStyle:
+                                                                                    'italic',
+                                                                            }}
+                                                                        >
+                                                                            <span className="normalni">
+                                                                                {
+                                                                                    example
+                                                                                }
+                                                                            </span>
+                                                                        </span>
+                                                                    </>
+                                                                ),
+                                                                item.data
+                                                                    .examples
+                                                            )}
+                                                        </span>
+                                                    </>
+                                                ) : null}
                                             </S.ASSCStyle>
                                         </S.MeaningBody>
                                     </S.MeaningItem>
