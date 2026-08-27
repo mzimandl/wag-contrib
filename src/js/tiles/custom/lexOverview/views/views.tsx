@@ -363,7 +363,7 @@ export function init(
               } as LexItem);
         let asscVariantData: VariantData;
 
-        switch (state.mainSource) {
+        switch (state.variantSource) {
             case Source.ASSC:
                 if (
                     isAsscData(state.sourceData.assc) &&
@@ -371,7 +371,7 @@ export function init(
                 ) {
                     asscVariantData =
                         state.sourceData.assc.data[
-                            selectedVariant.sources['assc'][0].groupOrder
+                            selectedVariant.sources[Source.ASSC][0].groupOrder
                         ];
                     // selected variant may not be in detailed data, for example "hranolky" is only mentioned in hranolka/hranolek
                     if (asscVariantData !== undefined) {
@@ -412,7 +412,7 @@ export function init(
                         tileId={props.tileId}
                         selectedVariantIdx={state.selectedVariantIdx}
                         selectedVariant={selectedVariant}
-                        source={state.mainSource}
+                        source={state.variantSource}
                         variants={state.variants}
                         queryMatches={state.availQueryMatches}
                     />
@@ -431,10 +431,10 @@ export function init(
                             </lexComponents.MessageSubtile>
                         ))
                     )}
-                    {state.mainSource !== undefined ? (
+                    {state.variantSource !== undefined ? (
                         <LexOverviewBasics
                             tileId={props.tileId}
-                            source={state.mainSource}
+                            source={selectedVariant.posSource}
                             selectedVariant={selectedVariant}
                             basicOverview={basicOverview}
                             playingAudio={state.playingAudio}

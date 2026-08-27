@@ -38,13 +38,13 @@ export interface LexKey {
 
 export interface LexItem {
     key: LexKey;
-    posSource: string;
+    posSource: Source;
     sources: { [source: string]: Array<LexID> };
 }
 
 export interface LexExtraData {
     corpusId: string;
-    mainSource: Source;
+    variantSource: Source;
     variant: LexItem;
 }
 
@@ -54,7 +54,7 @@ export function isLexQueryMatch(
     return (
         qm.extraData !== undefined &&
         typeof qm.extraData['corpusId'] === 'string' &&
-        typeof qm.extraData['mainSource'] === 'string' &&
+        typeof qm.extraData['variantSource'] === 'string' &&
         typeof qm.extraData['variant'] === 'object'
     );
 }
