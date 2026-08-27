@@ -160,7 +160,8 @@ export function init(
                     className={'variant' + (clickHandler ? '' : ' selected')}
                     onClick={clickHandler ? clickHandler : null}
                 >
-                    {lexKey.plurality !== Plurality.NONE ? (
+                    {lexKey.plurality !== Plurality.NONE &&
+                    lexKey.plurality !== Plurality.UNKNOWN ? (
                         <span className="plurality">
                             {translatePlurality(lexKey, true)}{' '}
                         </span>
@@ -221,7 +222,8 @@ export function init(
             <S.Header source={props.source} width={itemWidth}>
                 <h2>{props.selectedVariant.key.lemma}</h2>
                 {List.size(props.variants) > 1 ||
-                props.variants[0].key.plurality > 0 ? (
+                (props.variants[0].key.plurality !== Plurality.NONE &&
+                    props.variants[0].key.plurality !== Plurality.UNKNOWN) ? (
                     <div className="variant-grid">
                         {pipe(
                             props.variants,
