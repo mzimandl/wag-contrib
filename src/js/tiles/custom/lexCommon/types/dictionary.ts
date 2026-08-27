@@ -24,15 +24,21 @@ interface LexID {
     parentId?: string;
     groupOrder: number;
     homonym: number;
+    pos: string;
 }
 
-export interface LexItem {
+export interface LexKey {
     lemma: string;
     pos: PoS;
     gender?: Gender;
     aspect?: Aspect;
     uninflected: boolean;
-    plurality: Plurality;
+    plurality: number;
+}
+
+export interface LexItem {
+    key: LexKey;
+    posSource: string;
     sources: { [source: string]: Array<LexID> };
 }
 

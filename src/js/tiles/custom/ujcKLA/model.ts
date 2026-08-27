@@ -87,7 +87,7 @@ export class UjcKLAModel extends TileStatelessModel<UjcKLAModelState> {
                 }
                 const variant = getCurrentVariant(queryMatch);
                 if (variant) {
-                    state.queries = [variant.lemma];
+                    state.queries = [variant.key.lemma];
                 } else {
                     state.queries = [queryMatch.lemma || queryMatch.word];
                 }

@@ -137,7 +137,7 @@ export class LexCommonModel extends TileStatelessModel<LexCommonModelState> {
                                               ),
                                     links: List.map(
                                         (sourceItem) => ({
-                                            label: `${variant.lemma} ${this.homonymToGreek(sourceItem.homonym)}`,
+                                            label: `${variant.key.lemma} ${this.homonymToGreek(sourceItem.homonym)}`,
                                             url: this.lexApi
                                                 .getBacklinkURL(
                                                     action.payload

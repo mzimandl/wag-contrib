@@ -86,7 +86,9 @@ export class LexOverviewTile implements ITileProvider {
                     return match.extraData.variant;
                 }
                 return {
-                    lemma: match.lemma || match.word,
+                    key: {
+                        lemma: match.lemma || match.word,
+                    },
                 } as LexItem;
             })
         );
