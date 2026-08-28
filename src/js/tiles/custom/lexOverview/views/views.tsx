@@ -32,7 +32,7 @@ import { init as initCorpusViews } from './corpus/views.js';
 import * as S from './style.js';
 import { List, pipe } from 'cnc-tskit';
 import { initLexComponents } from '../../lexCommon/views.js';
-import { LexItem, LexKey } from '../../lexCommon/types/dictionary.js';
+import { LexItem, LexKey, LexID } from '../../lexCommon/types/dictionary.js';
 import { SubtileRow } from '../../lexCommon/style.js';
 import { Plurality, Source } from '../../lexCommon/types/enums.js';
 import { VariantData } from '../../lexCommon/types/assc.js';
@@ -63,6 +63,15 @@ export function init(
     const asscViews = initAsscViews(dispatcher, ut);
     const ijpViews = initIjpViews(dispatcher, ut);
     const corpusViews = initCorpusViews(dispatcher, ut);
+
+    const translatePoSFromSource = (sourceData: Array<LexID>) => {
+        const posList = pipe(
+            sourceData,
+            List.reduce((acc, v, i) => List.addUnique(v.pos, acc), []),
+            List.map((v) => ut.translate(`lex_common__pos_${v}`))
+        );
+        return posList.join(', ');
+    };
 
     const translateMorfology = (
         lexKey: LexKey,
@@ -218,12 +227,15 @@ export function init(
         };
 
         const itemWidth = List.size(props.variants) === 4 ? '35%' : undefined;
+        const displayGrid =
+            List.size(props.variants) > 1 ||
+            (props.variants[0].key.plurality !== Plurality.NONE &&
+                props.variants[0].key.plurality !== Plurality.UNKNOWN &&
+                props.variants[0].key.plurality !== undefined);
         return (
             <S.Header source={props.source} width={itemWidth}>
                 <h2>{props.selectedVariant.key.lemma}</h2>
-                {List.size(props.variants) > 1 ||
-                (props.variants[0].key.plurality !== Plurality.NONE &&
-                    props.variants[0].key.plurality !== Plurality.UNKNOWN) ? (
+                {displayGrid ? (
                     <div className="variant-grid">
                         {pipe(
                             props.variants,
@@ -304,11 +316,17 @@ export function init(
                         {ut.translate('lex_overview__overview_part_of_speech')}:
                     </span>
                     <span className="value">
-                        {translateMorfology(
-                            props.selectedVariant.key,
-                            true,
-                            false
-                        )}
+                        {props.selectedVariant.key.pos.length > 0
+                            ? translatePoSFromSource(
+                                  props.selectedVariant.sources[
+                                      props.selectedVariant.posSource
+                                  ]
+                              )
+                            : translateMorfology(
+                                  props.selectedVariant.key,
+                                  true,
+                                  false
+                              )}
                     </span>
                 </SubtileRow>
             </lexComponents.Subtile>
@@ -360,6 +378,7 @@ export function init(
                       lemma: selectedQueryMatch.lemma,
                       pos: selectedQueryMatch.pos[0].value,
                   },
+                  posSource: Source.Corpus,
               } as LexItem);
         let asscVariantData: VariantData;
 
@@ -431,7 +450,7 @@ export function init(
                             </lexComponents.MessageSubtile>
                         ))
                     )}
-                    {state.variantSource !== undefined ? (
+                    {selectedVariant.posSource ? (
                         <LexOverviewBasics
                             tileId={props.tileId}
                             source={selectedVariant.posSource}
