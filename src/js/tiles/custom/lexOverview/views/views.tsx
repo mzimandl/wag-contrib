@@ -316,7 +316,7 @@ export function init(
                         {ut.translate('lex_overview__overview_part_of_speech')}:
                     </span>
                     <span className="value">
-                        {props.selectedVariant.key.pos.length > 0
+                        {props.selectedVariant.key.pos.length > 1
                             ? translatePoSFromSource(
                                   props.selectedVariant.sources[
                                       props.selectedVariant.posSource
