@@ -137,7 +137,7 @@ export class LexCommonModel extends TileStatelessModel<LexCommonModelState> {
                                               ),
                                     links: List.map(
                                         (sourceItem) => ({
-                                            label: `${variant.lemma} ${this.homonymToGreek(sourceItem.homonym)}`,
+                                            label: `${variant.key.lemma} ${this.homonymToGreek(sourceItem.homonym)}`,
                                             url: this.lexApi
                                                 .getBacklinkURL(
                                                     action.payload
@@ -188,9 +188,9 @@ export class LexCommonModel extends TileStatelessModel<LexCommonModelState> {
         const variant = getCurrentVariant(state.currQueryMatch);
         const args: LexArgs = {
             asscIds:
-                variant && variant.sources['assc']
+                variant && variant.sources[Source.ASSC]
                     ? pipe(
-                          variant.sources['assc'],
+                          variant.sources[Source.ASSC],
                           List.map((v) => v.id),
                           List.reduce(
                               (acc, curr, i) => List.addUnique(curr, acc),
@@ -199,9 +199,9 @@ export class LexCommonModel extends TileStatelessModel<LexCommonModelState> {
                       )
                     : [],
             ijpIds:
-                variant && variant.sources['ijp']
+                variant && variant.sources[Source.IJP]
                     ? pipe(
-                          variant.sources['ijp'],
+                          variant.sources[Source.IJP],
                           List.map((v) => v.id),
                           List.reduce(
                               (acc, curr, i) => List.addUnique(curr, acc),
@@ -211,9 +211,9 @@ export class LexCommonModel extends TileStatelessModel<LexCommonModelState> {
                       )
                     : [],
             sscIds:
-                variant && variant.sources['ssc']
+                variant && variant.sources[Source.SSC]
                     ? pipe(
-                          variant.sources['ssc'],
+                          variant.sources[Source.SSC],
                           List.map((v) => v.id),
                           List.reduce(
                               (acc, curr, i) => List.addUnique(curr, acc),

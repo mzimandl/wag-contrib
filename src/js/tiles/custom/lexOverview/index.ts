@@ -75,18 +75,20 @@ export class LexOverviewTile implements ITileProvider {
         this.configuredLemLevels = conf.lemmatizationLevels || [];
         this.readDataFromTile = readDataFromTile;
 
-        var mainSource: Source = undefined;
+        var variantSource: Source = undefined;
         var usedCorpus: string = undefined;
         const variants = pipe(
             queryMatches[0],
             List.map((match) => {
                 if (isLexQueryMatch(match)) {
-                    mainSource = match.extraData.mainSource;
+                    variantSource = match.extraData.variantSource;
                     usedCorpus = match.extraData.corpusId;
                     return match.extraData.variant;
                 }
                 return {
-                    lemma: match.lemma || match.word,
+                    key: {
+                        lemma: match.lemma || match.word,
+                    },
                 } as LexItem;
             })
         );
@@ -103,7 +105,7 @@ export class LexOverviewTile implements ITileProvider {
                 isBusy: isBusy,
                 availQueryMatches: queryMatches[0],
                 referenceCorpus: usedCorpus,
-                mainSource,
+                variantSource,
                 variants,
                 selectedVariantIdx: List.findIndex(
                     (v) => v.isCurrent,

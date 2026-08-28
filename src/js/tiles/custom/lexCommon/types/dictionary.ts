@@ -19,26 +19,32 @@
 import { QueryMatch } from '../../../../query/index.js';
 import { Aspect, Gender, PoS, Plurality, Source } from './enums.js';
 
-interface LexID {
+export interface LexID {
     id: string;
     parentId?: string;
     groupOrder: number;
     homonym: number;
+    pos: string;
 }
 
-export interface LexItem {
+export interface LexKey {
     lemma: string;
     pos: PoS;
     gender?: Gender;
     aspect?: Aspect;
     uninflected: boolean;
     plurality: Plurality;
+}
+
+export interface LexItem {
+    key: LexKey;
+    posSource: Source;
     sources: { [source: string]: Array<LexID> };
 }
 
 export interface LexExtraData {
     corpusId: string;
-    mainSource: Source;
+    variantSource: Source;
     variant: LexItem;
 }
 
@@ -48,7 +54,7 @@ export function isLexQueryMatch(
     return (
         qm.extraData !== undefined &&
         typeof qm.extraData['corpusId'] === 'string' &&
-        typeof qm.extraData['mainSource'] === 'string' &&
+        typeof qm.extraData['variantSource'] === 'string' &&
         typeof qm.extraData['variant'] === 'object'
     );
 }

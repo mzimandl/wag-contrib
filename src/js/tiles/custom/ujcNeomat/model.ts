@@ -87,7 +87,7 @@ export class UjcNeomatModel extends TileStatelessModel<UjcNeomatModelState> {
                 }
                 const variant = getCurrentVariant(queryMatch);
                 if (variant) {
-                    state.ident = variant.lemma;
+                    state.ident = variant.key.lemma;
                 } else {
                     state.ident = queryMatch.lemma || queryMatch.word;
                 }

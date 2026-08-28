@@ -32,7 +32,7 @@ import { init as initCorpusViews } from './corpus/views.js';
 import * as S from './style.js';
 import { List, pipe } from 'cnc-tskit';
 import { initLexComponents } from '../../lexCommon/views.js';
-import { LexItem } from '../../lexCommon/types/dictionary.js';
+import { LexItem, LexKey, LexID } from '../../lexCommon/types/dictionary.js';
 import { SubtileRow } from '../../lexCommon/style.js';
 import { Plurality, Source } from '../../lexCommon/types/enums.js';
 import { VariantData } from '../../lexCommon/types/assc.js';
@@ -64,8 +64,17 @@ export function init(
     const ijpViews = initIjpViews(dispatcher, ut);
     const corpusViews = initCorpusViews(dispatcher, ut);
 
+    const translatePoSFromSource = (sourceData: Array<LexID>) => {
+        const posList = pipe(
+            sourceData,
+            List.reduce((acc, v, i) => List.addUnique(v.pos, acc), []),
+            List.map((v) => ut.translate(`lex_common__pos_${v}`))
+        );
+        return posList.join(', ');
+    };
+
     const translateMorfology = (
-        variant: LexItem,
+        lexKey: LexKey,
         withPosInfo: boolean,
         short: boolean
     ) => {
@@ -73,28 +82,28 @@ export function init(
         if (withPosInfo) {
             parts.push(
                 short
-                    ? ut.translate(`lex_common__pos_short_${variant.pos}`)
-                    : ut.translate(`lex_common__pos_${variant.pos}`)
+                    ? ut.translate(`lex_common__pos_short_${lexKey.pos}`)
+                    : ut.translate(`lex_common__pos_${lexKey.pos}`)
             );
         }
-        if (variant.gender) {
+        if (lexKey.gender) {
             parts.push(
                 short
-                    ? ut.translate(`lex_common__gender_short_${variant.gender}`)
-                    : ut.translate(`lex_common__gender_${variant.gender}`)
+                    ? ut.translate(`lex_common__gender_short_${lexKey.gender}`)
+                    : ut.translate(`lex_common__gender_${lexKey.gender}`)
             );
-        } else if (variant.aspect) {
+        } else if (lexKey.aspect) {
             parts.push(
                 short
-                    ? ut.translate(`lex_common__aspect_short_${variant.aspect}`)
-                    : ut.translate(`lex_common__aspect_${variant.aspect}`)
+                    ? ut.translate(`lex_common__aspect_short_${lexKey.aspect}`)
+                    : ut.translate(`lex_common__aspect_${lexKey.aspect}`)
             );
         }
         return parts.join(' ');
     };
 
-    const translatePlurality = (variant: LexItem, short: boolean) => {
-        switch (variant.plurality) {
+    const translatePlurality = (lexKey: LexKey, short: boolean) => {
+        switch (lexKey.plurality) {
             case Plurality.PLURAL:
                 return ut.translate(
                     `lex_common__plurality${short ? '_short' : ''}_plural`
@@ -142,16 +151,16 @@ export function init(
 
         const renderVariant = (
             key: number,
-            variant: LexItem,
+            lexKey: LexKey,
             withInfo: boolean,
             withPosInfo: boolean,
             clickHandler?: () => void
         ) => {
             const info = [];
             if (withInfo) {
-                info.push(translateMorfology(variant, withPosInfo, true));
+                info.push(translateMorfology(lexKey, withPosInfo, true));
             }
-            if (variant.uninflected) {
+            if (lexKey.uninflected) {
                 info.push(ut.translate('lex_common__uninflected_short'));
             }
             return (
@@ -160,14 +169,15 @@ export function init(
                     className={'variant' + (clickHandler ? '' : ' selected')}
                     onClick={clickHandler ? clickHandler : null}
                 >
-                    {variant.plurality !== Plurality.NONE ? (
+                    {lexKey.plurality !== Plurality.NONE &&
+                    lexKey.plurality !== Plurality.UNKNOWN ? (
                         <span className="plurality">
-                            {translatePlurality(variant, true)}{' '}
+                            {translatePlurality(lexKey, true)}{' '}
                         </span>
                     ) : null}
                     {clickHandler ? (
                         <a>
-                            {variant.lemma}
+                            {lexKey.lemma}
                             {!List.empty(info) ? (
                                 <span className="morphology">
                                     {' '}
@@ -177,7 +187,7 @@ export function init(
                         </a>
                     ) : (
                         <span>
-                            {variant.lemma}
+                            {lexKey.lemma}
                             {!List.empty(info) ? (
                                 <span className="morphology">
                                     {' '}
@@ -190,47 +200,51 @@ export function init(
             );
         };
 
-        const hasSameLemmaVariant = (variant: LexItem) => {
+        const hasSameLemmaVariant = (key: LexKey) => {
             return (
                 List.findIndex(
                     (v, i) =>
-                        v.lemma === variant.lemma &&
-                        (v.pos !== variant.pos ||
-                            v.gender !== variant.gender ||
-                            v.aspect !== variant.aspect),
+                        v.key.lemma === key.lemma &&
+                        (v.key.pos !== key.pos ||
+                            v.key.gender !== key.gender ||
+                            v.key.aspect !== key.aspect),
                     props.variants
                 ) !== -1
             );
         };
 
-        const hasSamePosVariant = (variant: LexItem) => {
+        const hasSamePosVariant = (key: LexKey) => {
             return (
                 List.findIndex(
                     (v, i) =>
-                        v.lemma === variant.lemma &&
-                        v.pos === variant.pos &&
-                        (v.gender !== variant.gender ||
-                            v.aspect !== variant.aspect),
+                        v.key.lemma === key.lemma &&
+                        v.key.pos === key.pos &&
+                        (v.key.gender !== key.gender ||
+                            v.key.aspect !== key.aspect),
                     props.variants
                 ) !== -1
             );
         };
 
         const itemWidth = List.size(props.variants) === 4 ? '35%' : undefined;
+        const displayGrid =
+            List.size(props.variants) > 1 ||
+            (props.variants[0].key.plurality !== Plurality.NONE &&
+                props.variants[0].key.plurality !== Plurality.UNKNOWN &&
+                props.variants[0].key.plurality !== undefined);
         return (
             <S.Header source={props.source} width={itemWidth}>
-                <h2>{props.selectedVariant.lemma}</h2>
-                {List.size(props.variants) > 1 ||
-                props.variants[0].plurality > 0 ? (
+                <h2>{props.selectedVariant.key.lemma}</h2>
+                {displayGrid ? (
                     <div className="variant-grid">
                         {pipe(
                             props.variants,
                             List.map((variant, i) =>
                                 renderVariant(
                                     i,
-                                    variant,
-                                    hasSameLemmaVariant(variant),
-                                    !hasSamePosVariant(variant),
+                                    variant.key,
+                                    hasSameLemmaVariant(variant.key),
+                                    !hasSamePosVariant(variant.key),
                                     i !== props.selectedVariantIdx
                                         ? () => handleVariantClick(i)
                                         : undefined
@@ -302,7 +316,17 @@ export function init(
                         {ut.translate('lex_overview__overview_part_of_speech')}:
                     </span>
                     <span className="value">
-                        {translateMorfology(props.selectedVariant, true, false)}
+                        {props.selectedVariant.key.pos.length > 0
+                            ? translatePoSFromSource(
+                                  props.selectedVariant.sources[
+                                      props.selectedVariant.posSource
+                                  ]
+                              )
+                            : translateMorfology(
+                                  props.selectedVariant.key,
+                                  true,
+                                  false
+                              )}
                     </span>
                 </SubtileRow>
             </lexComponents.Subtile>
@@ -350,12 +374,15 @@ export function init(
         const selectedVariant = state.variants[state.selectedVariantIdx]
             ? state.variants[state.selectedVariantIdx]
             : ({
-                  lemma: selectedQueryMatch.lemma,
-                  pos: selectedQueryMatch.pos[0].value,
+                  key: {
+                      lemma: selectedQueryMatch.lemma,
+                      pos: selectedQueryMatch.pos[0].value,
+                  },
+                  posSource: Source.Corpus,
               } as LexItem);
         let asscVariantData: VariantData;
 
-        switch (state.mainSource) {
+        switch (state.variantSource) {
             case Source.ASSC:
                 if (
                     isAsscData(state.sourceData.assc) &&
@@ -363,7 +390,7 @@ export function init(
                 ) {
                     asscVariantData =
                         state.sourceData.assc.data[
-                            selectedVariant.sources['assc'][0].groupOrder
+                            selectedVariant.sources[Source.ASSC][0].groupOrder
                         ];
                     // selected variant may not be in detailed data, for example "hranolky" is only mentioned in hranolka/hranolek
                     if (asscVariantData !== undefined) {
@@ -372,7 +399,7 @@ export function init(
                         basicOverview.audioLink = asscVariantData.audioFile;
                     } else {
                         console.warn(
-                            `Selected variant ${selectedVariant.lemma} ${selectedVariant.pos} not found in ASSC data`
+                            `Selected variant ${selectedVariant.key.lemma} ${selectedVariant.key.pos} not found in ASSC data`
                         );
                     }
                 }
@@ -404,7 +431,7 @@ export function init(
                         tileId={props.tileId}
                         selectedVariantIdx={state.selectedVariantIdx}
                         selectedVariant={selectedVariant}
-                        source={state.mainSource}
+                        source={state.variantSource}
                         variants={state.variants}
                         queryMatches={state.availQueryMatches}
                     />
@@ -423,10 +450,10 @@ export function init(
                             </lexComponents.MessageSubtile>
                         ))
                     )}
-                    {state.mainSource !== undefined ? (
+                    {selectedVariant.posSource ? (
                         <LexOverviewBasics
                             tileId={props.tileId}
-                            source={state.mainSource}
+                            source={selectedVariant.posSource}
                             selectedVariant={selectedVariant}
                             basicOverview={basicOverview}
                             playingAudio={state.playingAudio}

@@ -106,7 +106,7 @@ export class LexDictionariesModel extends TileStatelessModel<LexDictionariesMode
                 var searchTerm: string;
                 const variant = getCurrentVariant(state.currQueryMatch);
                 if (variant) {
-                    searchTerm = variant.lemma;
+                    searchTerm = variant.key.lemma;
                 } else {
                     searchTerm =
                         state.currQueryMatch.lemma || state.currQueryMatch.word;
@@ -217,7 +217,7 @@ export class LexDictionariesModel extends TileStatelessModel<LexDictionariesMode
                 var searchTerm: string;
                 const variant = getCurrentVariant(state.currQueryMatch);
                 if (variant) {
-                    searchTerm = variant.lemma;
+                    searchTerm = variant.key.lemma;
                 } else {
                     searchTerm =
                         state.currQueryMatch.lemma || state.currQueryMatch.word;

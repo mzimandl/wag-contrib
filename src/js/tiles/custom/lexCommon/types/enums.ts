@@ -70,4 +70,5 @@ export enum Plurality {
     ALWAYS = 2,
     USUALLY = 3,
     ONLY = 4,
+    UNKNOWN = 5,
 }
