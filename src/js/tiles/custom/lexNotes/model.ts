@@ -23,7 +23,7 @@ import { Actions as GlobalActions } from '../../../models/actions.js';
 import { Actions } from './actions.js';
 import { List, pipe } from 'cnc-tskit';
 import { IDataStreaming } from '../../../page/streaming.js';
-import { HTMLBlock } from '../lexCommon/types/assc.js';
+import { ASSCHtmlData } from '../lexCommon/types/assc.js';
 import {
     isAsscDone,
     isAsscError,
@@ -42,7 +42,7 @@ export interface LexNotesModelState {
     isBusy: boolean;
     data: {
         ijp: Array<LexResponse<IJPData | string>>;
-        assc: Array<LexResponse<Array<HTMLBlock> | string>>;
+        assc: Array<LexResponse<ASSCHtmlData | string>>;
     };
     error: string;
     backlink: Backlink;

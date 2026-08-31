@@ -45,3 +45,6 @@ export interface HTMLBlock {
     links: Array<string>;
     notes: Array<string>;
 }
+
+export type ASSCData = Array<VariantData>;
+export type ASSCHtmlData = Array<HTMLBlock>;

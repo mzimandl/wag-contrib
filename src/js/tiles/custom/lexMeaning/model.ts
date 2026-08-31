@@ -159,7 +159,6 @@ export class LexMeaningModel extends TileStatelessModel<LexMeaningModelState> {
                         action.payload.response
                     );
                 }
-                console.log('Partial data loaded', action.payload.response);
             }
         );
     }

@@ -19,11 +19,11 @@
 import { Action } from 'kombo';
 import { Actions as GlobalActions } from '../../../models/actions.js';
 import { IJPData } from '../lexCommon/types/ijp.js';
-import { VariantData } from '../lexCommon/types/assc.js';
+import { ASSCData } from '../lexCommon/types/assc.js';
 import { LexResponse } from '../lexCommon/api.js';
 
 export interface PartialDataPayload {
-    resp: LexResponse<IJPData | Array<VariantData> | string>;
+    resp: LexResponse<IJPData | ASSCData | string>;
 }
 
 export class Actions {

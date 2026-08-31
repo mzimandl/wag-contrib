@@ -23,7 +23,7 @@ import { ajax$ } from '../../../page/ajax.js';
 import { ResourceApi, SourceDetails, HTTPHeaders } from '../../../types.js';
 import { Backlink } from '../../../page/tile.js';
 import { IDataStreaming } from '../../../page/streaming.js';
-import { HTMLBlock, VariantData } from './types/assc.js';
+import { ASSCData, ASSCHtmlData } from './types/assc.js';
 import { IJPData as IJPData } from './types/ijp.js';
 import { Source, Type } from './types/enums.js';
 import { CorpusInfoAPI } from '../../../api/vendor/mquery/corpusInfo.js';
@@ -40,13 +40,7 @@ export function isEmptyArgs(args: LexArgs): boolean {
 }
 
 export interface LexResponse<
-    T =
-        | SSCData
-        | IJPData
-        | Array<VariantData>
-        | Array<HTMLBlock>
-        | 'done'
-        | string,
+    T = SSCData | IJPData | ASSCData | ASSCHtmlData | 'done' | string,
 > {
     source: Source;
     type: string;
@@ -55,9 +49,7 @@ export interface LexResponse<
     statusCode: number;
 }
 
-export function isAsscData(
-    v: LexResponse
-): v is LexResponse<Array<VariantData>> {
+export function isAsscData(v: LexResponse): v is LexResponse<ASSCData> {
     return (
         v &&
         v.source === Source.ASSC &&
@@ -66,7 +58,7 @@ export function isAsscData(
     );
 }
 
-export function isAsscHtml(v: LexResponse): v is LexResponse<Array<HTMLBlock>> {
+export function isAsscHtml(v: LexResponse): v is LexResponse<ASSCHtmlData> {
     return (
         v &&
         v.source === Source.ASSC &&
