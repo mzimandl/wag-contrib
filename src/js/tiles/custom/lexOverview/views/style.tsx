@@ -51,7 +51,8 @@ export const Header = styled.div<{
             padding: 0.2em 1em;
             white-space: nowrap;
             text-align: center;
-            border-radius: 3px;
+            border-radius: ${(props) =>
+                getLexTheme(props.theme).subtileBorderRadius};
             border: 1px solid
                 ${(props) =>
                     getLexTheme(props.theme).sourceColors[props.source]};

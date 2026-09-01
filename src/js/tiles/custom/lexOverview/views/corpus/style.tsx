@@ -28,7 +28,7 @@ export const Stars = styled.span<{ theme: Theme }>`
     white-space: nowrap;
 
     img {
+        color: ${(props) => props.theme.colorLogoBlue};
         width: 1em;
     }
 `;
-

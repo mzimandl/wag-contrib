@@ -39,7 +39,7 @@ export const SubtileWrapper = styled.div<{
     $source?: string;
     $systemMessageType?: SystemMessageType;
 }>`
-    margin-top: 1em;
+    margin-top: 0.5em;
     &:first-child {
         margin-top: 0;
     }
@@ -50,7 +50,7 @@ export const SubtileWrapper = styled.div<{
         props.$systemMessageType
             ? `2px solid ${getMessageColor(props.$systemMessageType)}`
             : 'none'};
-    border-radius: 3px;
+    border-radius: ${(props) => getLexTheme(props.theme).subtileBorderRadius};
     display: flex;
     flex-direction: column;
     justify-content: space-between;

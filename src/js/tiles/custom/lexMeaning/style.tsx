@@ -45,6 +45,7 @@ export const MeaningTileView = styled(LexTileBase)<{ theme: Theme }>`
             overflow-y: hidden;
 
             .scroller {
+                padding: 1em;
                 overflow-y: auto;
             }
         }
