@@ -94,71 +94,67 @@ export function init(
                                                 ke slovu
                                             </span>
                                         ) : null}
-                                        {
-                                            <S.MeaningItem
-                                                key={i}
-                                                className={
-                                                    isParent ? 'parent' : ''
-                                                }
-                                            >
-                                                <S.MeaningHead>
-                                                    {List.map(
-                                                        (line, i) => (
-                                                            <ASSCHeader
-                                                                i={i}
-                                                                line={line}
-                                                            />
-                                                        ),
-                                                        block.formattedVariants
-                                                    )}
-                                                </S.MeaningHead>
-                                                <S.MeaningBody>
-                                                    {List.map(
-                                                        (item, i) => (
-                                                            <S.ASSCStyle
-                                                                key={`block${i}`}
-                                                                className={
-                                                                    'meaning-block' +
-                                                                    (item.includes(
-                                                                        '□'
-                                                                    )
-                                                                        ? ' style_souslovi'
-                                                                        : '')
-                                                                }
-                                                                dangerouslySetInnerHTML={{
-                                                                    __html: item,
-                                                                }}
-                                                            />
-                                                        ),
-                                                        block.meanings
-                                                    )}
-                                                    {List.map(
-                                                        (nest, i) => (
-                                                            <S.ASSCStyle
-                                                                key={`nest${i}`}
-                                                                className="nest-line"
-                                                                dangerouslySetInnerHTML={{
-                                                                    __html: nest,
-                                                                }}
-                                                            />
-                                                        ),
-                                                        block.nestedVariants
-                                                    )}
-                                                    {List.map(
-                                                        (links, i) => (
-                                                            <S.ASSCStyle
-                                                                key={`links${i}`}
-                                                                className="links"
-                                                                dangerouslySetInnerHTML={{
-                                                                    __html: links,
-                                                                }}
-                                                            />
-                                                        ),
-                                                        block.links
-                                                    )}
-                                                </S.MeaningBody>
-                                            </S.MeaningItem>
-                                        }
+                                        <S.MeaningItem
+                                            key={i}
+                                            className={isParent ? 'parent' : ''}
+                                        >
+                                            <S.MeaningHead>
+                                                {List.map(
+                                                    (line, i) => (
+                                                        <ASSCHeader
+                                                            i={i}
+                                                            line={line}
+                                                        />
+                                                    ),
+                                                    block.formattedVariants
+                                                )}
+                                            </S.MeaningHead>
+                                            <S.MeaningBody>
+                                                {List.map(
+                                                    (item, i) => (
+                                                        <S.ASSCStyle
+                                                            key={`block${i}`}
+                                                            className={
+                                                                'meaning-block' +
+                                                                (item.includes(
+                                                                    '□'
+                                                                )
+                                                                    ? ' style_souslovi'
+                                                                    : '')
+                                                            }
+                                                            dangerouslySetInnerHTML={{
+                                                                __html: item,
+                                                            }}
+                                                        />
+                                                    ),
+                                                    block.meanings
+                                                )}
+                                                {List.map(
+                                                    (nest, i) => (
+                                                        <S.ASSCStyle
+                                                            key={`nest${i}`}
+                                                            className="nest-line"
+                                                            dangerouslySetInnerHTML={{
+                                                                __html: nest,
+                                                            }}
+                                                        />
+                                                    ),
+                                                    block.nestedVariants
+                                                )}
+                                                {List.map(
+                                                    (links, i) => (
+                                                        <S.ASSCStyle
+                                                            key={`links${i}`}
+                                                            className="links"
+                                                            dangerouslySetInnerHTML={{
+                                                                __html: links,
+                                                            }}
+                                                        />
+                                                    ),
+                                                    block.links
+                                                )}
+                                            </S.MeaningBody>
+                                        </S.MeaningItem>
                                     </>
                                 );
                             }, blocks.data),

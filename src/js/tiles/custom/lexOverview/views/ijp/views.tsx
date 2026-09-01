@@ -25,7 +25,7 @@ import {
     ComparisonData,
     ConjugationData,
 } from '../../../lexCommon/types/ijp.js';
-import * as LS from './style.js';
+import * as S from '../style.js';
 import { IJPData } from '../../../lexCommon/types/ijp.js';
 import { initLexComponents } from '../../../lexCommon/views.js';
 import { SubtileRow } from '../../../lexCommon/style.js';
@@ -49,7 +49,7 @@ export function init(
         comparisonData: ComparisonData;
     }> = (props) => {
         return (
-            <LS.DataTable>
+            <S.DataTable>
                 <thead>
                     <tr>
                         <th>
@@ -74,7 +74,7 @@ export function init(
                         <td>{props.comparisonData.superlative}</td>
                     </tr>
                 </tbody>
-            </LS.DataTable>
+            </S.DataTable>
         );
     };
 
@@ -91,7 +91,7 @@ export function init(
             )
         ) {
             return (
-                <LS.DataTable>
+                <S.DataTable>
                     <thead>
                         <tr>
                             <th className="tableKey">
@@ -116,11 +116,11 @@ export function init(
                             ))
                         )}
                     </tbody>
-                </LS.DataTable>
+                </S.DataTable>
             );
         }
         return (
-            <LS.DataTable>
+            <S.DataTable>
                 <thead>
                     <tr>
                         <th className="tableKey">
@@ -143,7 +143,7 @@ export function init(
                         ))
                     )}
                 </tbody>
-            </LS.DataTable>
+            </S.DataTable>
         );
     };
 
@@ -153,7 +153,7 @@ export function init(
         conjugationData: ConjugationData;
     }> = (props) => {
         return (
-            <LS.DataTable>
+            <S.DataTable>
                 <thead>
                     <tr>
                         <th className="tableKey"></th>
@@ -315,7 +315,7 @@ export function init(
                         </tr>
                     ) : null}
                 </tbody>
-            </LS.DataTable>
+            </S.DataTable>
         );
     };
 

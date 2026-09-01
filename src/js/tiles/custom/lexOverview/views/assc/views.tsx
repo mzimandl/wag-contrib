@@ -20,7 +20,7 @@ import { List } from 'cnc-tskit';
 import { IActionDispatcher, ViewUtils } from 'kombo';
 import * as React from 'react';
 import { GlobalComponents } from '../../../../../views/common/index.js';
-import * as LS from './style.js';
+import * as S from '../style.js';
 import { initLexComponents } from '../../../lexCommon/views.js';
 import { SubtileRow } from '../../../lexCommon/style.js';
 import { Source } from '../../../lexCommon/types/enums.js';
@@ -44,7 +44,7 @@ export function init(
         forms: Array<FormStruct>;
     }> = (props) => {
         return (
-            <LS.DataTable>
+            <S.DataTable>
                 <tbody>
                     <tr>
                         <td className="tableKey">
@@ -83,7 +83,7 @@ export function init(
                         props.forms
                     )}
                 </tbody>
-            </LS.DataTable>
+            </S.DataTable>
         );
     };
 

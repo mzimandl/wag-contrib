@@ -19,6 +19,7 @@
 import { styled } from 'styled-components';
 import { Theme } from '../../../page/theme.js';
 import { LexTileBase } from '../lexCommon/style.js';
+import { getLexTheme } from '../lexCommon/theme.js';
 
 // ---------------- <MeaningTileView /> --------------------------------------
 
@@ -49,9 +50,10 @@ export const MeaningTileView = styled(LexTileBase)<{ theme: Theme }>`
                 overflow-y: auto;
 
                 hr.itemDivider {
-                    height: 3px;
+                    height: 2px;
                     background-color: ${(props) =>
                         props.theme.tileBackgroundColor};
+                    border-radius: 2px;
                 }
             }
         }
@@ -73,9 +75,11 @@ export const MeaningItem = styled.div<{ theme: Theme }>`
     // -------- parent meaning indentation --------
 
     &.parent {
-        margin-left: 1em;
-        border-left: 3px solid ${(props) => props.theme.tileBackgroundColor};
-        padding-left: 1em;
+        margin: 0 1em;
+        padding: 0.5em 1em;
+        background-color: ${(props) => getLexTheme(props.theme).overlayColor};
+        border-radius: ${(props) =>
+            getLexTheme(props.theme).subtileBorderRadius};
     }
 
     // -------- ASSC adjusted styles -------
