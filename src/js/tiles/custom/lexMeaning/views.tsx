@@ -86,7 +86,9 @@ export function init(
                                 const isParent = j > 0;
                                 return (
                                     <>
-                                        {i > 0 && j === 0 ? <hr /> : null}
+                                        {i > 0 && j === 0 ? (
+                                            <hr className="itemDivider" />
+                                        ) : null}
                                         {isParent ? (
                                             <span className="ke-slovu">
                                                 ke slovu
@@ -182,7 +184,7 @@ export function init(
                     {List.map(
                         (item, i) => (
                             <>
-                                {i > 0 ? <hr /> : null}
+                                {i > 0 ? <hr className="itemDivider" /> : null}
                                 {
                                     <S.MeaningItem key={i}>
                                         <S.MeaningHead>
@@ -262,7 +264,7 @@ export function init(
                     {List.map(
                         (item, i) => (
                             <>
-                                {i > 0 ? <hr /> : null}
+                                {i > 0 ? <hr className="itemDivider" /> : null}
                                 {
                                     <S.MeaningItem key={i}>
                                         <S.SSCStyle

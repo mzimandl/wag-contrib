@@ -24,10 +24,16 @@ export const DataTable = styled.table<{ theme: Theme }>`
     border-collapse: collapse;
     border-spacing: 0em;
 
+    .tableKey {
+        width: 0.1%;
+        white-space: nowrap;
+        text-align: right;
+    }
+
     td,
     th {
         padding: 0.2em 0.5em;
-        border: 1px solid #dddddd;
+        border: 1px solid ${(props) => props.theme.tileBackgroundColor};
         text-align: center;
         vertical-align: middle;
     }

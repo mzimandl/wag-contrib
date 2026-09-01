@@ -94,7 +94,9 @@ export function init(
                 <LS.DataTable>
                     <thead>
                         <tr>
-                            <th>{ut.translate('lex_overview__table_case')}</th>
+                            <th className="tableKey">
+                                {ut.translate('lex_overview__table_case')}
+                            </th>
                             <th>
                                 {ut.translate(
                                     'lex_overview__number_indetermined'
@@ -108,7 +110,7 @@ export function init(
                             Dict.toEntries(),
                             List.map((data, i) => (
                                 <tr key={`${i}:${data[0]}`}>
-                                    <td>{i + 1}.</td>
+                                    <td className="tableKey">{i + 1}.</td>
                                     <td>{data[1].indetermined}</td>
                                 </tr>
                             ))
@@ -121,7 +123,9 @@ export function init(
             <LS.DataTable>
                 <thead>
                     <tr>
-                        <th>{ut.translate('lex_overview__table_case')}</th>
+                        <th className="tableKey">
+                            {ut.translate('lex_overview__table_case')}
+                        </th>
                         <th>{ut.translate('lex_overview__number_singular')}</th>
                         <th>{ut.translate('lex_overview__number_plural')}</th>
                     </tr>
@@ -132,7 +136,7 @@ export function init(
                         Dict.toEntries(),
                         List.map((data, i) => (
                             <tr key={`${i}:${data[0]}`}>
-                                <td>{i + 1}.</td>
+                                <td className="tableKey">{i + 1}.</td>
                                 <td>{data[1].singular}</td>
                                 <td>{data[1].plural}</td>
                             </tr>
@@ -152,7 +156,7 @@ export function init(
             <LS.DataTable>
                 <thead>
                     <tr>
-                        <th></th>
+                        <th className="tableKey"></th>
                         <th>{ut.translate('lex_overview__number_singular')}</th>
                         <th>{ut.translate('lex_overview__number_plural')}</th>
                     </tr>
@@ -163,7 +167,7 @@ export function init(
                         Dict.toEntries(),
                         List.map((data) => (
                             <tr>
-                                <td>
+                                <td className="tableKey">
                                     {ut.translate(
                                         `lex_overview__conjugation_person_${data[0]}`
                                     )}
@@ -176,7 +180,7 @@ export function init(
                     {!!props.conjugationData.imperative.singular ||
                     !!props.conjugationData.imperative.singular ? (
                         <tr>
-                            <td>
+                            <td className="tableKey">
                                 {ut.translate(
                                     'lex_overview__conjugation_imperative'
                                 )}
@@ -187,7 +191,7 @@ export function init(
                     ) : null}
                     {!!props.conjugationData.participle.active ? (
                         <tr>
-                            <td>
+                            <td className="tableKey">
                                 {ut.translate(
                                     'lex_overview__conjugation_participle_active'
                                 )}
@@ -199,7 +203,7 @@ export function init(
                     ) : null}
                     {!!props.conjugationData.participle.passive ? (
                         <tr>
-                            <td>
+                            <td className="tableKey">
                                 {ut.translate(
                                     'lex_overview__conjugation_participle_passive'
                                 )}
@@ -212,7 +216,7 @@ export function init(
                     {!!props.conjugationData.transgressive.past.m.singular ||
                     !!props.conjugationData.transgressive.past.m.plural ? (
                         <tr>
-                            <td>
+                            <td className="tableKey">
                                 {ut.translate(
                                     'lex_overview__conjugation_transgressive_past_m'
                                 )}
@@ -234,7 +238,7 @@ export function init(
                     {!!props.conjugationData.transgressive.past.zs.singular ||
                     !!props.conjugationData.transgressive.past.zs.plural ? (
                         <tr>
-                            <td>
+                            <td className="tableKey">
                                 {ut.translate(
                                     'lex_overview__conjugation_transgressive_past_zs'
                                 )}
@@ -256,7 +260,7 @@ export function init(
                     {!!props.conjugationData.transgressive.present.m.singular ||
                     !!props.conjugationData.transgressive.present.m.plural ? (
                         <tr>
-                            <td>
+                            <td className="tableKey">
                                 {ut.translate(
                                     'lex_overview__conjugation_transgressive_present_m'
                                 )}
@@ -279,7 +283,7 @@ export function init(
                         .singular ||
                     !!props.conjugationData.transgressive.present.zs.plural ? (
                         <tr>
-                            <td>
+                            <td className="tableKey">
                                 {ut.translate(
                                     'lex_overview__conjugation_transgressive_present_zs'
                                 )}
@@ -300,7 +304,7 @@ export function init(
                     ) : null}
                     {!!props.conjugationData.verbalNoun ? (
                         <tr>
-                            <td>
+                            <td className="tableKey">
                                 {ut.translate(
                                     'lex_overview__conjugation_verbal_noun'
                                 )}

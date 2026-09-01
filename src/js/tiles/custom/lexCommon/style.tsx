@@ -43,7 +43,7 @@ export const SubtileWrapper = styled.div<{
     &:first-child {
         margin-top: 0;
     }
-    padding: 0.5em;
+    padding: 0.8em 1em;
     background-color: ${(props) =>
         getLexTheme(props.theme).sourceColors[props.$source]};
     border: ${(props) =>
@@ -63,12 +63,13 @@ export const SubtileWrapper = styled.div<{
 
 export const SubtileRow = styled.div<{ theme: Theme }>`
     &:not(:first-child) {
-        margin-top: 0.5em;
+        margin-top: 0.25em;
     }
 
     .key {
-        color: ${(props) => props.theme.colorLightText};
+        color: ${(props) => props.theme.colorSecondaryText};
         font-family: ${(props) => props.theme.condensedFontFamily};
+        font-weight: 800;
     }
 
     .value {
@@ -80,7 +81,13 @@ export const SubtileRow = styled.div<{ theme: Theme }>`
     }
 
     &.footer {
+        margin-top: 0.5em;
         font-size: 0.9em;
         text-align: right;
+
+        .key {
+            color: ${(props) => props.theme.colorLightText};
+            font-weight: 100;
+        }
     }
 `;

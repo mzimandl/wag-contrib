@@ -28,7 +28,6 @@ function isLexTheme(theme: Theme): theme is Theme<LexTheme> {
     return (
         !!theme &&
         typeof theme.extraTheme === 'object' &&
-        'subtileBorderRadius' in theme.extraTheme &&
         'sourceColors' in theme.extraTheme &&
         typeof theme.extraTheme.sourceColors === 'object'
     );

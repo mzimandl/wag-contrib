@@ -26,7 +26,7 @@ export const DataTable = styled.table<{ theme: Theme }>`
 
     .tableKey {
         white-space: nowrap;
-        text-align: left;
+        text-align: right;
     }
 
     .tableValue {
