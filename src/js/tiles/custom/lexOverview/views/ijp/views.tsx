@@ -25,7 +25,7 @@ import {
     ComparisonData,
     ConjugationData,
 } from '../../../lexCommon/types/ijp.js';
-import * as LS from './style.js';
+import * as S from '../style.js';
 import { IJPData } from '../../../lexCommon/types/ijp.js';
 import { initLexComponents } from '../../../lexCommon/views.js';
 import { SubtileRow } from '../../../lexCommon/style.js';
@@ -49,7 +49,7 @@ export function init(
         comparisonData: ComparisonData;
     }> = (props) => {
         return (
-            <LS.DataTable>
+            <S.DataTable>
                 <thead>
                     <tr>
                         <th>
@@ -74,7 +74,7 @@ export function init(
                         <td>{props.comparisonData.superlative}</td>
                     </tr>
                 </tbody>
-            </LS.DataTable>
+            </S.DataTable>
         );
     };
 
@@ -91,10 +91,12 @@ export function init(
             )
         ) {
             return (
-                <LS.DataTable>
+                <S.DataTable>
                     <thead>
                         <tr>
-                            <th>{ut.translate('lex_overview__table_case')}</th>
+                            <th className="tableKey">
+                                {ut.translate('lex_overview__table_case')}
+                            </th>
                             <th>
                                 {ut.translate(
                                     'lex_overview__number_indetermined'
@@ -108,20 +110,22 @@ export function init(
                             Dict.toEntries(),
                             List.map((data, i) => (
                                 <tr key={`${i}:${data[0]}`}>
-                                    <td>{i + 1}.</td>
+                                    <td className="tableKey">{i + 1}.</td>
                                     <td>{data[1].indetermined}</td>
                                 </tr>
                             ))
                         )}
                     </tbody>
-                </LS.DataTable>
+                </S.DataTable>
             );
         }
         return (
-            <LS.DataTable>
+            <S.DataTable>
                 <thead>
                     <tr>
-                        <th>{ut.translate('lex_overview__table_case')}</th>
+                        <th className="tableKey">
+                            {ut.translate('lex_overview__table_case')}
+                        </th>
                         <th>{ut.translate('lex_overview__number_singular')}</th>
                         <th>{ut.translate('lex_overview__number_plural')}</th>
                     </tr>
@@ -132,14 +136,14 @@ export function init(
                         Dict.toEntries(),
                         List.map((data, i) => (
                             <tr key={`${i}:${data[0]}`}>
-                                <td>{i + 1}.</td>
+                                <td className="tableKey">{i + 1}.</td>
                                 <td>{data[1].singular}</td>
                                 <td>{data[1].plural}</td>
                             </tr>
                         ))
                     )}
                 </tbody>
-            </LS.DataTable>
+            </S.DataTable>
         );
     };
 
@@ -149,10 +153,10 @@ export function init(
         conjugationData: ConjugationData;
     }> = (props) => {
         return (
-            <LS.DataTable>
+            <S.DataTable>
                 <thead>
                     <tr>
-                        <th></th>
+                        <th className="tableKey"></th>
                         <th>{ut.translate('lex_overview__number_singular')}</th>
                         <th>{ut.translate('lex_overview__number_plural')}</th>
                     </tr>
@@ -163,7 +167,7 @@ export function init(
                         Dict.toEntries(),
                         List.map((data) => (
                             <tr>
-                                <td>
+                                <td className="tableKey">
                                     {ut.translate(
                                         `lex_overview__conjugation_person_${data[0]}`
                                     )}
@@ -176,7 +180,7 @@ export function init(
                     {!!props.conjugationData.imperative.singular ||
                     !!props.conjugationData.imperative.singular ? (
                         <tr>
-                            <td>
+                            <td className="tableKey">
                                 {ut.translate(
                                     'lex_overview__conjugation_imperative'
                                 )}
@@ -187,7 +191,7 @@ export function init(
                     ) : null}
                     {!!props.conjugationData.participle.active ? (
                         <tr>
-                            <td>
+                            <td className="tableKey">
                                 {ut.translate(
                                     'lex_overview__conjugation_participle_active'
                                 )}
@@ -199,7 +203,7 @@ export function init(
                     ) : null}
                     {!!props.conjugationData.participle.passive ? (
                         <tr>
-                            <td>
+                            <td className="tableKey">
                                 {ut.translate(
                                     'lex_overview__conjugation_participle_passive'
                                 )}
@@ -212,7 +216,7 @@ export function init(
                     {!!props.conjugationData.transgressive.past.m.singular ||
                     !!props.conjugationData.transgressive.past.m.plural ? (
                         <tr>
-                            <td>
+                            <td className="tableKey">
                                 {ut.translate(
                                     'lex_overview__conjugation_transgressive_past_m'
                                 )}
@@ -234,7 +238,7 @@ export function init(
                     {!!props.conjugationData.transgressive.past.zs.singular ||
                     !!props.conjugationData.transgressive.past.zs.plural ? (
                         <tr>
-                            <td>
+                            <td className="tableKey">
                                 {ut.translate(
                                     'lex_overview__conjugation_transgressive_past_zs'
                                 )}
@@ -256,7 +260,7 @@ export function init(
                     {!!props.conjugationData.transgressive.present.m.singular ||
                     !!props.conjugationData.transgressive.present.m.plural ? (
                         <tr>
-                            <td>
+                            <td className="tableKey">
                                 {ut.translate(
                                     'lex_overview__conjugation_transgressive_present_m'
                                 )}
@@ -279,7 +283,7 @@ export function init(
                         .singular ||
                     !!props.conjugationData.transgressive.present.zs.plural ? (
                         <tr>
-                            <td>
+                            <td className="tableKey">
                                 {ut.translate(
                                     'lex_overview__conjugation_transgressive_present_zs'
                                 )}
@@ -300,7 +304,7 @@ export function init(
                     ) : null}
                     {!!props.conjugationData.verbalNoun ? (
                         <tr>
-                            <td>
+                            <td className="tableKey">
                                 {ut.translate(
                                     'lex_overview__conjugation_verbal_noun'
                                 )}
@@ -311,7 +315,7 @@ export function init(
                         </tr>
                     ) : null}
                 </tbody>
-            </LS.DataTable>
+            </S.DataTable>
         );
     };
 

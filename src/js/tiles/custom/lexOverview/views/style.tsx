@@ -27,6 +27,37 @@ export const LexOverviewTileView = styled(LexTileBase)`
     justify-content: space-between;
 `;
 
+export const DataTable = styled.table<{ theme: Theme }>`
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 2px;
+
+    .tableKey {
+        width: 0.1%;
+        white-space: nowrap;
+        text-align: right;
+    }
+
+    .tableValue {
+        width: 100%;
+
+        .comment {
+            font-size: 0.8em;
+            font-weight: 400;
+        }
+    }
+
+    td,
+    th {
+        padding: 0.2em 0.5em;
+        background-color: ${(props) => getLexTheme(props.theme).overlayColor};
+        border-radius: ${(props) =>
+            getLexTheme(props.theme).overlayBorderRadius};
+        text-align: center;
+        vertical-align: middle;
+    }
+`;
+
 export const Header = styled.div<{
     theme: Theme;
     source?: string;
@@ -51,7 +82,8 @@ export const Header = styled.div<{
             padding: 0.2em 1em;
             white-space: nowrap;
             text-align: center;
-            border-radius: 3px;
+            border-radius: ${(props) =>
+                getLexTheme(props.theme).subtileBorderRadius};
             border: 1px solid
                 ${(props) =>
                     getLexTheme(props.theme).sourceColors[props.source]};

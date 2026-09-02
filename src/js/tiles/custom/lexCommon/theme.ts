@@ -20,6 +20,9 @@ import { Theme } from '../../../page/theme.js';
 import { Source } from './types/enums.js';
 
 interface LexTheme {
+    subtileBorderRadius: string;
+    overlayBorderRadius: string;
+    overlayColor: string;
     sourceColors: Partial<Record<Source, string>>;
 }
 
@@ -27,13 +30,19 @@ function isLexTheme(theme: Theme): theme is Theme<LexTheme> {
     return (
         !!theme &&
         typeof theme.extraTheme === 'object' &&
-        'sourceColors' in theme.extraTheme &&
-        typeof theme.extraTheme.sourceColors === 'object'
+        ('overlayColor' in theme.extraTheme ||
+            'subtileBorderRadius' in theme.extraTheme ||
+            'overlayBorderRadius' in theme.extraTheme ||
+            ('sourceColors' in theme.extraTheme &&
+                typeof theme.extraTheme.sourceColors === 'object'))
     );
 }
 
 export function getLexTheme(theme: Theme): LexTheme {
     const defaultTheme: LexTheme = {
+        subtileBorderRadius: '0.5em',
+        overlayBorderRadius: '0.25em',
+        overlayColor: '#0000000e',
         sourceColors: {
             [Source.ASSC]: '#d4e2f4',
             [Source.SSC]: '#dae8f6',

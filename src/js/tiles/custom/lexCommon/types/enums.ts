@@ -24,7 +24,7 @@ export enum Source {
     SJC = 'sjc',
     DJD = 'djd',
     SSC = 'ssc',
-    Corpus = 'corpus',
+    Corpus = 'cnc',
 }
 
 export enum Type {

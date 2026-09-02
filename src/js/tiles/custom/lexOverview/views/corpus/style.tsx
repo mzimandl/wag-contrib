@@ -31,4 +31,3 @@ export const Stars = styled.span<{ theme: Theme }>`
         width: 1em;
     }
 `;
-
