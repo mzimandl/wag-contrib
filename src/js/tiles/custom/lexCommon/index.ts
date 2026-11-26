@@ -97,9 +97,6 @@ export class LexCommonTile implements ITileProvider {
             appServices,
             conf.backlinkConf
         );
-        this.label = appServices.importExternalMessage(
-            conf.label || 'lex_common__main_label'
-        );
 
         const initQueryMatch = List.map(findCurrQueryMatch, queryMatches)[0];
         this.model = new LexCommonModel({

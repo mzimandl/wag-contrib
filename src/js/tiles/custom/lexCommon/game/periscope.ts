@@ -20,17 +20,24 @@ import type { FloatingWord, GameState } from './simulation.js';
 
 /**
  * Periscope simulation (pure numbers, same as simulation.ts).
- * Horizontal motion uses a damped spring, the "turning" of the
- * periscope is just a number going from -1 (looks left) to 1
- * (looks right) which the renderer uses as horizontal scale.
+ * Horizontal motion uses a damped spring, turning is a rotation
+ * around the vertical axis of the tube.
  */
 
 export interface Periscope {
     x: number;
     /** horizontal speed in px per second */
     vx: number;
-    /** -1 = looks left, 1 = looks right; values between = turning */
-    facing: number;
+    /**
+     * Rotation around the vertical axis in radians, within [0, 2π):
+     * 0 = looks right, π/2 = looks at the viewer, π = looks left,
+     * 3π/2 = looks away from the viewer.
+     */
+    heading: number;
+    /** heading the periscope is turning to (HEADING_RIGHT or HEADING_LEFT) */
+    targetHeading: number;
+    /** 1 = turns through the front (towards the viewer), -1 = through the back */
+    turnDirection: number;
     /** 0 = under water, 1 = fully raised */
     lift: number;
     /** text of the word the periscope is looking at */
@@ -52,8 +59,19 @@ const SPRING_DAMPING = 2 * Math.sqrt(SPRING_STIFFNESS);
 
 const MAX_SPEED = 220;
 
-/** how fast the periscope turns (facing units per second) */
-const TURN_SPEED = 3.5;
+/** how fast the periscope turns (radians per second) */
+const TURN_SPEED = 4.5;
+
+export const HEADING_RIGHT = 0;
+export const HEADING_LEFT = Math.PI;
+
+/**
+ * Horizontal component of the viewing direction:
+ * 1 = looks right, -1 = looks left, 0 = looks at the viewer.
+ */
+export function periscopeFacing(p: Periscope): number {
+    return Math.cos(p.heading);
+}
 
 /** how fast the periscope rises at the beginning (lift units per second) */
 const LIFT_SPEED = 0.6;
@@ -71,7 +89,9 @@ export function createPeriscope(x: number): Periscope {
     return {
         x,
         vx: 0,
-        facing: 1,
+        heading: HEADING_RIGHT,
+        targetHeading: HEADING_RIGHT,
+        turnDirection: 1,
         lift: 0,
         spotted: null,
         wanderTarget: null,
@@ -151,12 +171,54 @@ export function stepPeriscope(state: GameState, dt: number): void {
     p.spotted = spotted ? spotted.text : null;
 
     // look at the spotted word, otherwise in the direction of travel
-    let desired = p.facing >= 0 ? 1 : -1;
+    let desired = p.targetHeading;
     if (spotted) {
-        desired = spotted.x >= p.x ? 1 : -1;
+        desired = spotted.x >= p.x ? HEADING_RIGHT : HEADING_LEFT;
     } else if (Math.abs(p.vx) > 15) {
-        desired = p.vx > 0 ? 1 : -1;
+        desired = p.vx > 0 ? HEADING_RIGHT : HEADING_LEFT;
     }
-    const maxTurn = TURN_SPEED * dt;
-    p.facing += Math.max(-maxTurn, Math.min(maxTurn, desired - p.facing));
+    if (desired !== p.targetHeading) {
+        p.turnDirection = isTurning(p)
+            ? // changed mind in the middle of a turn - go back the short way
+              Math.sign(signedAngle(desired - p.heading)) || 1
+            : // a new turn - through the front or the back, by chance
+              state.random() < 0.5
+              ? 1
+              : -1;
+        p.targetHeading = desired;
+    }
+    rotateTowardsTarget(p, TURN_SPEED * dt);
+}
+
+const TWO_PI = 2 * Math.PI;
+
+/** angle normalized to [0, 2π) */
+function normalizeAngle(a: number): number {
+    return ((a % TWO_PI) + TWO_PI) % TWO_PI;
+}
+
+/** angle normalized to [-π, π) - the shortest rotation */
+function signedAngle(a: number): number {
+    return normalizeAngle(a + Math.PI) - Math.PI;
+}
+
+function isTurning(p: Periscope): boolean {
+    return Math.abs(signedAngle(p.targetHeading - p.heading)) > 1e-6;
+}
+
+/**
+ * Rotate in `turnDirection` by at most `maxStep` radians. The remaining
+ * angle is measured in the direction of rotation, so it can be almost
+ * a full circle - that is the "long way" through the back or the front.
+ */
+function rotateTowardsTarget(p: Periscope, maxStep: number): void {
+    const remaining = normalizeAngle(
+        (p.targetHeading - p.heading) * p.turnDirection
+    );
+    if (remaining < 1e-6) {
+        p.heading = p.targetHeading;
+        return;
+    }
+    const step = Math.min(remaining, maxStep);
+    p.heading = normalizeAngle(p.heading + step * p.turnDirection);
 }

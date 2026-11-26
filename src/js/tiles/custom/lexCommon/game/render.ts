@@ -27,6 +27,7 @@ import {
     wordPose,
     wordVisibility,
 } from './simulation.js';
+import { periscopeFacing } from './periscope.js';
 
 export interface GameStyle {
     sky: string;
@@ -36,6 +37,7 @@ export interface GameStyle {
     wordSpotted: string;
     periscope: string;
     periscopeAccent: string;
+    periscopeGlass: string;
     /** CSS font shorthand used for words (canvas accepts the same syntax) */
     font: string;
 }
@@ -68,6 +70,7 @@ export function createGameStyle(theme: Theme): GameStyle {
             wordSpotted: '#ff4d6a',
             periscope: LOGO_BLUE_DARK_VARIANT,
             periscopeAccent: LOGO_RED,
+            periscopeGlass: '#8fc4f0',
             font,
         };
     }
@@ -79,6 +82,7 @@ export function createGameStyle(theme: Theme): GameStyle {
         wordSpotted: LOGO_RED,
         periscope: LOGO_BLUE,
         periscopeAccent: LOGO_RED,
+        periscopeGlass: '#7fb8ec',
         font,
     };
 }
@@ -168,48 +172,243 @@ function drawWords(
 // -------------------- periscope ------------------------------------------
 
 /*
- * The periscope is the mark from the Slovoskop logo. Coordinates
- * below are copied from the logo SVG (its viewBox units): a tall
- * tube, a red triangular head and a "lens" pointing to the right.
- * (The logo has also the bottom part, but that one is under water.)
+ * The periscope is the mark from the Slovoskop logo, turned into
+ * simple 3D bodies. Coordinates are in logo SVG units, relative to
+ * the tube axis:
+ *
+ *   u - distance along the viewing direction (logo x - 59)
+ *   y - vertical position (logo y)
+ *   z - depth across the viewing direction
+ *
+ * All parts (tube, red head, lens) are prisms - their logo
+ * outlines (profiles) extruded to the tube thickness.
+ * Seen exactly from the side (heading 0) the result is the logo.
  */
-const PERISCOPE_SHAPES = {
-    tube: 'M35,57 h48 v84.188 h-48 z',
-    head: 'M83,48 L83,0 L35,48 z',
-    lens: 'M92,0 h26 v48 h-26 z',
-};
 
-type PeriscopePaths = Record<keyof typeof PERISCOPE_SHAPES, Path2D>;
+type Vec2 = [number, number];
 
-let periscopePaths: PeriscopePaths | null = null;
-
-/**
- * Path2D parses an SVG path once and can be filled many times.
- * It exists only in browsers, so we create it lazily - creating
- * it at module level would crash server side rendering.
- */
-function getPeriscopePaths(): PeriscopePaths {
-    if (!periscopePaths) {
-        periscopePaths = {
-            tube: new Path2D(PERISCOPE_SHAPES.tube),
-            head: new Path2D(PERISCOPE_SHAPES.head),
-            lens: new Path2D(PERISCOPE_SHAPES.lens),
-        };
-    }
-    return periscopePaths;
+interface Prism {
+    /** convex outline in (u, y) */
+    profile: Array<Vec2>;
+    halfDepth: number;
 }
 
-/** logo point which is placed on the water surface */
-const PERISCOPE_ANCHOR = { x: 59, y: 112 };
+/** half of the tube thickness - the tube has a square cross-section */
+const TUBE_HALF_WIDTH = 24;
 
-/** center of the lens in logo units */
-const PERISCOPE_LENS_CENTER = { x: 105, y: 24 };
+/** the tall blue rectangle, its bottom part is under water */
+const PERISCOPE_TUBE: Prism = {
+    profile: [
+        [-24, 57],
+        [24, 57],
+        [24, 141.188],
+        [-24, 141.188],
+    ],
+    halfDepth: TUBE_HALF_WIDTH,
+};
+
+/** the red triangle (angled mirror housing) */
+const PERISCOPE_HEAD: Prism = {
+    profile: [
+        [24, 48],
+        [24, 0],
+        [-24, 48],
+    ],
+    halfDepth: TUBE_HALF_WIDTH,
+};
+
+/** the blue rectangle at the top - an eyepiece looking forward */
+const PERISCOPE_LENS: Prism = {
+    profile: [
+        [33, 0],
+        [59, 0],
+        [59, 48],
+        [33, 48],
+    ],
+    halfDepth: TUBE_HALF_WIDTH,
+};
+
+/** glass on the front face of the lens (u = 59) */
+const LENS_GLASS = { y0: 9, y1: 39, halfDepth: 15 };
+
+/** logo y placed on the water surface */
+const PERISCOPE_ANCHOR_Y = 112;
+
+/** center of the lens in (u, y) */
+const PERISCOPE_LENS_CENTER: Vec2 = [46, 24];
 
 /** logo units -> px */
 const PERISCOPE_SCALE = 0.4;
 
 /** how deep (px) the periscope hides when not raised */
 const PERISCOPE_SINK_DEPTH = 60;
+
+/**
+ * Direction towards the light in (screen x, screen y, depth) -
+ * from the upper left and in front of the scene (y grows down,
+ * depth grows towards the viewer).
+ */
+const LIGHT = (() => {
+    const v = [-0.45, -0.55, 0.7];
+    const len = Math.hypot(...v);
+    return v.map((c) => c / len);
+})();
+
+/**
+ * Faces turned towards the light get lighter, the others darker.
+ * The side face seen at heading 0 keeps exactly the logo color.
+ */
+const NEUTRAL_BRIGHTNESS = LIGHT[2];
+
+/** rotation of the periscope around its vertical axis */
+interface ViewRotation {
+    cos: number;
+    sin: number;
+}
+
+/**
+ * Orthographic projection of a model point to the screen: rotate
+ * (u, z) around the vertical axis and forget the depth. Vertical
+ * coordinate does not change at all.
+ */
+function projectX(rot: ViewRotation, u: number, z: number): number {
+    return u * rot.cos - z * rot.sin;
+}
+
+/**
+ * Brightness of a face with model normal (nu, ny, nz) - the dot
+ * product of the rotated normal and the light direction.
+ * Also returns the depth component, which tells whether the face
+ * looks towards the viewer (> 0) or away from them.
+ */
+function lightFace(
+    rot: ViewRotation,
+    nu: number,
+    ny: number,
+    nz: number
+): { brightness: number; towardsViewer: number } {
+    const x = nu * rot.cos - nz * rot.sin;
+    const depth = nu * rot.sin + nz * rot.cos;
+    return {
+        brightness: x * LIGHT[0] + ny * LIGHT[1] + depth * LIGHT[2],
+        towardsViewer: depth,
+    };
+}
+
+function fillShaded(
+    ctx: CanvasRenderingContext2D,
+    points: Array<Vec2>,
+    color: string,
+    brightness: number
+): void {
+    ctx.beginPath();
+    points.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)));
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    // shading = a translucent white or black layer over the base color
+    const delta = brightness - NEUTRAL_BRIGHTNESS;
+    ctx.fillStyle =
+        delta > 0
+            ? `rgba(255, 255, 255, ${Math.min(0.5, delta * 0.5)})`
+            : `rgba(0, 0, 0, ${Math.min(0.6, -delta * 0.45)})`;
+    ctx.fill();
+}
+
+/** depth of the prism center (bigger = closer to the viewer) */
+function prismDepth(rot: ViewRotation, prism: Prism): number {
+    const cu =
+        prism.profile.reduce((acc, p) => acc + p[0], 0) / prism.profile.length;
+    // the center lies at z = 0
+    return cu * rot.sin;
+}
+
+/** faces almost perpendicular to the screen are skipped */
+const MIN_VISIBLE = 1e-3;
+
+/**
+ * Draws a convex prism. Thanks to convexity we do not have to sort
+ * faces: a face is either turned towards the viewer and fully
+ * visible, or turned away and hidden ("back-face culling").
+ */
+function drawPrism(
+    ctx: CanvasRenderingContext2D,
+    rot: ViewRotation,
+    prism: Prism,
+    color: string
+): void {
+    const pts = prism.profile;
+    const d = prism.halfDepth;
+    const cu = pts.reduce((acc, p) => acc + p[0], 0) / pts.length;
+    const cy = pts.reduce((acc, p) => acc + p[1], 0) / pts.length;
+
+    // side faces - one per profile edge, extruded along z
+    for (let i = 0; i < pts.length; i++) {
+        const [au, ay] = pts[i];
+        const [bu, by] = pts[(i + 1) % pts.length];
+        // a perpendicular to the edge, flipped to point outwards
+        let nu = by - ay;
+        let ny = -(bu - au);
+        if (nu * ((au + bu) / 2 - cu) + ny * ((ay + by) / 2 - cy) < 0) {
+            nu = -nu;
+            ny = -ny;
+        }
+        const len = Math.hypot(nu, ny);
+        const light = lightFace(rot, nu / len, ny / len, 0);
+        if (light.towardsViewer < MIN_VISIBLE) {
+            continue;
+        }
+        fillShaded(
+            ctx,
+            [
+                [projectX(rot, au, -d), ay],
+                [projectX(rot, bu, -d), by],
+                [projectX(rot, bu, d), by],
+                [projectX(rot, au, d), ay],
+            ],
+            color,
+            light.brightness
+        );
+    }
+
+    // caps - the logo outline itself, on both sides of the prism
+    for (const z of [d, -d]) {
+        const light = lightFace(rot, 0, 0, Math.sign(z));
+        if (light.towardsViewer < MIN_VISIBLE) {
+            continue;
+        }
+        fillShaded(
+            ctx,
+            pts.map(([u, y]) => [projectX(rot, u, z), y]),
+            color,
+            light.brightness
+        );
+    }
+}
+
+/** glass is visible only when the lens front face is turned to us */
+function drawLensGlass(
+    ctx: CanvasRenderingContext2D,
+    rot: ViewRotation,
+    style: GameStyle
+): void {
+    const front = PERISCOPE_LENS.profile[1][0];
+    const light = lightFace(rot, 1, 0, 0);
+    if (light.towardsViewer < MIN_VISIBLE) {
+        return;
+    }
+    const { y0, y1, halfDepth } = LENS_GLASS;
+    const left = projectX(rot, front, halfDepth);
+    const right = projectX(rot, front, -halfDepth);
+    const g = ctx.createLinearGradient(0, y0, 0, y1);
+    g.addColorStop(0, style.periscopeGlass);
+    g.addColorStop(1, style.periscope);
+    ctx.fillStyle = g;
+    ctx.fillRect(left, y0, right - left, y1 - y0);
+    // a small reflection makes the glass look glossy
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.fillRect(left + (right - left) * 0.2, y0 + 4, (right - left) * 0.2, 6);
+}
 
 function periscopeY(state: GameState): number {
     const p = state.periscope;
@@ -224,19 +423,31 @@ function drawPeriscope(
     style: GameStyle
 ): void {
     const p = state.periscope;
+    const rot: ViewRotation = {
+        cos: Math.cos(p.heading),
+        sin: Math.sin(p.heading),
+    };
     ctx.save();
     ctx.translate(p.x, periscopeY(state));
-    // a negative horizontal scale mirrors the shape - when `facing`
-    // goes from 1 to -1 the periscope gets narrower, flips and gets
-    // wider again, which looks like turning around its axis
-    ctx.scale(p.facing * PERISCOPE_SCALE, PERISCOPE_SCALE);
-    ctx.translate(-PERISCOPE_ANCHOR.x, -PERISCOPE_ANCHOR.y);
-    const paths = getPeriscopePaths();
-    ctx.fillStyle = style.periscope;
-    ctx.fill(paths.tube);
-    ctx.fill(paths.lens);
-    ctx.fillStyle = style.periscopeAccent;
-    ctx.fill(paths.head);
+    ctx.scale(PERISCOPE_SCALE, PERISCOPE_SCALE);
+    ctx.translate(0, -PERISCOPE_ANCHOR_Y);
+    // painter's algorithm - farther bodies are drawn first, so the
+    // nearer ones cover them; when the periscope looks away from us,
+    // the lens is behind the head and the order flips
+    const bodies = [
+        { prism: PERISCOPE_TUBE, color: style.periscope, glass: false },
+        { prism: PERISCOPE_HEAD, color: style.periscopeAccent, glass: false },
+        { prism: PERISCOPE_LENS, color: style.periscope, glass: true },
+    ];
+    bodies
+        .map((b) => ({ ...b, depth: prismDepth(rot, b.prism) }))
+        .sort((a, b) => a.depth - b.depth)
+        .forEach((b) => {
+            drawPrism(ctx, rot, b.prism, b.color);
+            if (b.glass) {
+                drawLensGlass(ctx, rot, style);
+            }
+        });
     ctx.restore();
 }
 
@@ -249,17 +460,14 @@ function drawSightLine(
     const p = state.periscope;
     const word = state.words.find((w) => w.text === p.spotted);
     // only when the periscope is up and looks towards the word
-    if (!word || p.lift < 1 || Math.abs(p.facing) < 0.9) {
+    const facing = periscopeFacing(p);
+    if (!word || p.lift < 1 || Math.abs(facing) < 0.9) {
         return;
     }
-    const lensX =
-        p.x +
-        p.facing *
-            (PERISCOPE_LENS_CENTER.x - PERISCOPE_ANCHOR.x) *
-            PERISCOPE_SCALE;
+    const [lensU, lensV] = PERISCOPE_LENS_CENTER;
+    const lensX = p.x + facing * lensU * PERISCOPE_SCALE;
     const lensY =
-        periscopeY(state) +
-        (PERISCOPE_LENS_CENTER.y - PERISCOPE_ANCHOR.y) * PERISCOPE_SCALE;
+        periscopeY(state) + (lensV - PERISCOPE_ANCHOR_Y) * PERISCOPE_SCALE;
     const pose = wordPose(state, word);
     const targetY = wordBaselineY(state, word, pose, 0) - WORD_FONT_SIZE / 2;
 
