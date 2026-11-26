@@ -38,6 +38,8 @@ import {
 import { LexCommonModel } from './model.js';
 import { LexApi } from './api.js';
 import { Source } from './types/enums.js';
+import { isEasterEggQuery } from './model.js';
+import { init as viewInit } from './game/view.js';
 
 export interface LexCommonTileConf extends TileConf {
     apiURL: string;
@@ -93,6 +95,7 @@ export class LexCommonTile implements ITileProvider {
             conf.label || 'lex_common__main_label'
         );
 
+        const initQueryMatch = List.map(findCurrQueryMatch, queryMatches)[0];
         this.model = new LexCommonModel({
             dispatcher,
             appServices,
@@ -102,10 +105,11 @@ export class LexCommonTile implements ITileProvider {
             multiWordSupport: this.supportsMultiWordQueries(),
             lexApi: this.lexApi,
             initState: {
-                currQueryMatch: List.map(findCurrQueryMatch, queryMatches)[0],
+                currQueryMatch: initQueryMatch,
+                easterEgg: isEasterEggQuery(initQueryMatch),
             },
         });
-        this.view = () => null;
+        this.view = viewInit(ut, this.model);
     }
 
     getIdent(): number {

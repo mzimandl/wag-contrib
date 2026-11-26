@@ -31,6 +31,22 @@ import { map } from 'rxjs';
 
 export interface LexCommonModelState {
     currQueryMatch: QueryMatch;
+    /**
+     * Easter egg mode - when user searches for "slovoskop",
+     * the tile becomes visible and shows a small game.
+     */
+    easterEgg: boolean;
+}
+
+const EASTER_EGG_WORD = 'slovoskop';
+
+export function isEasterEggQuery(qm: QueryMatch | undefined): boolean {
+    return (
+        !!qm &&
+        [qm.word, qm.lemma].some(
+            (v) => typeof v === 'string' && v.toLowerCase() === EASTER_EGG_WORD
+        )
+    );
 }
 
 export interface LexCommonModelArgs {
@@ -73,14 +89,16 @@ export class LexCommonModel extends TileStatelessModel<LexCommonModelState> {
                 if (!!action.payload?.newQueryMatches) {
                     state.currQueryMatch = action.payload.newQueryMatches[0];
                 }
+                state.easterEgg = isEasterEggQuery(state.currQueryMatch);
             },
             (state, action, dispatch, ds) => {
                 // this instantly hides tile from layout
+                // (unless the easter egg is active)
                 dispatch<typeof Actions.TileDataLoaded>({
                     name: Actions.TileDataLoaded.name,
                     payload: {
                         tileId: this.tileId,
-                        isEmpty: true,
+                        isEmpty: !state.easterEgg,
                     },
                 });
                 this.loadData(state, ds, dispatch);
@@ -227,7 +245,7 @@ export class LexCommonModel extends TileStatelessModel<LexCommonModelState> {
                     name: Actions.TileDataLoaded.name,
                     payload: {
                         tileId: this.tileId,
-                        isEmpty: true,
+                        isEmpty: !state.easterEgg,
                     },
                 });
             },
