@@ -26,6 +26,7 @@ import {
     wordBaselineY,
     wordPose,
     wordVisibility,
+    SEA_LEVEL_RATIO,
 } from './simulation.js';
 import { periscopeFacing } from './periscope.js';
 
@@ -110,33 +111,52 @@ export function createMeasure(
 /** horizontal distance between sampled surface points in px */
 const SURFACE_STEP = 8;
 
-function drawSea(
-    ctx: CanvasRenderingContext2D,
-    state: GameState,
-    style: GameStyle
-): void {
-    // the surface is approximated by a polyline sampled every few pixels
-    ctx.beginPath();
-    ctx.moveTo(0, state.height);
-    for (let x = 0; x <= state.width + SURFACE_STEP; x += SURFACE_STEP) {
-        ctx.lineTo(x, surfaceY(state, x));
-    }
-    ctx.lineTo(state.width, state.height);
-    ctx.closePath();
+/** opacity of word parts under the water surface */
+const UNDERWATER_OPACITY = 0.3;
 
-    const seaTop = state.height * state.seaLevelRatio;
-    const gradient = ctx.createLinearGradient(0, seaTop, 0, state.height);
-    gradient.addColorStop(0, style.seaTop);
-    gradient.addColorStop(1, style.seaBottom);
-    ctx.fillStyle = gradient;
-    ctx.fill();
+/**
+ * Creates the path of the sea once per frame.
+ */
+function traceSea(state: GameState): Path2D {
+    // the surface is approximated by a polyline sampled every few pixels
+    const path = new Path2D();
+    path.moveTo(0, state.height);
+    for (let x = 0; x <= state.width + SURFACE_STEP; x += SURFACE_STEP) {
+        path.lineTo(x, surfaceY(state, x));
+    }
+    path.lineTo(state.width, state.height);
+    path.closePath();
+    return path;
+}
+
+/**
+ * The sea gradient is not painted by the canvas at all - filling a
+ * large area with a gradient every frame turned out to be the most
+ * expensive part of the whole scene. Instead, the gradient is a static
+ * CSS background of the canvas element (painted once by the browser)
+ * and we only "cut a hole" into the canvas where the sea is.
+ */
+export function seaBackgroundCSS(style: GameStyle): string {
+    // the top part is the sky color, so the canvas looks fine even
+    // before its first frame is painted (canvas covers it later);
+    // the sky stops above the highest possible wave crest
+    const sky = (SEA_LEVEL_RATIO - 0.1) * 100;
+    const sea = SEA_LEVEL_RATIO * 100;
+    return (
+        `linear-gradient(to bottom, ${style.sky} ${sky}%, ` +
+        `${style.seaTop} ${sky}%, ${style.seaTop} ${sea}%, ` +
+        `${style.seaBottom} 100%)`
+    );
 }
 
 function drawWords(
     ctx: CanvasRenderingContext2D,
     state: GameState,
-    style: GameStyle
+    style: GameStyle,
+    opacity: number = 1
 ): void {
+    // transformation set by the caller (scaling to device pixels)
+    const base = ctx.getTransform();
     ctx.font = style.font;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
@@ -148,7 +168,7 @@ function drawWords(
         const pose = wordPose(state, w);
         const visibility = wordVisibility(w);
         const sink = WORD_DRAFT + (1 - visibility) * WORD_SINK_DEPTH;
-        ctx.globalAlpha = visibility;
+        ctx.globalAlpha = opacity * visibility;
         for (const g of w.glyphs) {
             // each letter sits on the bent baseline and is tilted
             // along the chord between baseline points under its edges
@@ -156,17 +176,50 @@ function drawWords(
             const y = wordBaselineY(state, w, pose, g.dx);
             const yLeft = wordBaselineY(state, w, pose, g.dx - half);
             const yRight = wordBaselineY(state, w, pose, g.dx + half);
-            // save/restore keeps the transformation local to this letter
-            ctx.save();
-            // move the origin to the letter and rotate around it -
-            // easier than computing rotated coordinates by hand
-            ctx.translate(w.x + g.dx, y);
-            ctx.rotate(Math.atan2(yRight - yLeft, g.width));
+            // cos and sin of the tilt straight from the chord vector -
+            // no need for atan2() followed by cos() and sin()
+            const len = Math.hypot(g.width, yRight - yLeft);
+            setRotatedTransform(
+                ctx,
+                base,
+                w.x + g.dx,
+                y,
+                g.width / len,
+                (yRight - yLeft) / len
+            );
             ctx.fillText(g.char, 0, sink);
-            ctx.restore();
         }
     }
+    ctx.setTransform(base);
     ctx.globalAlpha = 1;
+}
+
+/**
+ * Sets transformation "base, then move to (x, y), then rotate" in one
+ * call. It does the same as save() + translate() + rotate() + restore(),
+ * but these are surprisingly expensive when called for every letter
+ * (save/restore copies the whole drawing state, clipping included).
+ *
+ * Canvas transformation is a matrix [a c e; b d f]: a point (x, y) goes
+ * to (a*x + c*y + e, b*x + d*y + f). Multiplying the base matrix by the
+ * translation and the rotation [cos -sin; sin cos] gives:
+ */
+function setRotatedTransform(
+    ctx: CanvasRenderingContext2D,
+    base: DOMMatrix,
+    x: number,
+    y: number,
+    cos: number,
+    sin: number
+): void {
+    ctx.setTransform(
+        base.a * cos + base.c * sin,
+        base.b * cos + base.d * sin,
+        base.c * cos - base.a * sin,
+        base.d * cos - base.b * sin,
+        base.a * x + base.c * y + base.e,
+        base.b * x + base.d * y + base.f
+    );
 }
 
 // -------------------- periscope ------------------------------------------
@@ -302,7 +355,9 @@ function fillShaded(
     brightness: number
 ): void {
     ctx.beginPath();
-    points.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)));
+    points.forEach(([x, y], i) =>
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+    );
     ctx.closePath();
     ctx.fillStyle = color;
     ctx.fill();
@@ -496,11 +551,26 @@ export function draw(
 ): void {
     ctx.fillStyle = style.sky;
     ctx.fillRect(0, 0, state.width, state.height);
-    // words go first, so the sea covers their lower part
-    // and they look like floating
-    drawWords(ctx, state, style);
+    // back to front: the periscope sails behind the words, the sea
+    // covers lower parts of both, so they look like floating
     drawPeriscope(ctx, state, style);
-    drawSea(ctx, state, style);
+    drawWords(ctx, state, style);
+
+    // Compositing operations say how new pixels combine with the ones
+    // already on the canvas (normally "source-over" = paint over them).
+    //
+    // "destination-out" erases where we paint: the sea area becomes
+    // transparent, the CSS gradient behind the canvas shows through
+    // and lower parts of words and the periscope disappear "under water".
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fill(traceSea(state));
+    // "destination-over" paints *behind* existing pixels: over the opaque
+    // sky the words stay hidden, in the transparent sea they appear -
+    // semi-transparent, so they look like seen through the water
+    ctx.globalCompositeOperation = 'destination-over';
+    drawWords(ctx, state, style, UNDERWATER_OPACITY);
+    ctx.globalCompositeOperation = 'source-over';
+
     // the sight line goes over everything
     drawSightLine(ctx, state, style);
 }

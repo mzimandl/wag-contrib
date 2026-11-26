@@ -27,11 +27,29 @@ import { LexCommonModel } from '../model.js';
 import * as S from './styles.js';
 import { createState, resize, step, wordAt } from './simulation.js';
 import { HTTPAction } from '../../../../page/actions.js';
-import { createGameStyle, createMeasure, draw } from './render.js';
+import {
+    createGameStyle,
+    createMeasure,
+    draw,
+    seaBackgroundCSS,
+} from './render.js';
 import { Theme } from '../../../../page/theme.js';
 
 /** max. simulation step in seconds */
 const MAX_DT = 0.1;
+
+/**
+ * Max. frames per second. requestAnimationFrame follows the display
+ * refresh rate, which is 120 Hz or more on many screens - twice the
+ * work for a slow sea animation nobody would notice.
+ */
+const MAX_FPS = 60;
+
+/**
+ * Max. device pixel ratio. Phones have 3x screens, but the number of
+ * pixels grows with the square: 3x = 9 pixels per CSS pixel, 2x = 4.
+ */
+const MAX_DPR = 2;
 
 const DEFAULT_WORDS = [
     'chobotnice',
@@ -86,7 +104,7 @@ export function init(
             // size (how many pixels it has); on HiDPI screens we need more
             // pixels to keep it sharp, then we scale drawing back to CSS px
             const resizeCanvas = () => {
-                const dpr = window.devicePixelRatio || 1;
+                const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
                 const { width, height } = canvas.getBoundingClientRect();
                 canvas.width = Math.round(width * dpr);
                 canvas.height = Math.round(height * dpr);
@@ -139,6 +157,15 @@ export function init(
             let frameId: number | null = null;
             let lastTime: number | null = null;
             const frame = (time: number) => {
+                frameId = requestAnimationFrame(frame);
+                // skip frames coming too early (high refresh rate displays);
+                // a small tolerance, because frame times are never exact
+                if (
+                    lastTime !== null &&
+                    time - lastTime < 1000 / MAX_FPS - 2
+                ) {
+                    return;
+                }
                 // dt = seconds since last frame; capped, so after switching
                 // back to the tab the game does not jump far ahead
                 const dt =
@@ -152,7 +179,6 @@ export function init(
                 if (canvas.style.cursor !== cursor) {
                     canvas.style.cursor = cursor;
                 }
-                frameId = requestAnimationFrame(frame);
             };
 
             // the loop runs only when the canvas is visible and the font
@@ -212,6 +238,7 @@ export function init(
                     users, so we offer the same words as ordinary links */}
                 <S.GameCanvas
                     ref={canvasRef}
+                    style={{ background: seaBackgroundCSS(style) }}
                     role="img"
                     aria-label={ut.translate('lex_common__easter_egg_aria')}
                 />

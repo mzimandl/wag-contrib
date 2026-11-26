@@ -101,6 +101,9 @@ export interface GameState {
     random: () => number;
 }
 
+/** y of the calm sea surface as a ratio of the canvas height */
+export const SEA_LEVEL_RATIO = 0.45;
+
 /** wave speed and amplitude multipliers in calm mode */
 const CALM_WAVE_SPEED = 0.25;
 const CALM_WAVE_AMPLITUDE = 0.35;
@@ -126,7 +129,7 @@ export function createState(
         calm: false,
         width,
         height,
-        seaLevelRatio: 0.45,
+        seaLevelRatio: SEA_LEVEL_RATIO,
         // a few waves with "unrelated" lengths, so the sum
         // does not look periodic
         waves: [

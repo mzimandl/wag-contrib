@@ -46,6 +46,8 @@ export interface Periscope {
     wanderTarget: string | null;
     /** seconds until a new wander target is chosen */
     wanderTimer: number;
+    /** on the way to a distant target - then it looks only ahead */
+    traveling: boolean;
 }
 
 /**
@@ -58,6 +60,14 @@ const SPRING_STIFFNESS = 5;
 const SPRING_DAMPING = 2 * Math.sqrt(SPRING_STIFFNESS);
 
 const MAX_SPEED = 220;
+
+/**
+ * Distances (px) to the target for starting / ending a travel. Two
+ * different limits (hysteresis) prevent quick switching back and forth
+ * when the distance is just around a single limit.
+ */
+const TRAVEL_START_DISTANCE = 40;
+const TRAVEL_END_DISTANCE = 12;
 
 /** how fast the periscope turns (radians per second) */
 const TURN_SPEED = 4.5;
@@ -96,6 +106,7 @@ export function createPeriscope(x: number): Periscope {
         spotted: null,
         wanderTarget: null,
         wanderTimer: 0,
+        traveling: false,
     };
 }
 
@@ -133,11 +144,26 @@ function chooseTargetX(state: GameState, p: Periscope, dt: number): number {
     return target ? watchPosition(p, target) : p.x;
 }
 
-/** the nearest word in sight; the hovered one always wins */
+/**
+ * Which word the periscope looks at:
+ * 1) the one under the pointer always wins,
+ * 2) on the way somewhere - none, it looks ahead,
+ * 3) when it came to visit a word on its own - that word,
+ * 4) otherwise the nearest one in sight.
+ */
 function findSpotted(state: GameState, p: Periscope): FloatingWord | null {
     const hovered = findWord(state, state.hovered);
     if (hovered) {
         return hovered;
+    }
+    if (p.traveling) {
+        return null;
+    }
+    if (!state.pointer) {
+        const visited = findWord(state, p.wanderTarget);
+        if (visited) {
+            return visited;
+        }
     }
     let best: FloatingWord | null = null;
     let bestDist = SIGHT_RANGE;
@@ -158,6 +184,10 @@ export function stepPeriscope(state: GameState, dt: number): void {
     const minX = EDGE_PADDING;
     const maxX = state.width - EDGE_PADDING;
     const targetX = Math.max(minX, Math.min(maxX, chooseTargetX(state, p, dt)));
+    const distance = Math.abs(targetX - p.x);
+    p.traveling = p.traveling
+        ? distance > TRAVEL_END_DISTANCE
+        : distance > TRAVEL_START_DISTANCE;
 
     // semi-implicit Euler integration: first update velocity from
     // acceleration, then position from the *new* velocity - simple
