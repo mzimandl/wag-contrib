@@ -7,6 +7,13 @@
         "backlinkConf": {
             "$ref": "#/definitions/Partial<Record<Source,{url:string;}>>"
         },
+        "easterEggWords": {
+            "description": "Words floating on the sea in the \"slovoskop\" easter egg game.\nIf omitted, a built-in list is used.",
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
         "tileType": {
             "description": "An identifier as defined by tiles configuration interface",
             "type": "string"
@@ -161,7 +168,29 @@
                         "url"
                     ]
                 },
-                "corpus": {
+                "ces": {
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "url"
+                    ]
+                },
+                "cnc": {
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "url"
+                    ]
+                },
+                "---": {
                     "type": "object",
                     "properties": {
                         "url": {

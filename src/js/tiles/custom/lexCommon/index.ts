@@ -44,6 +44,12 @@ import { init as viewInit } from './game/view.js';
 export interface LexCommonTileConf extends TileConf {
     apiURL: string;
     backlinkConf: Partial<Record<Source, { url: string }>>;
+
+    /**
+     * Words floating on the sea in the "slovoskop" easter egg game.
+     * If omitted, a built-in list is used.
+     */
+    easterEggWords?: Array<string>;
 }
 
 export class LexCommonTile implements ITileProvider {
@@ -109,7 +115,7 @@ export class LexCommonTile implements ITileProvider {
                 easterEgg: isEasterEggQuery(initQueryMatch),
             },
         });
-        this.view = viewInit(ut, this.model);
+        this.view = viewInit(ut, theme, this.model, conf.easterEggWords);
     }
 
     getIdent(): number {
