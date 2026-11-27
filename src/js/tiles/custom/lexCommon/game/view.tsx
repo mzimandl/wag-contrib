@@ -25,7 +25,14 @@ import {
 import { GlobalComponents } from '../../../../views/common/index.js';
 import { LexCommonModel } from '../model.js';
 import * as S from './styles.js';
-import { createState, resize, step, wordAt } from './simulation.js';
+import {
+    createState,
+    GameState,
+    resize,
+    setVocabulary,
+    step,
+    wordAt,
+} from './simulation.js';
 import { HTTPAction } from '../../../../page/actions.js';
 import {
     createGameStyle,
@@ -51,30 +58,10 @@ const MAX_FPS = 60;
  */
 const MAX_DPR = 2;
 
-const DEFAULT_WORDS = [
-    'chobotnice',
-    'čmelák',
-    'škrkavka',
-    'zmrzlina',
-    'kokrhat',
-    'bublina',
-    'skřítek',
-    'rozmar',
-    'pštros',
-    'vrkat',
-    'mlsný',
-    'šnek',
-    'pohádka',
-    'štěstí',
-    'kormidlo',
-    'maják',
-];
-
 export function init(
     ut: ViewUtils<GlobalComponents>,
     theme: Theme,
-    model: LexCommonModel,
-    words: Array<string> = DEFAULT_WORDS
+    model: LexCommonModel
 ): TileComponent {
     const globalComponents = ut.getComponents();
     const style = createGameStyle(theme);
@@ -84,8 +71,12 @@ export function init(
 
     // -------------------- <SlovoskopGame /> -------------------------------------------
 
-    const SlovoskopGame: React.FC = () => {
+    const SlovoskopGame: React.FC<{ words: Array<string> }> = ({ words }) => {
         const canvasRef = React.useRef<HTMLCanvasElement>(null);
+        // the game state must outlive re-renders and be reachable from
+        // both effects below - a ref is a box React keeps between renders
+        // without re-rendering when its content changes
+        const gameRef = React.useRef<GameState | null>(null);
 
         // canvas is touched only on the client side (useEffect does not run during SSR)
         React.useEffect(() => {
@@ -97,7 +88,10 @@ export function init(
             const rect = canvas.getBoundingClientRect();
             // game state lives outside of React - changing it must not
             // trigger re-render, we repaint the canvas ourselves
+            // (`words` from the first render; later changes are handled
+            // by the effect below, this one must not run again)
             const game = createState(rect.width, rect.height, words);
+            gameRef.current = game;
             const measure = createMeasure(ctx, style);
 
             // canvas has two sizes: CSS size (how big it looks) and bitmap
@@ -214,6 +208,7 @@ export function init(
             return () => {
                 disposed = true;
                 updateLoop();
+                gameRef.current = null;
                 resizeObserver.disconnect();
                 intersectionObserver.disconnect();
                 reducedMotion.removeEventListener(
@@ -226,6 +221,16 @@ export function init(
                 canvas.removeEventListener('click', onClick);
             };
         }, []);
+
+        // new words from the model are passed to the running game - the
+        // loop, observers and the periscope keep going, only the
+        // vocabulary changes (unlike the effect above, this one runs
+        // whenever `words` change)
+        React.useEffect(() => {
+            if (gameRef.current) {
+                setVocabulary(gameRef.current, words);
+            }
+        }, [words]);
 
         return (
             <S.Game>
@@ -269,7 +274,7 @@ export function init(
                 isSubtileContainer={props.isSubtileContainer}
                 issueReportingUrl={props.issueReportingUrl}
             >
-                <SlovoskopGame />
+                <SlovoskopGame words={state.easterEggWords} />
             </globalComponents.TileWrapper>
         );
     };

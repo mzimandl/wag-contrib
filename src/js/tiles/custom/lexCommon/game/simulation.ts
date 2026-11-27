@@ -56,6 +56,8 @@ export interface FloatingWord {
     age: number;
     /** how long the word stays on the surface (seconds) */
     lifetime: number;
+    /** removed from the vocabulary - it is sinking and will not come back */
+    retired: boolean;
 }
 
 /**
@@ -152,6 +154,30 @@ export function resize(state: GameState, width: number, height: number): void {
     state.height = height;
 }
 
+/**
+ * Replaces the vocabulary while the game is running. New words simply
+ * start to appear (spawning picks from the vocabulary). Floating words
+ * which are no longer in it are not removed at once - they sink, as if
+ * their time ran out.
+ */
+export function setVocabulary(state: GameState, words: Array<string>): void {
+    state.vocabulary = words;
+    const keep = new Set(words);
+    for (const w of state.words) {
+        if (keep.has(w.text) || w.retired) {
+            continue;
+        }
+        w.retired = true;
+        // end the life so that the sinking starts from the current
+        // visibility: (lifetime - age) / FADE_TIME = visibility, i.e.
+        // no jump even for a word which is just emerging
+        w.lifetime = Math.min(
+            w.lifetime,
+            w.age + wordVisibility(w) * FADE_TIME
+        );
+    }
+}
+
 function randomBetween(state: GameState, min: number, max: number): number {
     return min + state.random() * (max - min);
 }
@@ -196,6 +222,7 @@ function trySpawnWord(state: GameState, measure: MeasureText): boolean {
                 width,
                 age: 0,
                 lifetime: randomBetween(state, 8, 14),
+                retired: false,
             });
             return true;
         }
@@ -213,12 +240,14 @@ export function step(state: GameState, dt: number, measure: MeasureText): void {
     state.waveTime += dt * (state.calm ? CALM_WAVE_SPEED : 1);
 
     for (const w of state.words) {
-        w.age += dt;
         // the word user points at must not escape or disappear
-        // under their hands
+        // under their hands (a retired word just pauses its sinking)
         if (w.text === state.hovered) {
-            w.age = Math.min(w.age, w.lifetime - FADE_TIME);
+            if (!w.retired) {
+                w.age = Math.min(w.age + dt, w.lifetime - FADE_TIME);
+            }
         } else {
+            w.age += dt;
             w.x += w.vx * dt;
         }
     }

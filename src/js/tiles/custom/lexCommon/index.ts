@@ -40,16 +40,15 @@ import { LexApi } from './api.js';
 import { Source } from './types/enums.js';
 import { isEasterEggQuery } from './model.js';
 import { init as viewInit } from './game/view.js';
+import { DEFAULT_WORDS } from './game/words.js';
 
 export interface LexCommonTileConf extends TileConf {
     apiURL: string;
     backlinkConf: Partial<Record<Source, { url: string }>>;
 
-    /**
-     * Words floating on the sea in the "slovoskop" easter egg game.
-     * If omitted, a built-in list is used.
-     */
     easterEggWords?: Array<string>;
+    easterEggWordsURL?: string;
+    easterEggRefreshSecs?: number;
 }
 
 export class LexCommonTile implements ITileProvider {
@@ -107,12 +106,17 @@ export class LexCommonTile implements ITileProvider {
             lemLevelSupport: this.configuredLemLevels,
             multiWordSupport: this.supportsMultiWordQueries(),
             lexApi: this.lexApi,
+            easterEggWordsURL: conf.easterEggWordsURL,
+            easterEggRefreshSecs: conf.easterEggRefreshSecs,
             initState: {
                 currQueryMatch: initQueryMatch,
                 easterEgg: isEasterEggQuery(initQueryMatch),
+                easterEggWords: conf.easterEggWords?.length
+                    ? conf.easterEggWords
+                    : DEFAULT_WORDS,
             },
         });
-        this.view = viewInit(ut, theme, this.model, conf.easterEggWords);
+        this.view = viewInit(ut, theme, this.model);
     }
 
     getIdent(): number {

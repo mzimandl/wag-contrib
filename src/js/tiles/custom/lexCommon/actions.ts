@@ -24,4 +24,16 @@ export class Actions {
         {
             name: GlobalActions.TileDataLoaded.name,
         };
+
+    /**
+     * Replaces words of the "slovoskop" easter egg game. Anyone can
+     * dispatch it - the model loads words from a URL this way, but
+     * also e.g. another tile or a developer from the console could.
+     */
+    static SetEasterEggWords: Action<{
+        tileId: number;
+        words: Array<string>;
+    }> = {
+        name: 'LEX_COMMON_SET_EASTER_EGG_WORDS',
+    };
 }

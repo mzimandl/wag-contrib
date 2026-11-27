@@ -8,11 +8,16 @@
             "$ref": "#/definitions/Partial<Record<Source,{url:string;}>>"
         },
         "easterEggWords": {
-            "description": "Words floating on the sea in the \"slovoskop\" easter egg game.\nIf omitted, a built-in list is used.",
             "type": "array",
             "items": {
                 "type": "string"
             }
+        },
+        "easterEggWordsURL": {
+            "type": "string"
+        },
+        "easterEggRefreshSecs": {
+            "type": "number"
         },
         "tileType": {
             "description": "An identifier as defined by tiles configuration interface",

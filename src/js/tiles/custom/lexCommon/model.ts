@@ -23,11 +23,21 @@ import { Actions as GlobalActions } from '../../../models/actions.js';
 import { Actions } from './actions.js';
 import { getCurrentVariant } from './types/dictionary.js';
 import { getIdWithParent, isValidIjpId, LexApi, LexArgs } from './api.js';
-import { List, pipe } from 'cnc-tskit';
+import { HTTP, List, pipe } from 'cnc-tskit';
 import { IDataStreaming } from '../../../page/streaming.js';
 import { TileStatelessModel } from '../../../models/tiles/base.js';
 import { isValidSource, Source } from './types/enums.js';
-import { map } from 'rxjs';
+import {
+    catchError,
+    EMPTY,
+    map,
+    Observable,
+    of as rxOf,
+    Subscription,
+    switchMap,
+    timer,
+} from 'rxjs';
+import { ajax$, ResponseType } from '../../../page/ajax.js';
 
 export interface LexCommonModelState {
     currQueryMatch: QueryMatch;
@@ -36,6 +46,7 @@ export interface LexCommonModelState {
      * the tile becomes visible and shows a small game.
      */
     easterEgg: boolean;
+    easterEggWords: Array<string>;
 }
 
 const EASTER_EGG_WORD = 'slovoskop';
@@ -58,10 +69,19 @@ export interface LexCommonModelArgs {
     multiWordSupport: boolean;
     dependentTiles: Array<number>;
     lexApi: LexApi;
+    easterEggWordsURL?: string;
+    easterEggRefreshSecs?: number;
 }
 
 export class LexCommonModel extends TileStatelessModel<LexCommonModelState> {
     private readonly lexApi: LexApi;
+
+    private readonly easterEggWordsURL: string | undefined;
+
+    private readonly easterEggRefreshSecs: number;
+
+    /** running loading of easter egg words (so it can be stopped) */
+    private easterEggWordsLoading: Subscription | null = null;
 
     constructor({
         dispatcher,
@@ -72,6 +92,8 @@ export class LexCommonModel extends TileStatelessModel<LexCommonModelState> {
         dependentTiles,
         lemLevelSupport,
         multiWordSupport,
+        easterEggWordsURL,
+        easterEggRefreshSecs,
     }: LexCommonModelArgs) {
         super({
             dispatcher,
@@ -83,6 +105,8 @@ export class LexCommonModel extends TileStatelessModel<LexCommonModelState> {
             multiWordSupport,
         });
         this.lexApi = lexApi;
+        this.easterEggWordsURL = easterEggWordsURL;
+        this.easterEggRefreshSecs = easterEggRefreshSecs || 0;
 
         this.addSearchActionHandler(
             (state, action) => {
@@ -102,6 +126,22 @@ export class LexCommonModel extends TileStatelessModel<LexCommonModelState> {
                     },
                 });
                 this.loadData(state, ds, dispatch);
+                if (state.easterEgg) {
+                    this.startLoadingEasterEggWords(dispatch);
+                } else {
+                    this.stopLoadingEasterEggWords();
+                }
+            }
+        );
+
+        this.addActionSubtypeHandler(
+            Actions.SetEasterEggWords,
+            (action) => action.payload.tileId === this.tileId,
+            (state, action) => {
+                // an empty list would leave an empty sea - keep the old words
+                if (action.payload.words.length > 0) {
+                    state.easterEggWords = action.payload.words;
+                }
             }
         );
 
@@ -253,6 +293,61 @@ export class LexCommonModel extends TileStatelessModel<LexCommonModelState> {
                 console.error('lex api error:', err);
             },
         });
+    }
+
+    /**
+     * Loads easter egg words from the configured URL - once, or
+     * periodically with easterEggRefreshSecs. Every response is turned
+     * into the SetEasterEggWords action, the game picks it up from
+     * the model state.
+     */
+    private startLoadingEasterEggWords(dispatch: SEDispatcher): void {
+        this.stopLoadingEasterEggWords();
+        const url = this.easterEggWordsURL;
+        if (!url) {
+            return;
+        }
+        // timer(0, period) emits immediately and then every period ms
+        const ticks: Observable<number> =
+            this.easterEggRefreshSecs > 0
+                ? timer(0, this.easterEggRefreshSecs * 1000)
+                : rxOf(0);
+        this.easterEggWordsLoading = ticks
+            .pipe(
+                // switchMap cancels a request still running when the next
+                // tick comes, so slow responses cannot arrive out of order
+                switchMap(() =>
+                    ajax$<Array<string>>(
+                        HTTP.Method.GET,
+                        url,
+                        {},
+                        {
+                            headers: this.appServices.getApiHeaders(url),
+                            responseType: ResponseType.JSON,
+                        }
+                    ).pipe(
+                        // a failed request must not end the whole refreshing
+                        catchError((err) => {
+                            console.warn('easter egg words not loaded:', err);
+                            return EMPTY;
+                        })
+                    )
+                )
+            )
+            .subscribe((data) => {
+                dispatch<typeof Actions.SetEasterEggWords>({
+                    name: Actions.SetEasterEggWords.name,
+                    payload: {
+                        tileId: this.tileId,
+                        words: data,
+                    },
+                });
+            });
+    }
+
+    private stopLoadingEasterEggWords(): void {
+        this.easterEggWordsLoading?.unsubscribe();
+        this.easterEggWordsLoading = null;
     }
 
     private homonymToGreek(homonym: number): string {

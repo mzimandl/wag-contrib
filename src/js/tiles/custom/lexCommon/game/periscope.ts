@@ -180,9 +180,10 @@ function chooseTargetX(state: GameState, p: Periscope, dt: number): number {
     // 3) nobody plays with us - visit random words
     p.wanderTimer -= dt;
     let target = findWord(state, p.wanderTarget);
-    if ((!target || p.wanderTimer <= 0) && state.words.length > 0) {
-        target =
-            state.words[Math.floor(state.random() * state.words.length)];
+    // retired (sinking) words are not worth a visit
+    const candidates = state.words.filter((w) => !w.retired);
+    if ((!target || target.retired || p.wanderTimer <= 0) && candidates.length > 0) {
+        target = candidates[Math.floor(state.random() * candidates.length)];
         p.wanderTarget = target.text;
         p.wanderTimer = 4 + state.random() * 4;
     }
