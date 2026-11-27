@@ -23,7 +23,7 @@ import { Actions as GlobalActions } from '../../../models/actions.js';
 import { Actions } from './actions.js';
 import { getCurrentVariant } from './types/dictionary.js';
 import { getIdWithParent, isValidIjpId, LexApi, LexArgs } from './api.js';
-import { HTTP, List, pipe } from 'cnc-tskit';
+import { List, pipe } from 'cnc-tskit';
 import { IDataStreaming } from '../../../page/streaming.js';
 import { TileStatelessModel } from '../../../models/tiles/base.js';
 import { isValidSource, Source } from './types/enums.js';
@@ -37,7 +37,6 @@ import {
     switchMap,
     timer,
 } from 'rxjs';
-import { ajax$, ResponseType } from '../../../page/ajax.js';
 
 export interface LexCommonModelState {
     currQueryMatch: QueryMatch;
@@ -295,12 +294,6 @@ export class LexCommonModel extends TileStatelessModel<LexCommonModelState> {
         });
     }
 
-    /**
-     * Loads easter egg words from the configured URL - once, or
-     * periodically with easterEggRefreshSecs. Every response is turned
-     * into the SetEasterEggWords action, the game picks it up from
-     * the model state.
-     */
     private startLoadingEasterEggWords(dispatch: SEDispatcher): void {
         this.stopLoadingEasterEggWords();
         const url = this.easterEggWordsURL;
@@ -317,21 +310,26 @@ export class LexCommonModel extends TileStatelessModel<LexCommonModelState> {
                 // switchMap cancels a request still running when the next
                 // tick comes, so slow responses cannot arrive out of order
                 switchMap(() =>
-                    ajax$<Array<string>>(
-                        HTTP.Method.GET,
-                        url,
-                        {},
-                        {
-                            headers: this.appServices.getApiHeaders(url),
-                            responseType: ResponseType.JSON,
-                        }
-                    ).pipe(
-                        // a failed request must not end the whole refreshing
-                        catchError((err) => {
-                            console.warn('easter egg words not loaded:', err);
-                            return EMPTY;
-                        })
-                    )
+                    this.lexApi
+                        .getWords(
+                            // every load needs its own stream subgroup -
+                            // the main stream of the search is already used up
+                            this.appServices
+                                .dataStreaming()
+                                .startNewSubgroup(this.tileId),
+                            this.tileId,
+                            url
+                        )
+                        .pipe(
+                            // a failed request must not end the whole refreshing
+                            catchError((err) => {
+                                console.warn(
+                                    'easter egg words not loaded:',
+                                    err
+                                );
+                                return EMPTY;
+                            })
+                        )
                 )
             )
             .subscribe((data) => {

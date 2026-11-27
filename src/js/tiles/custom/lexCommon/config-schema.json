@@ -8,15 +8,18 @@
             "$ref": "#/definitions/Partial<Record<Source,{url:string;}>>"
         },
         "easterEggWords": {
+            "description": "Words floating on the sea of the \"slovoskop\" easter egg\n(built-in defaults are used if missing).",
             "type": "array",
             "items": {
                 "type": "string"
             }
         },
         "easterEggWordsURL": {
+            "description": "URL returning a JSON array of words for the easter egg, loaded\nvia the data stream (e.g. Frodo's `/dictionary/lex/words`)",
             "type": "string"
         },
         "easterEggRefreshSecs": {
+            "description": "If set (> 0), easterEggWordsURL is loaded again every N seconds\nwhile the easter egg is shown.",
             "type": "number"
         },
         "tileType": {

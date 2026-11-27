@@ -247,6 +247,27 @@ export class LexApi implements ResourceApi<LexArgs, LexResponse> {
                 );
     }
 
+    /**
+     * Loads a list of words (e.g. Frodo's /dictionary/lex/words, which
+     * returns random words). The request goes through the data stream
+     * like any other tile request; the cache is skipped, because the
+     * same URL is expected to return different words each time.
+     */
+    getWords(
+        streaming: IDataStreaming,
+        tileId: number,
+        url: string
+    ): Observable<Array<string>> {
+        return streaming.registerTileRequest<Array<string>>({
+            tileId,
+            method: HTTP.Method.GET,
+            url,
+            body: {},
+            contentType: 'application/json',
+            skipCache: true,
+        });
+    }
+
     getSourceDescription(
         streaming: IDataStreaming,
         tileId: number,

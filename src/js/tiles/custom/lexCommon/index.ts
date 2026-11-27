@@ -46,8 +46,22 @@ export interface LexCommonTileConf extends TileConf {
     apiURL: string;
     backlinkConf: Partial<Record<Source, { url: string }>>;
 
+    /**
+     * Words floating on the sea of the "slovoskop" easter egg
+     * (built-in defaults are used if missing).
+     */
     easterEggWords?: Array<string>;
+
+    /**
+     * URL returning a JSON array of words for the easter egg, loaded
+     * via the data stream (e.g. Frodo's `/dictionary/lex/words`)
+     */
     easterEggWordsURL?: string;
+
+    /**
+     * If set (> 0), easterEggWordsURL is loaded again every N seconds
+     * while the easter egg is shown.
+     */
     easterEggRefreshSecs?: number;
 }
 
