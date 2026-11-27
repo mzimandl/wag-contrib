@@ -40,6 +40,11 @@ export interface Periscope {
     turnDirection: number;
     /** 0 = under water, 1 = fully raised */
     lift: number;
+    /**
+     * y of the water level the periscope floats on - smoothed in space
+     * and time, so it does not copy every ripple (null = not set yet)
+     */
+    floatY: number | null;
     /** text of the word the periscope is looking at */
     spotted: string | null;
     /** word chosen to visit when the user does not control the periscope */
@@ -69,6 +74,45 @@ const MAX_SPEED = 220;
 const TRAVEL_START_DISTANCE = 40;
 const TRAVEL_END_DISTANCE = 12;
 
+/**
+ * The periscope floats on the average surface level under it
+ * (sampled over FLOAT_SPAN px) - short ripples average out.
+ */
+const FLOAT_SPAN = 70;
+const FLOAT_SAMPLES = 7;
+
+/**
+ * Time constant (s) of the vertical smoothing: after FLOAT_TAU seconds
+ * the periscope gets ~63 % of the way to the new level. Bigger = calmer,
+ * but also more "lagging" behind the waves.
+ */
+const FLOAT_TAU = 0.3;
+
+/** surface height function, passed in to avoid a circular import */
+export type SurfaceY = (state: GameState, x: number) => number;
+
+function averageSurface(state: GameState, x: number, surfaceY: SurfaceY): number {
+    let sum = 0;
+    for (let i = 0; i < FLOAT_SAMPLES; i++) {
+        sum += surfaceY(state, x - FLOAT_SPAN / 2 + (i * FLOAT_SPAN) / (FLOAT_SAMPLES - 1));
+    }
+    return sum / FLOAT_SAMPLES;
+}
+
+/**
+ * Exponential smoothing: each frame move by a fraction of the remaining
+ * distance. Using 1 - exp(-dt / tau) instead of a fixed fraction keeps
+ * the motion the same at any frame rate (30, 60 or 144 fps).
+ */
+function updateFloat(state: GameState, p: Periscope, dt: number, surfaceY: SurfaceY): void {
+    const target = averageSurface(state, p.x, surfaceY);
+    if (p.floatY === null) {
+        p.floatY = target;
+        return;
+    }
+    p.floatY += (target - p.floatY) * (1 - Math.exp(-dt / FLOAT_TAU));
+}
+
 /** how fast the periscope turns (radians per second) */
 const TURN_SPEED = 4.5;
 
@@ -90,10 +134,10 @@ const LIFT_SPEED = 0.6;
 const SIGHT_RANGE = 240;
 
 /** distance (px) from a word edge where the periscope stops to watch it */
-const WATCH_DISTANCE = 45;
+const WATCH_DISTANCE = 50;
 
 /** horizontal padding (px) the periscope keeps from canvas edges */
-const EDGE_PADDING = 25;
+const EDGE_PADDING = 32;
 
 export function createPeriscope(x: number): Periscope {
     return {
@@ -103,6 +147,7 @@ export function createPeriscope(x: number): Periscope {
         targetHeading: HEADING_RIGHT,
         turnDirection: 1,
         lift: 0,
+        floatY: null,
         spotted: null,
         wanderTarget: null,
         wanderTimer: 0,
@@ -177,7 +222,11 @@ function findSpotted(state: GameState, p: Periscope): FloatingWord | null {
     return best;
 }
 
-export function stepPeriscope(state: GameState, dt: number): void {
+export function stepPeriscope(
+    state: GameState,
+    dt: number,
+    surfaceY: SurfaceY
+): void {
     const p = state.periscope;
     p.lift = Math.min(1, p.lift + LIFT_SPEED * dt);
 
@@ -196,6 +245,7 @@ export function stepPeriscope(state: GameState, dt: number): void {
     p.vx += accel * dt;
     p.vx = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, p.vx));
     p.x += p.vx * dt;
+    updateFloat(state, p, dt, surfaceY);
 
     const spotted = findSpotted(state, p);
     p.spotted = spotted ? spotted.text : null;

@@ -19,7 +19,9 @@
 import { styled } from 'styled-components';
 import { Theme } from '../../../../page/theme.js';
 
-export const Game = styled.div``;
+export const Game = styled.div`
+    margin: -1rem;
+`;
 
 export const GameCanvas = styled.canvas<{ theme: Theme }>`
     display: block;

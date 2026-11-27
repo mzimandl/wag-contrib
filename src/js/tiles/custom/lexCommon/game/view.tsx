@@ -160,10 +160,7 @@ export function init(
                 frameId = requestAnimationFrame(frame);
                 // skip frames coming too early (high refresh rate displays);
                 // a small tolerance, because frame times are never exact
-                if (
-                    lastTime !== null &&
-                    time - lastTime < 1000 / MAX_FPS - 2
-                ) {
+                if (lastTime !== null && time - lastTime < 1000 / MAX_FPS - 2) {
                     return;
                 }
                 // dt = seconds since last frame; capped, so after switching
@@ -197,12 +194,10 @@ export function init(
                     frameId = null;
                 }
             };
-            const intersectionObserver = new IntersectionObserver(
-                (entries) => {
-                    isVisible = entries.some((e) => e.isIntersecting);
-                    updateLoop();
-                }
-            );
+            const intersectionObserver = new IntersectionObserver((entries) => {
+                isVisible = entries.some((e) => e.isIntersecting);
+                updateLoop();
+            });
             intersectionObserver.observe(canvas);
 
             // web fonts load lazily - measuring text with a fallback font

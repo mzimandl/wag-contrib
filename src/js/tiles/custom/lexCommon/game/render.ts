@@ -92,7 +92,7 @@ export function createGameStyle(theme: Theme): GameStyle {
 const WORD_DRAFT = 2;
 
 /** how deep (px) the word sinks when it disappears */
-const WORD_SINK_DEPTH = 28;
+const WORD_SINK_DEPTH = 50;
 
 /**
  * Creates text measuring function for the simulation. Font must be
@@ -149,45 +149,86 @@ export function seaBackgroundCSS(style: GameStyle): string {
     );
 }
 
+/** width (px) of the outline around words, in the background color */
+const WORD_OUTLINE_WIDTH = 2;
+
+/**
+ * Draws all words. Above water the letters get a thin outline in the
+ * sky color, so they stay readable over the periscope of the same color.
+ * The underwater pass (semi-transparent) is drawn without it.
+ *
+ * strokeText() is expensive (it almost doubled the frame time), but an
+ * outline in the sky color is invisible over the sky anyway - so only
+ * letters near the periscope get it.
+ */
 function drawWords(
     ctx: CanvasRenderingContext2D,
     state: GameState,
     style: GameStyle,
-    opacity: number = 1
+    opacity: number = 1,
+    outline: boolean = true
 ): void {
     // transformation set by the caller (scaling to device pixels)
     const base = ctx.getTransform();
     ctx.font = style.font;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
+    // the stroke is centered on the letter edge - half of it is covered
+    // by the fill, so it must be twice as wide as the visible outline;
+    // round joins avoid sharp spikes at letter corners
+    ctx.lineWidth = 2 * WORD_OUTLINE_WIDTH;
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = style.sky;
+    const outlineReach =
+        PERISCOPE_REACH * PERISCOPE_SCALE + WORD_OUTLINE_WIDTH;
     for (const w of state.words) {
-        ctx.fillStyle =
-            w.text === state.periscope.spotted
-                ? style.wordSpotted
-                : style.word;
         const pose = wordPose(state, w);
         const visibility = wordVisibility(w);
         const sink = WORD_DRAFT + (1 - visibility) * WORD_SINK_DEPTH;
         ctx.globalAlpha = opacity * visibility;
-        for (const g of w.glyphs) {
-            // each letter sits on the bent baseline and is tilted
-            // along the chord between baseline points under its edges
-            const half = g.width / 2;
-            const y = wordBaselineY(state, w, pose, g.dx);
-            const yLeft = wordBaselineY(state, w, pose, g.dx - half);
-            const yRight = wordBaselineY(state, w, pose, g.dx + half);
-            // cos and sin of the tilt straight from the chord vector -
-            // no need for atan2() followed by cos() and sin()
-            const len = Math.hypot(g.width, yRight - yLeft);
-            setRotatedTransform(
-                ctx,
-                base,
-                w.x + g.dx,
-                y,
-                g.width / len,
-                (yRight - yLeft) / len
-            );
-            ctx.fillText(g.char, 0, sink);
+        // outlines of all letters first, then their fills - otherwise
+        // the outline of a letter would cut into its left neighbor
+        const passes: Array<'stroke' | 'fill'> = outline
+            ? ['stroke', 'fill']
+            : ['fill'];
+        for (const pass of passes) {
+            if (pass === 'fill') {
+                ctx.fillStyle =
+                    w.text === state.periscope.spotted
+                        ? style.wordSpotted
+                        : style.word;
+            }
+            for (const g of w.glyphs) {
+                if (
+                    pass === 'stroke' &&
+                    Math.abs(w.x + g.dx - state.periscope.x) >
+                        outlineReach + g.width / 2
+                ) {
+                    continue;
+                }
+                // each letter sits on the bent baseline and is tilted
+                // along the chord between baseline points under its edges
+                const half = g.width / 2;
+                const y = wordBaselineY(state, w, pose, g.dx);
+                const yLeft = wordBaselineY(state, w, pose, g.dx - half);
+                const yRight = wordBaselineY(state, w, pose, g.dx + half);
+                // cos and sin of the tilt straight from the chord vector -
+                // no need for atan2() followed by cos() and sin()
+                const len = Math.hypot(g.width, yRight - yLeft);
+                setRotatedTransform(
+                    ctx,
+                    base,
+                    w.x + g.dx,
+                    y,
+                    g.width / len,
+                    (yRight - yLeft) / len
+                );
+                if (pass === 'stroke') {
+                    ctx.strokeText(g.char, 0, sink);
+                } else {
+                    ctx.fillText(g.char, 0, sink);
+                }
+            }
         }
     }
     ctx.setTransform(base);
@@ -249,13 +290,18 @@ interface Prism {
 /** half of the tube thickness - the tube has a square cross-section */
 const TUBE_HALF_WIDTH = 24;
 
-/** the tall blue rectangle, its bottom part is under water */
+/**
+ * The tall blue rectangle. It is longer than in the logo (which ends
+ * at y = 141), because the periscope does not copy every ripple and
+ * a short tube could show its end in a deep wave trough. The part
+ * under water is erased anyway.
+ */
 const PERISCOPE_TUBE: Prism = {
     profile: [
         [-24, 57],
         [24, 57],
-        [24, 141.188],
-        [-24, 141.188],
+        [24, 200],
+        [-24, 200],
     ],
     halfDepth: TUBE_HALF_WIDTH,
 };
@@ -284,6 +330,9 @@ const PERISCOPE_LENS: Prism = {
 /** glass on the front face of the lens (u = 59) */
 const LENS_GLASS = { y0: 9, y1: 39, halfDepth: 15 };
 
+/** depth (logo units) where the periscope vanishes completely under water */
+const UNDERWATER_FADE_DEPTH = 30;
+
 /** logo y placed on the water surface */
 const PERISCOPE_ANCHOR_Y = 112;
 
@@ -291,10 +340,16 @@ const PERISCOPE_ANCHOR_Y = 112;
 const PERISCOPE_LENS_CENTER: Vec2 = [46, 24];
 
 /** logo units -> px */
-const PERISCOPE_SCALE = 0.4;
+const PERISCOPE_SCALE = 0.5;
+
+/**
+ * Max. horizontal distance (logo units) of any periscope point from its
+ * axis, in any rotation: the lens corner at u = 59, z = ±24.
+ */
+const PERISCOPE_REACH = Math.hypot(59, TUBE_HALF_WIDTH);
 
 /** how deep (px) the periscope hides when not raised */
-const PERISCOPE_SINK_DEPTH = 60;
+const PERISCOPE_SINK_DEPTH = 75;
 
 /**
  * Direction towards the light in (screen x, screen y, depth) -
@@ -348,25 +403,67 @@ function lightFace(
     };
 }
 
+const rgbCache = new Map<string, [number, number, number]>();
+
+function toRGB(color: string): [number, number, number] {
+    let rgb = rgbCache.get(color);
+    if (!rgb) {
+        const [r, g, b] = Color.importColor(1, color);
+        rgb = [r, g, b];
+        rgbCache.set(color, rgb);
+    }
+    return rgb;
+}
+
+/**
+ * Shading = mixing the base color with white (lit faces) or black
+ * (faces in shadow). Each face is filled only once with the final
+ * color - this matters for the semi-transparent underwater pass,
+ * where a second (shading) layer would not cover the first one.
+ */
+function shadeColor(color: string, brightness: number): string {
+    const delta = brightness - NEUTRAL_BRIGHTNESS;
+    const [r, g, b] = toRGB(color);
+    const [target, amount] =
+        delta > 0
+            ? [255, Math.min(0.5, delta * 0.5)]
+            : [0, Math.min(0.6, -delta * 0.45)];
+    const mix = (c: number) => Math.round(c + (target - c) * amount);
+    return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
+}
+
+/**
+ * Vertical range (in the current drawing units) where faces fade out
+ * from fully opaque to fully transparent; null = no fading.
+ */
+type Fade = { from: number; to: number } | null;
+
 function fillShaded(
     ctx: CanvasRenderingContext2D,
     points: Array<Vec2>,
     color: string,
-    brightness: number
+    brightness: number,
+    fade: Fade
 ): void {
     ctx.beginPath();
     points.forEach(([x, y], i) =>
         i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
     );
     ctx.closePath();
-    ctx.fillStyle = color;
-    ctx.fill();
-    // shading = a translucent white or black layer over the base color
-    const delta = brightness - NEUTRAL_BRIGHTNESS;
-    ctx.fillStyle =
-        delta > 0
-            ? `rgba(255, 255, 255, ${Math.min(0.5, delta * 0.5)})`
-            : `rgba(0, 0, 0, ${Math.min(0.6, -delta * 0.45)})`;
+    const shaded = shadeColor(color, brightness);
+    if (fade) {
+        // the same color, only its alpha goes to zero ("rgb(...)" ->
+        // "rgba(..., 0)"); a gradient on such a small area is cheap
+        const gradient = ctx.createLinearGradient(0, fade.from, 0, fade.to);
+        gradient.addColorStop(0, shaded);
+        gradient.addColorStop(
+            1,
+            shaded.replace('rgb(', 'rgba(').replace(')', ', 0)')
+        );
+        ctx.fillStyle = gradient;
+    } else {
+        ctx.fillStyle = shaded;
+    }
     ctx.fill();
 }
 
@@ -390,7 +487,8 @@ function drawPrism(
     ctx: CanvasRenderingContext2D,
     rot: ViewRotation,
     prism: Prism,
-    color: string
+    color: string,
+    fade: Fade = null
 ): void {
     const pts = prism.profile;
     const d = prism.halfDepth;
@@ -422,7 +520,8 @@ function drawPrism(
                 [projectX(rot, au, d), ay],
             ],
             color,
-            light.brightness
+            light.brightness,
+            fade
         );
     }
 
@@ -436,7 +535,8 @@ function drawPrism(
             ctx,
             pts.map(([u, y]) => [projectX(rot, u, z), y]),
             color,
-            light.brightness
+            light.brightness,
+            fade
         );
     }
 }
@@ -469,37 +569,57 @@ function periscopeY(state: GameState): number {
     const p = state.periscope;
     // ease-out: fast at the beginning, slow at the end
     const lift = 1 - Math.pow(1 - p.lift, 3);
-    return surfaceY(state, p.x) + (1 - lift) * PERISCOPE_SINK_DEPTH;
+    const floatY = p.floatY ?? surfaceY(state, p.x);
+    return floatY + (1 - lift) * PERISCOPE_SINK_DEPTH;
 }
 
+/**
+ * Draws the periscope. Normally (painter's algorithm) farther bodies
+ * go first and nearer ones cover them; when the periscope looks away
+ * from us, the lens is behind the head and the order flips.
+ *
+ * With `behind = true` everything is drawn in the "destination-over"
+ * mode, where each new shape goes *behind* the already painted ones -
+ * so the order must be reversed: nearest bodies first. Under water
+ * the bodies also fade out with depth.
+ */
 function drawPeriscope(
     ctx: CanvasRenderingContext2D,
     state: GameState,
-    style: GameStyle
+    style: GameStyle,
+    behind: boolean = false
 ): void {
     const p = state.periscope;
     const rot: ViewRotation = {
         cos: Math.cos(p.heading),
         sin: Math.sin(p.heading),
     };
+    const y = periscopeY(state);
     ctx.save();
-    ctx.translate(p.x, periscopeY(state));
+    ctx.translate(p.x, y);
     ctx.scale(PERISCOPE_SCALE, PERISCOPE_SCALE);
     ctx.translate(0, -PERISCOPE_ANCHOR_Y);
-    // painter's algorithm - farther bodies are drawn first, so the
-    // nearer ones cover them; when the periscope looks away from us,
-    // the lens is behind the head and the order flips
+    // under water the periscope fades with depth - the fading starts at
+    // the real water surface at the periscope axis (converted to logo units)
+    const waterline =
+        PERISCOPE_ANCHOR_Y + (surfaceY(state, p.x) - y) / PERISCOPE_SCALE;
+    const fade: Fade = behind
+        ? { from: waterline, to: waterline + UNDERWATER_FADE_DEPTH }
+        : null;
     const bodies = [
         { prism: PERISCOPE_TUBE, color: style.periscope, glass: false },
         { prism: PERISCOPE_HEAD, color: style.periscopeAccent, glass: false },
         { prism: PERISCOPE_LENS, color: style.periscope, glass: true },
     ];
+    const direction = behind ? -1 : 1;
     bodies
         .map((b) => ({ ...b, depth: prismDepth(rot, b.prism) }))
-        .sort((a, b) => a.depth - b.depth)
+        .sort((a, b) => direction * (a.depth - b.depth))
         .forEach((b) => {
-            drawPrism(ctx, rot, b.prism, b.color);
-            if (b.glass) {
+            // (under water the glass is skipped - it would not fade,
+            // and it is under water only while the periscope emerges)
+            drawPrism(ctx, rot, b.prism, b.color, fade);
+            if (b.glass && !behind) {
                 drawLensGlass(ctx, rot, style);
             }
         });
@@ -553,6 +673,7 @@ export function draw(
     ctx.fillRect(0, 0, state.width, state.height);
     // back to front: the periscope sails behind the words, the sea
     // covers lower parts of both, so they look like floating
+    // horizontal scale of the current transformation = device pixel ratio
     drawPeriscope(ctx, state, style);
     drawWords(ctx, state, style);
 
@@ -568,7 +689,13 @@ export function draw(
     // sky the words stay hidden, in the transparent sea they appear -
     // semi-transparent, so they look like seen through the water
     ctx.globalCompositeOperation = 'destination-over';
-    drawWords(ctx, state, style, UNDERWATER_OPACITY);
+    drawWords(ctx, state, style, UNDERWATER_OPACITY, false);
+    // the periscope goes behind the underwater words; faces of one body
+    // do not overlap (it is convex), so with opacity nothing shines
+    // through except where bodies overlap (only while it emerges)
+    ctx.globalAlpha = UNDERWATER_OPACITY;
+    drawPeriscope(ctx, state, style, true);
+    ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = 'source-over';
 
     // the sight line goes over everything

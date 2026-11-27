@@ -65,7 +65,7 @@ export interface FloatingWord {
 export type MeasureText = (text: string) => number;
 
 /** font size of floating words in px (used for hit testing) */
-export const WORD_FONT_SIZE = 20;
+export const WORD_FONT_SIZE = 25;
 
 export interface PointerPosition {
     x: number;
@@ -256,7 +256,7 @@ export function step(state: GameState, dt: number, measure: MeasureText): void {
         : null;
     state.hovered = hovered ? hovered.text : null;
 
-    stepPeriscope(state, dt);
+    stepPeriscope(state, dt, surfaceY);
 }
 
 /**
