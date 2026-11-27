@@ -250,8 +250,10 @@ export class LexApi implements ResourceApi<LexArgs, LexResponse> {
     /**
      * Loads a list of words (e.g. Frodo's /dictionary/lex/words, which
      * returns random words). The request goes through the data stream
-     * like any other tile request; the cache is skipped, because the
-     * same URL is expected to return different words each time.
+     * like any other tile request. The same URL is expected to return
+     * different words each time, so caches must be avoided: WaG's own
+     * via skipCache and APIGuard's via a random URL parameter (APIGuard
+     * keys its cache by URL path + query; the backend ignores it).
      */
     getWords(
         streaming: IDataStreaming,
@@ -262,7 +264,8 @@ export class LexApi implements ResourceApi<LexArgs, LexResponse> {
             tileId,
             method: HTTP.Method.GET,
             url,
-            body: {},
+            // for GET, the data stream appends body entries to the URL
+            body: { rnd: Math.random().toString(36).slice(2) },
             contentType: 'application/json',
             skipCache: true,
         });
